@@ -11,9 +11,12 @@ import cat.copernic.Projecte1.repository.VehicleRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,12 @@ public class ReservaLogic {
     private final ReservaRepository reservaRepo;
     private final VehicleRepository vehicleRepo;
     private final UsuarisRepository usuarisRepo;
+    
+    @Value("${app.reserves.dies-antelacio-devolucio:2}")
+    private int diesAntelacioDevolucio;
+    
+    @Autowired
+    private EmailService emailService;
 
     public ReservaLogic(
             ReservaRepository reservaRepo,
@@ -194,4 +203,67 @@ public class ReservaLogic {
     public List<Reserva> obtenirInformeReserves(Integer clientId) {
         return reservaRepo.findReservesPerInforme(clientId);
     }
+    
+     @Transactional
+    public BigDecimal anularReservaPerClient(Integer idReserva, Long idUsuariLoguejat) {
+        Reserva reserva = getReservaById(idReserva);
+
+        if (reserva == null || !reserva.getUsuari().getId().equals(idUsuariLoguejat)) {
+            throw new IllegalArgumentException("La reserva no existeix o no pertany a aquest usuari.");
+        }
+
+        if (reserva.getEstat() == EstatReserva.Lliurada || reserva.getEstat() == EstatReserva.Anulada) {
+            throw new IllegalArgumentException("Aquesta reserva no es pot anul·lar.");
+        }
+
+        // 1. Canviar l'estat de la reserva i alliberar el vehicle
+        reserva.setEstat(EstatReserva.Anulada);
+
+        // 2. Comprovar antelació per al retorn de diners
+        LocalDate avui = LocalDate.now();
+        LocalDate dataIniciReserva = reserva.getDataInici().toLocalDate();
+
+        BigDecimal importRetornat = BigDecimal.ZERO;
+
+        // Si queden >= diesAntelacioDevolucio entre avui i la data d'inici, es retorna l'import complet (lloguer + fiança)
+        if (!avui.plusDays(diesAntelacioDevolucio).isAfter(dataIniciReserva)) {
+            BigDecimal totalLloguer = reserva.getPreuLloguer() != null ? reserva.getPreuLloguer() : BigDecimal.ZERO;
+            BigDecimal fianca = reserva.getImportFianca() != null ? reserva.getImportFianca() : BigDecimal.ZERO;
+            importRetornat = totalLloguer.add(fianca);
+        }
+
+        // Guardar canvis
+        reservaRepo.save(reserva);
+
+        // 3. Enviar correu electrònic d'anul·lació
+        emailService.enviarEmailAnullacio(
+                reserva.getUsuari().getEmail(),
+                reserva.getUsuari().getNom(),
+                reserva.getCodiReserva(),
+                importRetornat
+        );
+
+        return importRetornat;
+    }
+
+        
+        // Cerca i filtratge de reserves del client per codi, estat o data.
+        public List<Reserva> filtrarReservesClient(Long usuariId, String codi, String estat, String data) {
+            List<Reserva> reserves = getReservesPerUsuari(usuariId);
+
+            return reserves.stream()
+                    // Filtre per Codi (parcial)
+            .filter(r -> codi == null || codi.isBlank() || 
+                    (r.getCodiReserva() != null && r.getCodiReserva().toLowerCase().contains(codi.trim().toLowerCase())))
+            
+            // Filtre per Estat (compara com a text sense importar majúscules/minúscules)
+            .filter(r -> estat == null || estat.isBlank() || 
+                    (r.getEstat() != null && r.getEstat().name().equalsIgnoreCase(estat.trim())))
+            
+            // Filtre per Data (coincidència exacta de la data d'inici YYYY-MM-DD)
+            .filter(r -> data == null || data.isBlank() || 
+                    (r.getDataInici() != null && r.getDataInici().toLocalDate().toString().equals(data.trim())))
+            
+            .toList();
+        }
 }
