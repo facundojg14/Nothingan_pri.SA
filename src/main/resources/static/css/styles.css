@@ -1004,3 +1004,26 @@ body {
     padding-bottom: 16px;
     border-bottom: 1px solid #edf0f4;
 }
+/* Fila clicable */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+    background-color: #f1f5f9 !important;
+}
+
+/* Icona de fletxa desplegable */
+.chevron-icon {
+    font-size: 0.75rem;
+    margin-left: 6px;
+    color: #64748b;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.clickable-row.open .chevron-icon {
+    transform: rotate(180deg);
+}
+

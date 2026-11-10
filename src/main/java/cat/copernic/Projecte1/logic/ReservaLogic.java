@@ -85,6 +85,36 @@ public class ReservaLogic {
         return reservaRepo.findReservesSolapades(
                 vehicleId, dataInici, dataFi, EstatReserva.Anulada).isEmpty();
     }
+    
+    /**
+    * Prepara un objeto Reserva calculando precios, fianzas (aplicando el 25% si es Premium) 
+    * y duraciones para la vista de confirmación del cliente.
+    */
+   public void prepararReservaClient(Reserva reserva, Vehicle vehicle, Usuaris usuari, long diesLloguer) {
+       if (reserva == null) return;
+
+       // 1. Fianza base de 200.00 €
+       BigDecimal fiancaBase = new BigDecimal("200.00");
+
+       // 2. Aplicar 25% de descuento en la fianza si el usuario es Premium
+       BigDecimal fiancaFinal = fiancaBase;
+       if (usuari != null && Boolean.TRUE.equals(usuari.getPremium())) {
+           fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75")).setScale(2, RoundingMode.HALF_UP);
+       }
+
+       // 3. Subtotal alquiler = precioPorDia * dias
+       BigDecimal preuDia = (vehicle != null && vehicle.getPreuDia() != null) ? vehicle.getPreuDia() : BigDecimal.ZERO;
+       BigDecimal subtotalLloguer = preuDia.multiply(BigDecimal.valueOf(diesLloguer)).setScale(2, RoundingMode.HALF_UP);
+
+       // 4. Total a pagar (alquiler + fianza)
+       BigDecimal totalAPagar = subtotalLloguer.add(fiancaFinal);
+
+       // Asignamos los valores a la entidad Reserva
+       reserva.setVehicle(vehicle != null ? vehicle : new Vehicle());
+       reserva.setUsuari(usuari);
+       reserva.setPreuLloguer(subtotalLloguer);
+       reserva.setImportFianca(fiancaFinal); // Guardamos ya la fianza final calculada
+   }
 
     @Transactional
     public Integer saveReserva(Reserva reserva) {
@@ -134,7 +164,9 @@ public class ReservaLogic {
                 || reserva.getImportFianca().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("La fiança ha de ser igual o superior a zero.");
         }
-
+        
+        BigDecimal fiancaBase= new BigDecimal("200.00");
+        
         Duration durada = Duration.between(reserva.getDataInici(), reserva.getDataFi());
         long dies = durada.toDays();
         if (!durada.minusDays(dies).isZero()) {
@@ -147,9 +179,9 @@ public class ReservaLogic {
 
         reserva.setPreuLloguer(preuTotal);
 
-        BigDecimal fianca = reserva.getImportFianca();
+        BigDecimal fianca = fiancaBase;
         if (Boolean.TRUE.equals(usuari.getPremium())) {
-            fianca = fianca.multiply(new BigDecimal("0.90"));
+            fianca = fianca.multiply(new BigDecimal("0.75"));
         }
         reserva.setImportFianca(fianca.setScale(2, RoundingMode.HALF_UP));
 

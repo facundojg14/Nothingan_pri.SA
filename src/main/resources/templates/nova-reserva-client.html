@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VISTA DE NOVA RESERVA PER A CLIENT! -->
+<!-- VISTA DE NOVA RESERVA PER A CLIENT -->
 <html lang="ca" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -37,6 +37,7 @@
             font-size: 0.95rem;
         }
 
+        /* Grid per mantenir les dues columnes una al costat de l'altra */
         .booking-grid {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
@@ -253,7 +254,7 @@
 
             <div class="booking-grid">
                 
-                <!-- Columna Esquerra: Resum del vehicle i preu -->
+                <!-- COLUMNA ESQUERRA: Vehicle, Dates i Preu -->
                 <div class="summary-section">
                     <h3>Vehicle seleccionat</h3>
                     
@@ -291,20 +292,47 @@
                     <div class="price-breakdown" th:if="${vehicle != null}">
                         <div class="price-row">
                             <span>Preu per dia:</span>
-                            <span><strong th:text="${vehicle.preuDia != null ? #numbers.formatDecimal(vehicle.preuDia, 1, 2) : '0.00'}">50.00</strong> €</span>
+                            <span style="white-space: nowrap;">
+                                <strong th:text="${#numbers.formatDecimal(vehicle.preuDia, 1, 2)}">50.00</strong> €
+                            </span>
                         </div>
                         <div class="price-row">
                             <span>Dies de lloguer:</span>
                             <span th:text="${'x ' + diesLloguer}">x 4</span>
                         </div>
+                        <div class="price-row">
+                            <span>Subtotal lloguer:</span>
+                            <span style="white-space: nowrap;">
+                                <strong th:text="${#numbers.formatDecimal(reserva.preuLloguer, 1, 2)}">200.00</strong> €
+                            </span>
+                        </div>
+                        
+                        <!-- Fiança i indicador Premium -->
+                        <div class="price-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #cbd5e1;">
+                            <span>
+                                Fiança de garantia:
+                                <span th:if="${usuariLoguejat != null and usuariLoguejat.premium}" 
+                                      class="badge" 
+                                      style="background-color: #8b5cf6; color: white; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; margin-left: 4px;">
+                                    -25% Descompte Premium
+                                </span>
+                            </span>
+                            <span style="white-space: nowrap;">
+                                <strong th:text="${#numbers.formatDecimal(reserva.importFianca, 1, 2)}">150.00</strong> €
+                            </span>
+                        </div>
+
+                        <!-- Total a pagar -->
                         <div class="price-total">
-                            <span>Total a pagar:</span>
-                            <span><span th:text="${vehicle.preuDia != null ? #numbers.formatDecimal(vehicle.preuDia.multiply(T(java.math.BigDecimal).valueOf(diesLloguer)), 1, 2) : '0.00'}">200.00</span> €</span>
+                            <span>Total a pagar (inclou fiança):</span>
+                            <span style="white-space: nowrap;">
+                                <span th:text="${#numbers.formatDecimal(reserva.preuLloguer.add(reserva.importFianca), 1, 2)}">350.00</span> €
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Columna Dreta: Formulari i Dades del Client -->
+                <!-- COLUMNA DRETA: Titular de la Reserva i Formularís -->
                 <div class="form-section">
                     <h3>Titular de la Reserva</h3>
 
@@ -332,11 +360,11 @@
 
                     <form th:action="@{/web/usuaris/client/reserves/save}" th:object="${reserva}" method="post">
 
-                    <!-- Camps ocults -->
+                        <!-- Camps ocults -->
                         <input type="hidden" name="vehicle.id" th:value="${vehicle != null ? vehicle.id : ''}" />
                         <input type="hidden" th:field="*{dataInici}" />
                         <input type="hidden" th:field="*{dataFi}" />
-                        <input type="hidden" name="fianca" value="0.00" /> <!-- Camp de fiança predeterminat -->
+                        <input type="hidden" th:field="*{importFianca}" />
 
                         <div class="form-group" style="margin-top: 20px;">
                             <label for="observacions" style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">
@@ -359,6 +387,7 @@
                         </div>
                     </form>
                 </div>
+
             </div>
         </div>
     </main>
