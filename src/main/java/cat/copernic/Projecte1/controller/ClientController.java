@@ -63,6 +63,7 @@ public class ClientController {
 public String mostrarReservesClient(@RequestParam(value = "codi", required = false) String codi,
                                                      @RequestParam(value = "estat", required = false) String estat,
                                                      @RequestParam(value= "data", required = false) String data,
+                                                     @RequestParam(value="detall", required = false) Integer detall,
                                                       HttpSession session, Model model) {
     //Obtenir usuari autenticat desde la sessió http
     Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -84,6 +85,14 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
     if (reserves == null) {    // Si no en té reserves asigna una llista buida per
         reserves = List.of(); // evitar errors de renderitzat i càrrega.
     }
+    
+    if (detall != null) {
+        Reserva seleccionada = reservaLogic.getReservaById(detall);
+        if (seleccionada != null && seleccionada.getUsuari().getId().equals(usuariLoguejat.getId())) {
+            model.addAttribute("reservaSeleccionada", seleccionada);
+        }
+    }
+    
     model.addAttribute("reserves", reserves); // enviat al html i renderitzat per th:each"r: ${reserves}
     
     model.addAttribute("codiFiltre", codi);
@@ -121,11 +130,11 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
         if (dataInici != null && dataFi != null && dataFi.isAfter(dataInici)) {
             diesLloguer = (long) Math.ceil(Duration.between(dataInici, dataFi).toMinutes() / 1440.0);
         }
+        
         Reserva reserva = new Reserva();
-        reserva.setVehicle(vehicle != null ? vehicle : new Vehicle());
-        reserva.setUsuari(usuariLoguejat);
         reserva.setDataInici(dataInici);
         reserva.setDataFi(dataFi);
+        reservaLogic.prepararReservaClient(reserva, vehicle, usuariLoguejat, diesLloguer);
         
         model.addAttribute("reserva", reserva);
         model.addAttribute("vehicle", vehicle);
@@ -152,17 +161,13 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
             }
 
             try {
-                reservaLogic.saveReserva(reserva);
+                    Integer idNova = reservaLogic.saveReserva(reserva);
                 
-                List<Reserva> mevesReserves = reservaLogic.getReservesPerUsuari(usuariBD.getId());
-                if (!mevesReserves.isEmpty()) {
-                    // Si la llista ve ordenada per ID descendent, la darrera és la primera (get(0))
-                    // Si no, agafem la darrera de la llista (mevesReserves.get(mevesReserves.size() - 1))
-                    Reserva novaReserva = mevesReserves.get(0); 
-                    redirectAttributes.addFlashAttribute("idNovaReserva", novaReserva.getId());
-                }
-                redirectAttributes.addFlashAttribute("missatge", "Reserva creada amb èxit!");
-                return "redirect:/web/usuaris/client/reserves";
+                    redirectAttributes.addFlashAttribute("idNovaReserva", idNova);
+                    redirectAttributes.addFlashAttribute("missatge", "Reserva creada amb èxit!");
+                
+                
+                    return "redirect:/web/usuaris/client/reserves";
             } catch (IllegalArgumentException e) {
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
                 return "redirect:/web/usuaris/client/reserves/nova";
