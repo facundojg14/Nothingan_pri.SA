@@ -505,4 +505,61 @@ public class AdminController {
 
         return "admin-informes";
     }
+    
+    // ==========================================
+    // SECCIÓN: PERFIL DE ADMINISTRADOR
+    // ==========================================
+    
+    // 1. MOSTRAR EL PERFIL DE L'ADMINISTRADOR LOGUEJAT
+    @GetMapping("/perfil")
+    public String mostrarPerfilAdmin(jakarta.servlet.http.HttpSession session, Model model) {
+        Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
+        if (usuariLoguejat == null) {
+            return "redirect:/web/usuaris/login";
+        }
+
+        // Carreguem les dades actualitzades des de la base de dades
+        Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
+        
+        model.addAttribute("usuariLoguejat", usuariBD);
+        model.addAttribute("usuari", usuariBD); // Necessari per al th:object="${usuari}" a la vista perfil.html
+        
+        return "perfil-admin"; // Renderitza la plantilla perfil.html
+    }
+
+    // 2. DESAR ELS CANVIS DEL PERFIL
+    @PostMapping("/perfil/save")
+    public String guardarPerfilAdmin(
+            @ModelAttribute("usuari") Usuaris usuariForm, 
+            jakarta.servlet.http.HttpSession session, 
+            RedirectAttributes redirectAttributes) {
+            
+        Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
+        if (usuariLoguejat == null) {
+            return "redirect:/web/usuaris/login";
+        }
+
+        // Carreguem l'usuari real de la base de dades per no perdre contrasenya ni permisos
+        Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
+
+        if (usuariBD != null) {
+            // Actualitzem els camps modificables (per exemple, telèfon i/o nom)
+            usuariBD.setTelefon(usuariForm.getTelefon());
+            if (usuariForm.getNom() != null && !usuariForm.getNom().isBlank()) {
+                usuariBD.setNom(usuariForm.getNom());
+            }
+
+            // Guardem a la BD
+            usuarisService.saveUsuari(usuariBD);
+
+            // Actualitzem l'objecte a la sessió HTTP per mantenir la coherència
+            session.setAttribute("usuariLoguejat", usuariBD);
+
+            redirectAttributes.addFlashAttribute("missatge", "Perfil actualitzat amb èxit!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "No s'ha pogut carregar el perfil per actualitzar.");
+        }
+
+        return "redirect:/web/admin/perfil";
+    }
 }

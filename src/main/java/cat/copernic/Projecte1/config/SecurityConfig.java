@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package cat.copernic.Projecte1.config;
 
 import cat.copernic.Projecte1.repository.UsuarisRepository;
@@ -24,20 +20,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                // 1. Rutes PÚBLIQUES (Fitxers estàtics, login, registre, Home i cerca de cotxes)
+                // 1. Rutes PÚBLIQUES
                 .requestMatchers(
                         "/", 
                         "/home", 
                         "/css/**", 
                         "/js/**", 
-                        "/images/**", 
+                        "/img/**", 
                         "/uploads/**", 
-                        "/assets/**",
                         "/web/usuaris/registre", 
                         "/web/usuaris/login",
-                        "/coches/**", 
-                        "/web/coches/**", 
-                        "/api/coches/**"
+                        "/web/vehicles/**",                  // Permite ver y buscar vehículos públicamente
+                        "/web/usuaris/client/reserves/nova"  // <- CORREGIDO: Permite ver el formulario de nueva reserva sin estar logueado
                 ).permitAll()
                 
                 // 2. Rutes protegides per Rol
@@ -52,7 +46,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/web/usuaris/login")
                 .usernameParameter("email")
                 .passwordParameter("password")
-                .successHandler(customSuccessHandler()) // <-- REDIRECCIÓ DINÀMICA PER ROL
+                .successHandler(customSuccessHandler())
                 .permitAll()
                 )
                 .logout(logout -> logout
@@ -70,9 +64,8 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler customSuccessHandler() {
         return (request, response, authentication) -> {
-            String email = authentication.getName(); // Obtenim l'email de l'usuari autenticat
+            String email = authentication.getName();
 
-            // Guardem l'objecte Usuaris a la sessió HTTP per a que ClientController el trobi
             usuarisRepository.findByEmail(email).ifPresent(usuari -> {
                 request.getSession().setAttribute("usuariLoguejat", usuari);
             });
@@ -82,13 +75,13 @@ public class SecurityConfig {
 
             for (var authority : authorities) {
                 if (authority.getAuthority().equals("ROLE_ADMIN")) {
-                    redirectUrl = "/web/usuaris/all";
+                    redirectUrl = "/web/admin/usuaris";
                     break;
                 } else if (authority.getAuthority().equals("ROLE_AGENT")) {
                     redirectUrl = "/web/usuaris/all";
                     break;
                 } else if (authority.getAuthority().equals("ROLE_CLIENT")) {
-                    redirectUrl = "/web/usuaris/client/home"; // Ruta d'entrada del client
+                    redirectUrl = "/web/usuaris/client/home";
                     break;
                 }
             }

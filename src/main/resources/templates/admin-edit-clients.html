@@ -34,9 +34,16 @@
                 <header class="top-header">
                     <h2>Gestió de clients</h2>
 
-                    <div class="user-dropdown">
-                        <span>Administrador ▾</span>
-                        <div class="user-avatar"></div>
+                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                        <!-- Enllaç directament al Perfil amb el nom de l'usuari -->
+                        <a th:href="@{/web/admin/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                        </a>
+
+                        <!-- Botó directament per Tancar Sessió -->
+                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                            Tancar Sessió
+                        </a>
                     </div>
                 </header>
 
