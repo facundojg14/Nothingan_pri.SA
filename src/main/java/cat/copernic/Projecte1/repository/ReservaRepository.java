@@ -20,10 +20,16 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
 
     // Busca las reservas de un vehículo.
     List<Reserva> findByVehicle_Id(long vehicleId);
-    
+
     // Busca las reservas de un usuario.
     List<Reserva> findByUsuariId(Long id);
-    
+
+    // Comprueba si existe alguna reserva asociada al vehículo
+    boolean existsByVehicle_Id(long vehicleId);
+
+    // Comprueba si existe alguna reserva asociada al vehículo excluyendo un estado concreto (ej. ANULADA)
+    boolean existsByVehicle_IdAndEstatNot(long vehicleId, EstatReserva estat);
+
     // Busca las reservas de un vehículo que coinciden con unas fechas.
     @Query("SELECT r FROM Reserva r WHERE r.vehicle.id = :vehicleId "
             + "AND r.estat <> :anulada "
@@ -40,6 +46,6 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             + "(:clientId IS NULL OR r.usuari.id = :clientId) "
             + "ORDER BY r.usuari.nom ASC, r.dataInici DESC")
     List<Reserva> findReservesPerInforme(@Param("clientId") Integer clientId);
-    
-    Optional<Reserva>findByCodiReserva(String codiReserva);
+
+    Optional<Reserva> findByCodiReserva(String codiReserva);
 }
