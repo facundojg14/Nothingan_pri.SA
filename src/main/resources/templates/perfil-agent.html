@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El meu perfil (Agent) - Nothingan Pri</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .profile-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            margin-top: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-top: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-group input {
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            color: #1e293b;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input[readonly] {
+            background-color: #f8fafc !important;
+            color: #64748b;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        .form-group input:focus:not([readonly]) {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Estructura principal -->
+    <div class="layout">
+
+        <!-- Menú lateral de navegació per a l'Agent -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <a th:href="@{/web/usuaris/login}">
+                    <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
+                </a>
+            </div>
+
+            <nav class="nav-menu">
+                <a th:href="@{/web/reserves/all}">• Reserves</a>
+                <a th:href="@{/web/vehicles/all}">• Vehicles</a>
+                <a th:href="@{/web/usuaris/all}">• Clients</a>
+            </nav>
+        </aside>
+
+        <!-- Contingut Principal -->
+        <main class="content">
+
+            <!-- Capçalera superior amb Perfil i Logout -->
+            <header class="top-header">
+                <h2>El meu perfil</h2>
+
+                <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Enllaç directament al Perfil amb el nom de l'usuari/agent -->
+                    <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 600;">
+                        <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                    </a>
+
+                    <!-- Botó directament per Tancar Sessió -->
+                    <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                        Tancar Sessió
+                    </a>
+                </div>
+            </header>
+
+            <!-- MISSATGES DE FEEDBACK -->
+            <div th:if="${missatge}" class="alert-success" style="background-color: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-top: 20px; font-size: 0.9rem; font-weight: 500;" th:text="${missatge}">
+                Dades actualitzades correctament.
+            </div>
+            <div th:if="${error}" class="alert-error" style="background-color: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-top: 20px; font-size: 0.9rem; font-weight: 500;" th:text="${error}">
+                S'ha produït un error en desar les dades.
+            </div>
+
+            <!-- TARGETA PRINCIPAL DEL PERFIL AGENT -->
+            <div class="profile-card">
+                <form th:action="@{/web/usuaris/perfil/save}" th:object="${usuari}" method="post">
+                    
+                    <!-- ID OCULT -->
+                    <input type="hidden" th:field="*{id}" />
+
+                    <!-- SECCIÓ 1: DADES PERSONALS I D'ACCÉS -->
+                    <div class="section-header">
+                        <h3>Dades personals i d'accés (Agent)</h3>
+                        <div>
+                            <span class="badge badge-validat" th:text="*{rol != null ? rol : 'AGENT'}">
+                                AGENT
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nom">Nom complet</label>
+                            <input type="text" id="nom" th:field="*{nom}" placeholder="Nom i cognoms" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Correu electrònic</label>
+                            <input type="email" id="email" th:field="*{email}" readonly placeholder="nom@exemple.com" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telefon">Telèfon de contacte</label>
+                            <input type="text" id="telefon" th:field="*{telefon}" placeholder="600112233" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nacionalitat">Nacionalitat</label>
+                            <input type="text" id="nacionalitat" th:field="*{nacionalitat}" readonly />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adreca">Adreça habitual</label>
+                            <input type="text" id="adreca" th:field="*{adreca}" readonly />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="poblacio">Població</label>
+                            <input type="text" id="poblacio" th:field="*{poblacio}" readonly />
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓ 2: DOCUMENTACIÓ OFICIAL -->
+                    <div class="section-header">
+                        <h3>Documentació oficial</h3>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="dni">DNI / Passaport</label>
+                            <input type="text" id="dni" th:field="*{dni}" readonly />
+                        </div>
+                    </div>
+
+                    <!-- BOTONS D'ACCIÓ -->
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-add" style="padding: 10px 20px; font-weight: 600; cursor: pointer;">
+                            Desar canvis
+                        </button>
+                        <a th:href="@{/web/reserves/all}" class="btn btn-cancel" style="padding: 10px 20px; font-weight: 600; text-decoration: none;">
+                            Cancel·lar
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>

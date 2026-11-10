@@ -129,7 +129,7 @@ public class UsuarisController {
             rol rolUsuari = (usuari.getRol() != null)
                     ? rol.valueOf(usuari.getRol().toString())
                     : rol.CLIENT;
-            
+
             if (rolUsuari == rol.CLIENT) {
                 return "redirect:/web/usuaris/client/home";
             } else if (rolUsuari == rol.ADMIN) {
@@ -189,5 +189,61 @@ public class UsuarisController {
     public String validarRegistre(@PathVariable("id") Long id, @RequestParam("estat") String nouEstat) {
         usuarisService.canviarEstatRegistre(id, nouEstat);
         return "redirect:/web/usuaris/pendents";
+    }
+// ==========================================
+    // SECCIÓ: PERFIL D'AGENT / USUARI LOGUEJAT
+    // ==========================================
+
+    // 1. MOSTRAR EL PERFIL DE L'AGENT LOGUEJAT
+    @GetMapping("/perfil")
+    public String mostrarPerfilAgent(HttpSession session, Model model) {
+        Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
+        if (usuariLoguejat == null) {
+            return "redirect:/web/usuaris/login";
+        }
+
+        // Carreguem les dades actualitzades des de la base de dades
+        Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
+
+        model.addAttribute("usuariLoguejat", usuariBD);
+        model.addAttribute("usuari", usuariBD); // Necessari per al th:object="${usuari}" a perfil.html
+
+        return "perfil-agent"; // Renderitza la plantilla perfil.html
+    }
+
+    // 2. DESAR ELS CANVIS DEL PERFIL
+    @PostMapping("/perfil/save")
+    public String guardarPerfilAgent(
+            @ModelAttribute("usuari") Usuaris usuariForm,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
+        if (usuariLoguejat == null) {
+            return "redirect:/web/usuaris/login";
+        }
+
+        // Carreguem l'usuari real de la BD per no sobrescriure contrasenya, rol o estat
+        Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
+
+        if (usuariBD != null) {
+            // Actualitzem els camps permesos (telèfon i/o nom)
+            usuariBD.setTelefon(usuariForm.getTelefon());
+            if (usuariForm.getNom() != null && !usuariForm.getNom().isBlank()) {
+                usuariBD.setNom(usuariForm.getNom());
+            }
+
+            // Guardem a la BD
+            usuarisService.saveUsuari(usuariBD);
+
+            // Actualitzem l'objecte a la sessió HTTP per mantenir la coherència
+            session.setAttribute("usuariLoguejat", usuariBD);
+
+            redirectAttributes.addFlashAttribute("missatge", "Perfil actualitzat amb èxit!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "No s'ha pogut carregar el perfil per actualitzar.");
+        }
+
+        return "redirect:/web/usuaris/perfil";
     }
 }
