@@ -3,9 +3,11 @@ package cat.copernic.Projecte1.controller;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
+import cat.copernic.Projecte1.logic.EmailService;
 import cat.copernic.Projecte1.logic.ReservaLogic;
 import cat.copernic.Projecte1.logic.UsuarisLogic;
 import cat.copernic.Projecte1.logic.VehicleLogic;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -29,12 +31,16 @@ public class ReservaController {
     private final ReservaLogic reservaLogic;
     private final VehicleLogic vehicleLogic;
     private final UsuarisLogic usuarisLogic;
+    private final EmailService emailService; // <- Injectem el servei de correu
 
     public ReservaController(ReservaLogic reservaLogic,
-            VehicleLogic vehicleLogic, UsuarisLogic usuarisLogic) {
+            VehicleLogic vehicleLogic, 
+            UsuarisLogic usuarisLogic,
+            EmailService emailService) { // <- S'afegeix al constructor
         this.reservaLogic = reservaLogic;
         this.vehicleLogic = vehicleLogic;
         this.usuarisLogic = usuarisLogic;
+        this.emailService = emailService;
     }
 
     // Muestra las reservas aplicando los filtros seleccionados.
@@ -51,14 +57,14 @@ public class ReservaController {
         // Obtenemos todas las reservas y filtramos según los datos introducidos.
         List<Reserva> reserves = reservaLogic.findAllReservas().stream()
                 .filter(r -> dni == null || dni.isBlank()
-                        || r.getUsuari().getDni().contains(dni))
+                        || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().contains(dni)))
                 .filter(r -> email == null || email.isBlank()
                         || (r.getUsuari() != null && r.getUsuari().getEmail() != null
                         && r.getUsuari().getEmail().toLowerCase().contains(email.toLowerCase())))
                 .filter(r -> codi == null || codi.isBlank()
-                        || r.getCodiReserva().contains(codi))
+                        || (r.getCodiReserva() != null && r.getCodiReserva().contains(codi)))
                 .filter(r -> matricula == null || matricula.isBlank()
-                        || r.getVehicle().getMatricula().contains(matricula))
+                        || (r.getVehicle() != null && r.getVehicle().getMatricula() != null && r.getVehicle().getMatricula().contains(matricula)))
                 .filter(r -> data == null || data.isBlank()
                         || (r.getDataReserva() != null
                         && r.getDataReserva().toLocalDate().toString().equals(data)))
@@ -230,22 +236,40 @@ public class ReservaController {
         return "redirect:/web/reserves/all";
     }
 
-    // Intenta anular una reserva y muestra el resultado.
     @PostMapping("/cancelar/{id}")
     public String cancel(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "") String motiu,
+            @RequestParam(required = false, defaultValue = "100") double percentatgeRetorn,
             RedirectAttributes redirectAttributes) {
-        if (reservaLogic.anularReserva(id)) {
-            redirectAttributes.addFlashAttribute(
-                    "missatge", "Reserva anul·lada correctament.");
-        } else {
-            redirectAttributes.addFlashAttribute(
-                    "error", "No s'ha pogut anul·lar la reserva.");
-        }
 
+        Reserva reserva = reservaLogic.getReservaById(id);
+
+        if (reserva != null && reservaLogic.anularReserva(id)) {
+
+            BigDecimal preuTotal = reserva.getPreuLloguer() != null ? reserva.getPreuLloguer() : BigDecimal.ZERO;
+            BigDecimal importRetornat = preuTotal.multiply(BigDecimal.valueOf(percentatgeRetorn / 100.0));
+
+            // Crida a la instància emailService (en minúscula)
+            if (reserva.getUsuari() != null) {
+                emailService.enviarEmailAnullacio(
+                    reserva.getUsuari().getEmail(),
+                    reserva.getUsuari().getNom(),
+                    reserva.getCodiReserva(),
+                    percentatgeRetorn,
+                    importRetornat,
+                    motiu
+                );
+            }
+
+            redirectAttributes.addFlashAttribute("missatge", "Reserva anul·lada i email enviat al client.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "No s'ha pogut anul·lar la reserva.");
+        }
+        
         return "redirect:/web/reserves/all";
     }
 
-    // Carga los vehículos y usuarios que aparecen en el formulario.
+    // Mètode privat afegit per carregar dades dels desplegables al formulari
     private void carregarDadesFormulari(Model model) {
         model.addAttribute("vehicles", vehicleLogic.findAllVehicles());
         model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
