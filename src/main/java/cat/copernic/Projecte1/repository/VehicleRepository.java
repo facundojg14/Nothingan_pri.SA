@@ -6,6 +6,8 @@ import cat.copernic.Projecte1.entity.Vehicle;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * REPOSITORIO DE VEHÍCULOS (CAPA DE ACCESO A DATOS - DAO)

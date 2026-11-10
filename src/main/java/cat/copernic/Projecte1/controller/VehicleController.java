@@ -227,8 +227,23 @@ public class VehicleController {
      */
     @GetMapping("/delete/{id}")
     public String deleteById(@PathVariable("id") Long vehicleId, RedirectAttributes redirectAttributes) {
-        vehicleLogic.deleteVehicleById(vehicleId);
-        redirectAttributes.addFlashAttribute("missatge", "Vehicle eliminat correctament.");
+        logger.debug("Intentant donar de baixa el vehicle " + vehicleId);
+
+        // 1. Intentar la baixa lògica (comprova si té reserves actives i canvia l'estat)
+        boolean donatDeBaixa = vehicleLogic.donarDeBaixaVehicle(vehicleId);
+
+        if (donatDeBaixa) {
+            redirectAttributes.addFlashAttribute("missatge", "El vehicle s'ha donat de baixa correctament (ja no està disponible).");
+        } else {
+            // Si retora false és perquè té reserves actives o no existeix
+            if (vehicleLogic.teReservesActives(vehicleId)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No es pot donar de baixa el vehicle perquè està assignat a una reserva activa.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "No s'ha trobat el vehicle.");
+            }
+        }
+
         return "redirect:/web/vehicles/all";
     }
 

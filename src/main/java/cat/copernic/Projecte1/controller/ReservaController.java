@@ -1,5 +1,6 @@
 package cat.copernic.Projecte1.controller;
 
+import cat.copernic.Projecte1.entity.Enum.EstatVehicle;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
@@ -24,8 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/web/reserves")
 @RequestScope
 public class ReservaController {
-    
-    // Clases que contienen las operaciones para gestionar los datos.
+
     private final ReservaLogic reservaLogic;
     private final VehicleLogic vehicleLogic;
     private final UsuarisLogic usuarisLogic;
@@ -37,7 +37,6 @@ public class ReservaController {
         this.usuarisLogic = usuarisLogic;
     }
 
-    // Muestra las reservas aplicando los filtros seleccionados.
     @GetMapping("/all")
     public String findAll(
             @RequestParam(required = false) String dni,
@@ -47,32 +46,29 @@ public class ReservaController {
             @RequestParam(required = false) String data,
             @RequestParam(required = false) Integer detall,
             Model model) {
-        
-        // Obtenemos todas las reservas y filtramos según los datos introducidos.
+
         List<Reserva> reserves = reservaLogic.findAllReservas().stream()
                 .filter(r -> dni == null || dni.isBlank()
-                        || r.getUsuari().getDni().contains(dni))
+                || r.getUsuari().getDni().contains(dni))
                 .filter(r -> email == null || email.isBlank()
-                        || (r.getUsuari() != null && r.getUsuari().getEmail() != null
-                        && r.getUsuari().getEmail().toLowerCase().contains(email.toLowerCase())))
+                || (r.getUsuari() != null && r.getUsuari().getEmail() != null
+                && r.getUsuari().getEmail().toLowerCase().contains(email.toLowerCase())))
                 .filter(r -> codi == null || codi.isBlank()
-                        || r.getCodiReserva().contains(codi))
+                || r.getCodiReserva().contains(codi))
                 .filter(r -> matricula == null || matricula.isBlank()
-                        || r.getVehicle().getMatricula().contains(matricula))
+                || r.getVehicle().getMatricula().contains(matricula))
                 .filter(r -> data == null || data.isBlank()
-                        || (r.getDataReserva() != null
-                        && r.getDataReserva().toLocalDate().toString().equals(data)))
+                || (r.getDataReserva() != null
+                && r.getDataReserva().toLocalDate().toString().equals(data)))
                 .toList();
-        
-        // Enviamos las reservas y los filtros a la página.
+
         model.addAttribute("reserves", reserves);
         model.addAttribute("dni", dni);
         model.addAttribute("email", email);
         model.addAttribute("codi", codi);
         model.addAttribute("matricula", matricula);
         model.addAttribute("data", data);
-        
-        // Si se ha seleccionado una reserva, también enviamos sus detalles.
+
         if (detall != null) {
             Reserva seleccionada = reservaLogic.getReservaById(detall);
             if (seleccionada != null) {
@@ -83,7 +79,6 @@ public class ReservaController {
         return "reserves-list";
     }
 
-    // Muestra el formulario para crear una reserva.
     @GetMapping("/new")
     public String getForm(Model model) {
         Reserva reserva = new Reserva();
@@ -91,14 +86,12 @@ public class ReservaController {
         reserva.setUsuari(new Usuaris());
 
         model.addAttribute("reserva", reserva);
-        
-        // Cargamos los vehículos y usuarios de los desplegables.
+
         carregarDadesFormulari(model);
 
         return "nova-reserva-agent";
     }
 
-    // Busca vehículos disponibles por fechas y categoría.
     @GetMapping("/disponibles")
     public String buscarDisponibles(
             @RequestParam String dataInici,
@@ -108,65 +101,59 @@ public class ReservaController {
 
         LocalDateTime inici;
         LocalDateTime fi;
-        
-        // Convertimos las fechas al formato que utiliza Java.
+
         try {
             inici = LocalDateTime.parse(dataInici);
             fi = LocalDateTime.parse(dataFi);
         } catch (DateTimeParseException e) {
-            
-            // Si las fechas no son válidas, mostramos un error.
             model.addAttribute("error", "Les dates no són vàlides.");
-            
+
             Reserva reserva = new Reserva();
             reserva.setVehicle(new Vehicle());
             reserva.setUsuari(new Usuaris());
-            
+
             model.addAttribute("reserva", reserva);
             model.addAttribute("vehicles", List.of());
             model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
             model.addAttribute("dataInici", dataInici);
             model.addAttribute("dataFi", dataFi);
             model.addAttribute("categoria", categoria);
-            
+
             return "nova-reserva-agent";
         }
-        
-        // Comprobamos que la fecha final sea posterior a la inicial.
+
         if (!fi.isAfter(inici)) {
             model.addAttribute("error",
                     "La data final ha de ser posterior a la data inicial.");
-            
+
             Reserva reserva = new Reserva();
             reserva.setVehicle(new Vehicle());
             reserva.setUsuari(new Usuaris());
-            
+
             model.addAttribute("reserva", reserva);
             model.addAttribute("vehicles", List.of());
             model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
             model.addAttribute("dataInici", dataInici);
             model.addAttribute("dataFi", dataFi);
             model.addAttribute("categoria", categoria);
-            
+
             return "nova-reserva-agent";
         }
-        
-        // Filtra los vehículos disponibles por fechas y categoría.
+
+        // MODIFICACIÓ: Només es mostren vehicles ACTIUS i DISPONIBLES que no estiguin reservats en aquestes dates
         List<Vehicle> disponibles = vehicleLogic.findAllVehicles().stream()
-                .filter(v -> reservaLogic.vehicleDisponible(
-                        v.getId(), inici, fi))
+                .filter(v -> Boolean.TRUE.equals(v.getActiu()) && v.getEstatVehicle() == EstatVehicle.Disponible)
+                .filter(v -> reservaLogic.vehicleDisponible(v.getId(), inici, fi))
                 .filter(v -> categoria == null || categoria.isBlank()
-                        || v.getCategoria().name().equals(categoria))
+                || v.getCategoria().name().equals(categoria))
                 .toList();
-        
-        // Preparamos la reserva con las fechas seleccionadas.
+
         Reserva reserva = new Reserva();
         reserva.setVehicle(new Vehicle());
         reserva.setUsuari(new Usuaris());
         reserva.setDataInici(inici);
         reserva.setDataFi(fi);
 
-        // Enviamos los resultados a la página.
         model.addAttribute("reserva", reserva);
         model.addAttribute("vehicles", disponibles);
         model.addAttribute("senseDisponibilitat", disponibles.isEmpty());
@@ -178,19 +165,22 @@ public class ReservaController {
         return "nova-reserva-agent";
     }
 
-    // Recibe y guarda los datos del formulario.
     @PostMapping("/save")
     public String save(@ModelAttribute Reserva reserva,
             RedirectAttributes redirectAttributes) {
         try {
+            // Validació extra: Evitar reservar un vehicle no actiu o no disponible
+            if (reserva.getVehicle() != null && reserva.getVehicle().getId() > 0) {
+                Vehicle v = vehicleLogic.getVehicleById(reserva.getVehicle().getId());
+                if (v != null && (!Boolean.TRUE.equals(v.getActiu()) || v.getEstatVehicle() != EstatVehicle.Disponible)) {
+                    redirectAttributes.addFlashAttribute("error", "Aquest vehicle està donat de baixa i no es pot reservar.");
+                    return "redirect:/web/reserves/new";
+                }
+            }
+
             reservaLogic.saveReserva(reserva);
-            
-            // Mensaje que se muestra si la reserva se crea correctamente.
-            redirectAttributes.addFlashAttribute(
-                    "missatge", "Reserva creada correctament.");
+            redirectAttributes.addFlashAttribute("missatge", "Reserva creada correctament.");
         } catch (IllegalArgumentException e) {
-            
-            // Si hay un error, volvemos al formulario con el mensaje.
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/web/reserves/new";
         }
@@ -198,7 +188,6 @@ public class ReservaController {
         return "redirect:/web/reserves/all";
     }
 
-    // Selecciona una reserva para mostrar sus detalles sin perder los filtros.
     @GetMapping("/detall/{id}")
     public String details(@PathVariable Integer id,
             @RequestParam(required = false) String dni,
@@ -210,7 +199,6 @@ public class ReservaController {
 
         attributes.addAttribute("detall", id);
 
-        // Conservamos los filtros que ya había aplicado el usuario.
         if (dni != null && !dni.isBlank()) {
             attributes.addAttribute("dni", dni);
         }
@@ -230,24 +218,24 @@ public class ReservaController {
         return "redirect:/web/reserves/all";
     }
 
-    // Intenta anular una reserva y muestra el resultado.
     @PostMapping("/cancelar/{id}")
     public String cancel(@PathVariable Integer id,
             RedirectAttributes redirectAttributes) {
         if (reservaLogic.anularReserva(id)) {
-            redirectAttributes.addFlashAttribute(
-                    "missatge", "Reserva anul·lada correctament.");
+            redirectAttributes.addFlashAttribute("missatge", "Reserva anul·lada correctament.");
         } else {
-            redirectAttributes.addFlashAttribute(
-                    "error", "No s'ha pogut anul·lar la reserva.");
+            redirectAttributes.addFlashAttribute("error", "No s'ha pogut anul·lar la reserva.");
         }
 
         return "redirect:/web/reserves/all";
     }
 
-    // Carga los vehículos y usuarios que aparecen en el formulario.
+    // MODIFICACIÓ: Només carrega al desplegable els vehicles ACTIUS i DISPONIBLES
     private void carregarDadesFormulari(Model model) {
-        model.addAttribute("vehicles", vehicleLogic.findAllVehicles());
+        List<Vehicle> vehiclesActius = vehicleLogic.findAllVehicles().stream()
+                .filter(v -> Boolean.TRUE.equals(v.getActiu()) && v.getEstatVehicle() == EstatVehicle.Disponible)
+                .toList();
+        model.addAttribute("vehicles", vehiclesActius);
         model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
     }
 }
