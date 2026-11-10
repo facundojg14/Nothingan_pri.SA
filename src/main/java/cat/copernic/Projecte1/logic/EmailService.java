@@ -6,15 +6,18 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 @Service
 public class EmailService {
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
-    
-    public void enviarEmailAnullacio(String toEmail, String nomClient, String codiReserva, BigDecimal importRetornat) {
+
+    /**
+     * Mètode únic per enviar notificacions d'anul·lació de reserva.
+     * Serveix tant si l'anul·la un Client, com un Agent o un Admin.
+     */
+    public void enviarEmailAnullacio(String toEmail, String nomClient, String codiReserva, 
+                                      double percentatgeRetorn, BigDecimal importRetornat, String motiu) {
         if (mailSender == null || toEmail == null || toEmail.isBlank()) {
             return;
         }
@@ -25,14 +28,20 @@ public class EmailService {
         message.setSubject("Anul·lació de la reserva " + codiReserva + " - Nothingan Pri");
 
         StringBuilder cos = new StringBuilder();
-        cos.append("Hola ").append(nomClient).append(",\n\n");
-        cos.append("T'informem que la teva reserva amb codi ").append(codiReserva).append(" ha estat anul·lada correctament.\n\n");
+        cos.append("Hola ").append(nomClient != null ? nomClient : "Client").append(",\n\n");
+        cos.append("T'informem que la teva reserva amb codi ").append(codiReserva).append(" ha estat anul·lada.\n\n");
 
+        // Si s'ha especificat un motiu (ex: anul·lació per Agent/Admin), s'inclou al correu
+        if (motiu != null && !motiu.isBlank()) {
+            cos.append("Motiu de l'anul·lació: ").append(motiu).append("\n\n");
+        }
+
+        // Informació de la devolució de l'import
         if (importRetornat != null && importRetornat.compareTo(BigDecimal.ZERO) > 0) {
-            cos.append("Com que l'anul·lació s'ha fet amb l'antelació requerida, se't retornarà el 100% de l'import: ")
-               .append(importRetornat).append(" €.\n");
+            cos.append("S'ha establert una devolució del ").append((int) percentatgeRetorn).append("% de l'import pagat, ")
+               .append("corresponent a un total de: ").append(importRetornat).append(" €.\n");
         } else {
-            cos.append("Segons la nostra política d'anul·lació, al no complir el termini mínim d'antelació, no se't retornarà cap import.\n");
+            cos.append("Segons la política/resolució d'anul·lació, no se't retornarà cap import per aquesta reserva.\n");
         }
 
         cos.append("\nGràcies per confiar en Nothingan Pri.");

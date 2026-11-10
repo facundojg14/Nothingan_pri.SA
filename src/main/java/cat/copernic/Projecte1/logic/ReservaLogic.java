@@ -235,12 +235,16 @@ public class ReservaLogic {
         // Guardar canvis
         reservaRepo.save(reserva);
 
-        // 3. Enviar correu electrònic d'anul·lació
+// 3. Enviar correu electrònic d'anul·lació (passant els 6 paràmetres)
+        double percentatgeRetorn = (importRetornat != null && importRetornat.compareTo(BigDecimal.ZERO) > 0) ? 100.0 : 0.0;
+
         emailService.enviarEmailAnullacio(
                 reserva.getUsuari().getEmail(),
                 reserva.getUsuari().getNom(),
                 reserva.getCodiReserva(),
-                importRetornat
+                percentatgeRetorn, // % de retorn (100 o 0)
+                importRetornat,    // Import calculat en BigDecimal
+                null               // Motiu buit quan ho fa el client
         );
 
         return importRetornat;

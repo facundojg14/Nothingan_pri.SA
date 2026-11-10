@@ -6,6 +6,7 @@ import cat.copernic.Projecte1.entity.Enum.rol;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
+import cat.copernic.Projecte1.logic.EmailService;
 import cat.copernic.Projecte1.logic.ReservaLogic;
 import cat.copernic.Projecte1.logic.UsuarisLogic;
 import cat.copernic.Projecte1.logic.VehicleLogic;
@@ -36,6 +37,9 @@ public class AdminController {
 
     @Autowired
     private ReservaLogic reservaLogic;
+
+    @Autowired
+    private EmailService emailService; // <- Injectat EmailService
 
     @GetMapping({"", "/"})
     public String indexAdmin() {
@@ -133,7 +137,6 @@ public class AdminController {
 
     @GetMapping("/vehicles/new")
     public String getFormVehicle(Model model) {
-        // CORRECCIÓN: Instancia limpia sin asignar ID manual en 0
         Vehicle vehicle = new Vehicle();
         vehicle.setCategoria(Categoria.SUV);
         vehicle.setEstatVehicle(EstatVehicle.Disponible);
@@ -145,7 +148,6 @@ public class AdminController {
 
     @PostMapping("/vehicles/save")
     public String saveVehicle(@ModelAttribute("vehicle") Vehicle vehicle, Model model, RedirectAttributes redirectAttributes) {
-        // Validación previa de duplicidad de matrícula
         if (vehicleLogic.existsByMatricula(vehicle.getMatricula(), vehicle.getId())) {
             model.addAttribute("error", "La matrícula '" + vehicle.getMatricula() + "' ja està registrada al sistema!");
             model.addAttribute("vehicle", vehicle);
@@ -309,7 +311,6 @@ public class AdminController {
     @PostMapping("/reserves/save")
     public String saveReserva(@ModelAttribute Reserva reserva, Model model, RedirectAttributes redirectAttributes) {
         try {
-            // CORRECCIÓN: Carga explícita de entidades vinculadas si solo vienen las IDs
             if (reserva.getVehicle() != null && reserva.getVehicle().getId() > 0) {
                 Vehicle v = vehicleLogic.getVehicleById(reserva.getVehicle().getId());
                 reserva.setVehicle(v);
@@ -363,10 +364,32 @@ public class AdminController {
         return "redirect:/web/admin/reserves";
     }
 
+    // ACTUALITZAT: Mètode d'anul·lació d'administrador integrat amb EmailService
     @PostMapping("/reserves/cancelar/{id}")
-    public String cancelReserva(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
-        if (reservaLogic.anularReserva(id)) {
-            redirectAttributes.addFlashAttribute("missatge", "Reserva anul·lada correctament.");
+    public String cancelReserva(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "") String motiu,
+            @RequestParam(required = false, defaultValue = "100") double percentatgeRetorn,
+            RedirectAttributes redirectAttributes) {
+
+        Reserva reserva = reservaLogic.getReservaById(id);
+
+        if (reserva != null && reservaLogic.anularReserva(id)) {
+
+            BigDecimal preuTotal = reserva.getPreuLloguer() != null ? reserva.getPreuLloguer() : BigDecimal.ZERO;
+            BigDecimal importRetornat = preuTotal.multiply(BigDecimal.valueOf(percentatgeRetorn / 100.0));
+
+            if (reserva.getUsuari() != null && reserva.getUsuari().getEmail() != null) {
+                emailService.enviarEmailAnullacio(
+                    reserva.getUsuari().getEmail(),
+                    reserva.getUsuari().getNom(),
+                    reserva.getCodiReserva(),
+                    percentatgeRetorn,
+                    importRetornat,
+                    motiu
+                );
+            }
+
+            redirectAttributes.addFlashAttribute("missatge", "Reserva anul·lada per l'administrador i email enviat al client.");
         } else {
             redirectAttributes.addFlashAttribute("error", "No s'ha pogut anul·lar la reserva.");
         }
@@ -510,7 +533,6 @@ public class AdminController {
     // SECCIÓN: PERFIL DE ADMINISTRADOR
     // ==========================================
     
-    // 1. MOSTRAR EL PERFIL DE L'ADMINISTRADOR LOGUEJAT
     @GetMapping("/perfil")
     public String mostrarPerfilAdmin(jakarta.servlet.http.HttpSession session, Model model) {
         Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -518,16 +540,14 @@ public class AdminController {
             return "redirect:/web/usuaris/login";
         }
 
-        // Carreguem les dades actualitzades des de la base de dades
         Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
         
         model.addAttribute("usuariLoguejat", usuariBD);
-        model.addAttribute("usuari", usuariBD); // Necessari per al th:object="${usuari}" a la vista perfil.html
+        model.addAttribute("usuari", usuariBD);
         
-        return "perfil-admin"; // Renderitza la plantilla perfil.html
+        return "perfil-admin";
     }
 
-    // 2. DESAR ELS CANVIS DEL PERFIL
     @PostMapping("/perfil/save")
     public String guardarPerfilAdmin(
             @ModelAttribute("usuari") Usuaris usuariForm, 
@@ -539,20 +559,15 @@ public class AdminController {
             return "redirect:/web/usuaris/login";
         }
 
-        // Carreguem l'usuari real de la base de dades per no perdre contrasenya ni permisos
         Usuaris usuariBD = usuarisService.getUsuariById(usuariLoguejat.getId());
 
         if (usuariBD != null) {
-            // Actualitzem els camps modificables (per exemple, telèfon i/o nom)
             usuariBD.setTelefon(usuariForm.getTelefon());
             if (usuariForm.getNom() != null && !usuariForm.getNom().isBlank()) {
                 usuariBD.setNom(usuariForm.getNom());
             }
 
-            // Guardem a la BD
             usuarisService.saveUsuari(usuariBD);
-
-            // Actualitzem l'objecte a la sessió HTTP per mantenir la coherència
             session.setAttribute("usuariLoguejat", usuariBD);
 
             redirectAttributes.addFlashAttribute("missatge", "Perfil actualitzat amb èxit!");
