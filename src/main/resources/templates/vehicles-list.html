@@ -38,9 +38,7 @@
             <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
         </a>
 
-<<<<<<< HEAD
-                <!-- MENSAJES DE ÉXITO Y ERROR DE ALERTA FLASH -->
-=======
+
         <!-- Botó per Tancar Sessió -->
         <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
             Tancar Sessió
@@ -52,7 +50,6 @@
                   th:if="${variable}": Renderiza el <div> SOLO si la variable existe en el modelo.
                   th:text="${variable}": Reemplaza el texto interno con el mensaje.
                 -->
->>>>>>> origin/develop
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 

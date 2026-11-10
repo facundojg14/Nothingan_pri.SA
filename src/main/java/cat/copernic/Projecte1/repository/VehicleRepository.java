@@ -50,7 +50,4 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             Categoria categoria,
             EstatVehicle estatVehicle
     );
-    
-    @Query("SELECT COUNT(r) > 0 FROM Reserva r WHERE r.vehicle.id = :vehicleId AND r.estat <> cat.copernic.Projecte1.entity.Enum.EstatReserva.ANULLADA")
-    boolean tieneReservasActivas(@Param("vehicleId") Long vehicleId);
 }

@@ -212,7 +212,7 @@ public class VehicleController {
             redirectAttributes.addFlashAttribute("error", "Error: La matrícula introduïda ja existeix.");
             return "redirect:/web/vehicles/new";
         }
- 
+
         return "redirect:/web/vehicles/all";
     }
 
@@ -229,20 +229,19 @@ public class VehicleController {
     public String deleteById(@PathVariable("id") Long vehicleId, RedirectAttributes redirectAttributes) {
         logger.debug("Intentant donar de baixa el vehicle " + vehicleId);
 
-        // 1. Comprovar si té reserves actives
-        if (vehicleLogic.teReservesActives(vehicleId)) {
-            redirectAttributes.addFlashAttribute("error",
-                    "No es pot donar de baixa el vehicle perquè està assignat a una reserva activa.");
-            return "redirect:/web/vehicles/all";
-        }
-
-        // 2. Si no té reserves actives, donar de baixa (baixa lògica o eliminació)
+        // 1. Intentar la baixa lògica (comprova si té reserves actives i canvia l'estat)
         boolean donatDeBaixa = vehicleLogic.donarDeBaixaVehicle(vehicleId);
 
         if (donatDeBaixa) {
-            redirectAttributes.addFlashAttribute("missatge", "El vehicle s'ha donat de baixa correctament.");
+            redirectAttributes.addFlashAttribute("missatge", "El vehicle s'ha donat de baixa correctament (ja no està disponible).");
         } else {
-            redirectAttributes.addFlashAttribute("error", "No s'ha pogut trobar el vehicle per donar-lo de baixa.");
+            // Si retora false és perquè té reserves actives o no existeix
+            if (vehicleLogic.teReservesActives(vehicleId)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No es pot donar de baixa el vehicle perquè està assignat a una reserva activa.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "No s'ha trobat el vehicle.");
+            }
         }
 
         return "redirect:/web/vehicles/all";
