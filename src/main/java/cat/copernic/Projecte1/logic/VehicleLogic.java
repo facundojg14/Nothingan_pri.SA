@@ -164,4 +164,30 @@ public class VehicleLogic {
                 .filter(v -> reservaLogic.vehicleDisponible(v.getId(), dataInici, dataFi))
                 .toList();
     }
+
+    // Comprovar si té reserves actives
+    public boolean teReservesActives(Long vehicleId) {
+        return vehicleRepo.tieneReservasActivas(vehicleId);
+    }
+
+// Donar de baixa el vehicle de forma segura
+    public boolean donarDeBaixaVehicle(Long id) {
+        // 1. Si té reserves actives, no es pot donar de baixa
+        if (teReservesActives(id)) {
+            return false;
+        }
+
+        // 2. Si no en té, procedim a la baixa lògica (o deshabilitar per a reserves)
+        Vehicle vehicle = getVehicleById(id);
+        if (vehicle != null) {
+            vehicle.setActiu(false);
+            vehicle.setEstatVehicle(cat.copernic.Projecte1.entity.Enum.EstatVehicle.Baixa);
+            vehicle.setEstatVehicle(cat.copernic.Projecte1.entity.Enum.EstatVehicle.Desactivat);
+            vehicle.setEstatVehicle(cat.copernic.Projecte1.entity.Enum.EstatVehicle.En_manteniment);// o l'estat que utilitzeu per a baixes
+            vehicleRepo.save(vehicle);
+            return true;
+        }
+
+        return false;
+    }
 }

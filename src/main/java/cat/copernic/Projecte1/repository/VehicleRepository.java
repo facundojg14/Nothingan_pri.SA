@@ -6,6 +6,8 @@ import cat.copernic.Projecte1.entity.Vehicle;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * REPOSITORIO DE VEHÍCULOS (CAPA DE ACCESO A DATOS - DAO)
@@ -48,4 +50,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
             Categoria categoria,
             EstatVehicle estatVehicle
     );
+    
+    @Query("SELECT COUNT(r) > 0 FROM Reserva r WHERE r.vehicle.id = :vehicleId AND r.estat <> cat.copernic.Projecte1.entity.Enum.EstatReserva.ANULLADA")
+    boolean tieneReservasActivas(@Param("vehicleId") Long vehicleId);
 }
