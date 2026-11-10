@@ -4,356 +4,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Reserva - Nothingan Pri</title>
+    <title>Confirmar Reserva - Nothingan Pri</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
+    
     <style>
-        .vehicles-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+        .booking-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
         }
 
-        .vehicle-card {
+        .booking-card {
             background: #ffffff;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
         }
 
-        .vehicle-image-placeholder {
-            background: #f1f5f9;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            height: 130px;
+        .booking-header-title {
+            background: linear-gradient(125deg, #0b2246, #174b91);
+            color: white;
+            padding: 25px 35px;
+        }
+
+        .booking-header-title h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .booking-header-title p {
+            color: #dbeafe;
+            font-size: 0.95rem;
+        }
+
+        .booking-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 0;
+        }
+
+        /* Resum del vehicle i dates (Columna Esquerra) */
+        .summary-section {
+            background: #f8fafc;
+            padding: 30px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .summary-section h3 {
+            font-size: 1.1rem;
+            color: #0b2246;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .vehicle-summary-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .vehicle-summary-photo {
+            height: 160px;
+            background: #edf2f7;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #94a3b8;
-            font-size: 0.82rem;
-            margin-bottom: 12px;
-            position: relative;
+            font-size: 50px;
         }
 
-        .vehicle-image-placeholder::before, .vehicle-image-placeholder::after {
-            content: '';
-            position: absolute;
-            background-color: #cbd5e1;
-        }
-        .vehicle-image-placeholder::before { width: 100%; height: 1px; }
-        .vehicle-image-placeholder::after { height: 100%; width: 1px; }
-        .vehicle-image-placeholder span {
-            position: relative;
-            z-index: 1;
-            background: #f1f5f9;
-            padding: 2px 8px;
-        }
-
-        .vehicle-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .vehicle-price {
-            font-size: 0.82rem;
-            color: #64748b;
-            margin-top: 2px;
-        }
-
-        .badge-disponible {
-            background-color: #10b981;
-            margin-top: 8px;
-        }
-
-        .btn-select {
-            background: transparent;
-            border: 1.5px solid #2563eb;
-            color: #2563eb;
+        .vehicle-summary-photo img {
             width: 100%;
-            padding: 8px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-top: 14px;
-            transition: all 0.2s ease;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .btn-select:hover {
-            background: #2563eb;
-            color: #ffffff;
+        .vehicle-summary-info {
+            padding: 15px;
         }
 
-        .booking-layout {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 24px;
-            align-items: start;
+        .vehicle-summary-info h4 {
+            font-size: 1.2rem;
+            color: #172b43;
+            margin-bottom: 5px;
         }
 
-        .summary-card {
+        .dates-summary {
             background: #ffffff;
+            border: 1px solid #cbd5e1;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 18px;
+            margin-bottom: 25px;
         }
 
-        .summary-card h3 {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 16px;
-        }
-
-        .summary-row {
+        .date-row {
             display: flex;
             justify-content: space-between;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .date-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .date-row strong {
+            color: #334155;
+        }
+
+        .price-breakdown {
+            background: #eef4fc;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
             color: #475569;
         }
 
-        .summary-row.total {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #0f172a;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 12px;
+        .price-total {
+            display: flex;
+            justify-content: space-between;
             margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px dashed #cbd5e1;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1769aa;
         }
 
-        .notice-text {
-            font-size: 0.78rem;
-            color: #94a3b8;
-            margin-top: 16px;
+        /* Formulari de confirmació (Columna Dreta) */
+        .form-section {
+            padding: 30px;
         }
 
-        .select-input {
-            padding: 10px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
+        .form-section h3 {
+            font-size: 1.1rem;
+            color: #0b2246;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .user-details-box {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
             font-size: 0.9rem;
-            background: #ffffff;
-            color: #1e293b;
         }
 
-        @media (max-width: 1024px) {
-            .booking-layout { grid-template-columns: 1fr; }
-            .vehicles-grid { grid-template-columns: repeat(2, 1fr); }
+        .user-details-box p {
+            margin-bottom: 8px;
+            color: #475569;
         }
 
-        @media (max-width: 640px) {
-            .vehicles-grid { grid-template-columns: 1fr; }
-            .filter-group { flex-direction: column; align-items: stretch; }
+        .user-details-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .actions-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-submit-booking {
+            flex: 2;
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 9px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn-submit-booking:hover {
+            background: #059669;
+        }
+
+        .btn-cancel-booking {
+            flex: 1;
+            background: #e2e8f0;
+            color: #475569;
+            text-align: center;
+            text-decoration: none;
+            padding: 14px;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-cancel-booking:hover {
+            background: #cbd5e1;
+        }
+
+        @media (max-width: 850px) {
+            .booking-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-section {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
         }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-    <div class="layout">
-        <!-- SIDEBAR DARK -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <a th:href="@{/web/usuaris/login}">
-                    <img th:src="@{/img/logo.png}" alt="NOTHINGAN PRI" class="logo" />
-                </a>
+    <!-- Header client -->
+    <header class="home-header">
+        <a th:href="@{/web/usuaris/client/home}" class="home-logo">
+            <img th:src="@{/img/logo.png}" alt="Nothingan Pri">
+        </a>
+
+        <nav class="home-nav">
+            <a th:href="@{/web/usuaris/client/reserves}">Les meves reserves</a>
+            <a th:href="@{/web/usuaris/client/perfil}" class="user-nav-item">
+                <div class="nav-avatar"></div>
+                <span th:text="${usuariLoguejat != null ? usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+            </a>
+            <a th:href="@{/web/usuaris/logout}" class="logout-link">Tancar sessió</a>
+        </nav>
+    </header>
+
+    <main class="booking-container">
+        
+        <!-- Missatge d'error -->
+        <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+        <div class="booking-card">
+            
+            <div class="booking-header-title">
+                <h1>Confirmació de la Reserva</h1>
+                <p>Revisa els detalls del lloguer abans de finalitzar la teva sol·licitud.</p>
             </div>
 
-            <!-- ENLACES DEL MENÚ LATERAL CORREGIDOS -->
-            <nav class="nav-menu">
-                <a th:href="@{/web/usuaris/client/reserves}">
-                    • Les meves reserves
-                </a>
-                <a th:href="@{/web/usuaris/client/reserves/nova}" class="active">
-                    • Nova reserva
-                </a>
-                <a th:href="@{/web/usuaris/client/perfil}">
-                    • El meu perfil
-                </a>
-            </nav>
-        </aside>
-
-        <!-- ÁREA DE CONTENIDO PRINCIPAL -->
-        <main class="content">
-
-            <!-- HEADER SUPERIOR -->
-            <header class="top-header">
-                <h2>Nova reserva</h2>
-
-                <div class="user-dropdown">
-                    <a th:href="@{/web/usuaris/client/perfil}" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; cursor: pointer;">
-                        <span th:text="${usuariLoguejat != null ? usuariLoguejat.nom : 'Client'}">UsuariLoguejat ▾</span>
-                        <div class="user-avatar"></div>
-                    </a>
-                </div>
-            </header>
-
-            <!-- FILTRO SUPERIOR DE BÚSQUEDA -->
-            <form th:action="@{/web/usuaris/client/reserves/nova}" method="get" class="top-bar">
-                <div class="filter-group" style="flex-wrap: wrap;">
-                    
-                    <div class="input-wrapper" style="min-width: 130px;">
-                        <label for="dataInici">Data inici</label>
-                        <input type="date" id="dataInici" name="dataInici" style="min-width: auto;">
-                    </div>
-
-                    <div class="input-wrapper" style="min-width: 100px;">
-                        <label for="hora">Hora</label>
-                        <input type="time" id="hora" name="hora" style="min-width: auto;">
-                    </div>
-
-                    <div class="input-wrapper" style="min-width: 130px;">
-                        <label for="dataFi">Data fi</label>
-                        <input type="date" id="dataFi" name="dataFi" style="min-width: auto;">
-                    </div>
-
-                    <div class="input-wrapper" style="min-width: 130px;">
-                        <label for="categoria">Categoria</label>
-                        <select id="categoria" name="categoria" class="select-input">
-                            <option value="">Totes les categories</option>
-                            <option value="Utilitari">Utilitari</option>
-                            <option value="Compacte">Compacte</option>
-                            <option value="SUV">SUV</option>
-                            <option value="Berlina">Berlina</option>
-                            <option value="Furgoneta">Furgoneta</option>
-                            <option value="Monovolum">Monovolum</option>
-                        </select>
-                    </div>
-
-                    <div class="input-wrapper" style="min-width: 140px;">
-                        <label for="marcaModel">Marca / model</label>
-                        <input type="text" id="marcaModel" name="marcaModel"
-                               placeholder="Marca o model" style="min-width: auto;">
-                    </div>
-
-                    <button type="submit" class="btn btn-filter">Cercar</button>
-                </div>
-            </form>
-
-            <!-- GRID PRINCIPAL (VEHÍCULOS Y RESUMEN) -->
-            <div class="booking-layout">
+            <div class="booking-grid">
                 
-                <!-- LISTADO DE TARJETAS DE VEHÍCULOS -->
-                <div>
-                                    <!-- GRID PRINCIPAL DE VEHICLES DINÀMIC -->
-                <div class="vehicles-grid">
+                <!-- Columna Esquerra: Resum del vehicle i preu -->
+                <div class="summary-section">
+                    <h3>Vehicle seleccionat</h3>
+                    
+                    <div class="vehicle-summary-card" th:if="${vehicle != null}">
+                        <div class="vehicle-summary-photo" th:if="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
+                            <img th:src="${vehicle.fotoVehicle}" th:alt="${vehicle.marca}">
+                        </div>
+                        <div class="vehicle-summary-photo" th:unless="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
+                            🚗
+                        </div>
+                        <div class="vehicle-summary-info">
+                            <span class="vehicle-category" th:text="${vehicle.categoria}">Categoria</span>
+                            <h4 th:text="${vehicle.marca + ' ' + vehicle.model}">Marca Model</h4>
+                            <small class="text-subtle">Any: <strong th:text="${vehicle.anyFabricacio}">2022</strong></small>
+                        </div>
+                    </div>
 
-                    <!-- Tarja de vehicle iterada amb Thymeleaf -->
-                    <div class="vehicle-card" th:each="v : ${vehicles}">
-                        <div>
-                            <!-- Imatge del vehicle o placeholder si no en té -->
-                            <div class="vehicle-image-placeholder">
-                                <img th:if="${v.imatgeUrl != null}" 
-                                        th:src="@{${v.imatgeUrl}}" 
-                                        th:alt="${v.marca + ' ' + v.model}" 
-                                        style="width:100%; height:100%; object-fit:cover; border-radius:8px;" />
-                                <span th:unless="${v.imatgeUrl != null and !v.imatgeUrl.isEmpty()}">Sense imatge</span>
-                            </div>
+                    <h3>Dates del Lloguer</h3>
+                    <div class="dates-summary">
+                        <div class="date-row">
+                            <span>Data de recollida:</span>
+                            <strong th:text="${reserva.dataInici != null ? #temporals.format(reserva.dataInici, 'dd/MM/yyyy HH:mm') : '-'}">01/12/2026 10:00</strong>
+                        </div>
+                        <div class="date-row">
+                            <span>Data de devolució:</span>
+                            <strong th:text="${reserva.dataFi != null ? #temporals.format(reserva.dataFi, 'dd/MM/yyyy HH:mm') : '-'}">05/12/2026 10:00</strong>
+                        </div>
+                        <div class="date-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9;">
+                            <span>Durada total:</span>
+                            <strong th:text="${diesLloguer + ' dies'}">4 dies</strong>
+                        </div>
+                    </div>
 
-                            <!-- Títol i Categoria -->
-                            <div class="vehicle-title" 
-                                 th:text="${v.marca + ' ' + v.model + ' · ' + v.categoria}">
-                            </div>
+                    <h3 th:if="${vehicle != null}">Desglossament del Preu</h3>
+                    <div class="price-breakdown" th:if="${vehicle != null}">
+                        <div class="price-row">
+                            <span>Preu per dia:</span>
+                            <span><strong th:text="${vehicle.preuDia != null ? #numbers.formatDecimal(vehicle.preuDia, 1, 2) : '0.00'}">50.00</strong> €</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Dies de lloguer:</span>
+                            <span th:text="${'x ' + diesLloguer}">x 4</span>
+                        </div>
+                        <div class="price-total">
+                            <span>Total a pagar:</span>
+                            <span><span th:text="${vehicle.preuDia != null ? #numbers.formatDecimal(vehicle.preuDia.multiply(T(java.math.BigDecimal).valueOf(diesLloguer)), 1, 2) : '0.00'}">200.00</span> €</span>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- Preu per dia -->
-                            <div class="vehicle-price" 
-                                 th:text="${v.preuDiari + ' €/dia'}">
-                            </div>
+                <!-- Columna Dreta: Formulari i Dades del Client -->
+                <div class="form-section">
+                    <h3>Titular de la Reserva</h3>
 
-                            <!-- Badge d'Estat -->
-                            <span class="badge badge-disponible" 
-                                  th:classappend="${v.disponible} ? 'badge-disponible' : 'badge-rebutjat'"
-                                  th:text="${v.disponible ? 'Disponible' : 'No disponible'}">
-                            </span>
+                    <div class="user-details-box" th:if="${usuariLoguejat != null}">
+                        <p>
+                            <strong>Nom complet:</strong> 
+                            <span th:text="${usuariLoguejat.nom != null ? usuariLoguejat.nom : '-'}">Nom Client</span>
+                        </p>
+                        
+                        <p th:if="${usuariLoguejat.dni != null}">
+                            <strong>DNI / NIE:</strong> 
+                            <span th:text="${usuariLoguejat.dni}">12345678X</span>
+                        </p>
+                        
+                        <p th:if="${usuariLoguejat.email != null}">
+                            <strong>Correu electrònic:</strong> 
+                            <span th:text="${usuariLoguejat.email}">client@email.com</span>
+                        </p>
+                        
+                        <p th:if="${usuariLoguejat.telefon != null}">
+                            <strong>Telèfon de contacte:</strong> 
+                            <span th:text="${usuariLoguejat.telefon}">600112233</span>
+                        </p>
+                    </div>
+
+                    <form th:action="@{/web/usuaris/client/reserves/save}" th:object="${reserva}" method="post">
+
+                    <!-- Camps ocults -->
+                        <input type="hidden" name="vehicle.id" th:value="${vehicle != null ? vehicle.id : ''}" />
+                        <input type="hidden" th:field="*{dataInici}" />
+                        <input type="hidden" th:field="*{dataFi}" />
+                        <input type="hidden" name="fianca" value="0.00" /> <!-- Camp de fiança predeterminat -->
+
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label for="observacions" style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">
+                                Observacions o peticions especials (Opcional):
+                            </label>
+                            <textarea id="observacions" 
+                                      th:field="*{observacions}" 
+                                      rows="4" 
+                                      style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-family: inherit;"
+                                      placeholder="Ex: Hora d'arribada del vol, cadireta per a nadó..."></textarea>
                         </div>
 
-                        <!-- Botó per seleccionar el vehicle -->
-                        <button type="button" 
-                                class="btn-select" 
-                                th:onclick="'seleccionarVehicle(' + ${v.id} + ', \'' + ${v.marca + ' ' + v.model} + '\', ' + ${v.preuDiari} + ')'">
-                            Seleccionar
-                        </button>
-                    </div>
-
-                    <!-- Estat buit quan no hi ha cap vehicle a la BDD -->
-                    <div th:if="${#lists.isEmpty(vehicles)}" style="grid-column: 1 / -1; padding: 24px; text-align: center; color: #64748b;">
-                        No s'han trobat vehicles disponibles amb els criteris seleccionats.
-                    </div>
-
-                </div>
-
-                    </div>
-
-                    <p class="notice-text">
-                        En confirmar, el vehicle queda bloquejat per al període seleccionat.
-                    </p>
-                </div>
-
-                <!-- RESUMEN DE LA RESERVA -->
-                <!-- RESUM DE LA RESERVA (100% SERVIDOR / SENSE JAVASCRIPT) -->
-                <aside class="summary-card">
-                    <h3>Resum de la reserva</h3>
-
-                    <!-- Vehicle seleccionat -->
-                    <div class="summary-row">
-                        <span>Vehicle</span>
-                        <strong th:text="${vehicleSeleccionat != null ? vehicleSeleccionat.marca + ' ' + vehicleSeleccionat.model : 'Cap seleccionat'}"></strong>
-                    </div>
-
-                    <!-- Període i dies calculats -->
-                    <div class="summary-row">
-                        <span>Període</span>
-                        <span th:if="${dataInici != null and dataFi != null}"
-                              th:text="${#temporals.format(dataInici, 'dd/MM') + ' – ' + #temporals.format(dataFi, 'dd/MM') + ' (' + dies + ' ' + (dies == 1 ? 'dia' : 'dies') + ')'}">
-                        </span>
-                        <span th:unless="${dataInici != null and dataFi != null}">-- / --</span>
-                    </div>
-
-                    <!-- Preu lloguer -->
-                    <div class="summary-row">
-                        <span>Lloguer</span>
-                        <span th:text="${preuLloguer != null ? #numbers.formatDecimal(preuLloguer, 1, 'POINT', 2, 'COMMA') + ' €' : '0,00 €'}"></span>
-                    </div>
-
-                    <!-- Fiança -->
-                    <div class="summary-row">
-                        <span>
-                            Fiança
-                            <small th:if="${usuariLoguejat != null and usuariLoguejat.premium}"
-                                   style="color: #10b981; font-weight: 600;">(-25% Premium)</small>
-                        </span>
-                        <span th:text="${importFianca != null ? #numbers.formatDecimal(importFianca, 1, 'POINT', 2, 'COMMA') + ' €' : '0,00 €'}"></span>
-                    </div>
-
-                    <!-- Import total -->
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span th:text="${preuTotal != null ? #numbers.formatDecimal(preuTotal, 1, 'POINT', 2, 'COMMA') + ' €' : '0,00 €'}"></span>
-                    </div>
-
-                    <!-- Formulari d'enviament -->
-                    <form th:action="@{/web/usuaris/client/reserves/save}" method="post" style="margin-top: 20px;">
-                        <input type="hidden" name="vehicle.id" th:value="${vehicleSeleccionat != null ? vehicleSeleccionat.id : ''}" />
-                        <input type="hidden" name="dataInici" th:value="${dataInici}" />
-                        <input type="hidden" name="dataFi" th:value="${dataFi}" />
-                        <input type="hidden" name="preuLloguer" th:value="${preuLloguer}" />
-                        <input type="hidden" name="importFianca" th:value="${importFianca}" />
-
-                        <button type="submit"
-                                class="btn btn-filter"
-                                style="width: 100%; text-align: center;"
-                                th:disabled="${vehicleSeleccionat == null}">
-                            Confirmar reserva
-                        </button>
+                        <div class="actions-group">
+                            <a th:href="@{/web/usuaris/client/home}" class="btn-cancel-booking">
+                                Cancel·lar
+                            </a>
+                            <button type="submit" class="btn-submit-booking">
+                                Confirmar i Reservar ✓
+                            </button>
+                        </div>
                     </form>
-                </aside>
-
+                </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+
+    <footer class="home-footer" style="margin-top: 50px;">
+        <p>© 2026 Nothingan Pri · Lloguer de vehicles</p>
+    </footer>
+
 </body>
 </html>

@@ -7,6 +7,7 @@ import cat.copernic.Projecte1.logic.ReservaLogic;
 import cat.copernic.Projecte1.logic.UsuarisLogic;
 import cat.copernic.Projecte1.logic.VehicleLogic;
 import jakarta.servlet.http.HttpSession;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,8 +30,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/web/usuaris/client")
 public class ClientController {
-    
-    
     
     @Autowired
     private UsuarisLogic usuarisLogic;
@@ -60,10 +60,12 @@ public class ClientController {
     
     
     @GetMapping("/reserves")
-public String mostrarReservesClient(HttpSession session, Model model) {
+public String mostrarReservesClient(@RequestParam(value = "codi", required = false) String codi,
+                                                     @RequestParam(value = "estat", required = false) String estat,
+                                                     @RequestParam(value= "data", required = false) String data,
+                                                      HttpSession session, Model model) {
     //Obtenir usuari autenticat desde la sessió http
     Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
-    
     // si no hi ha sessió, redirigir al login.
     if (usuariSessio == null) {
         return "redirect:/web/usuaris/login";
@@ -77,11 +79,17 @@ public String mostrarReservesClient(HttpSession session, Model model) {
     
     model.addAttribute("usuariLoguejat", usuariLoguejat); //passar l'usuari al model per mostrar el nom en el header
     
-    List<Reserva> reserves = reservaLogic.getReservesPerUsuari(usuariLoguejat.getId());
+    //List<Reserva> reserves = reservaLogic.getReservesPerUsuari(usuariLoguejat.getId());
+    List<Reserva> reserves = reservaLogic.filtrarReservesClient(usuariLoguejat.getId(), codi, estat, data);
     if (reserves == null) {    // Si no en té reserves asigna una llista buida per
         reserves = List.of(); // evitar errors de renderitzat i càrrega.
     }
     model.addAttribute("reserves", reserves); // enviat al html i renderitzat per th:each"r: ${reserves}
+    
+    model.addAttribute("codiFiltre", codi);
+    model.addAttribute("estatFiltre", estat);
+    model.addAttribute("dataFiltre", data);
+    
     return "client-reserves";
 }
 
@@ -124,7 +132,7 @@ public String mostrarReservesClient(HttpSession session, Model model) {
         model.addAttribute("diesLloguer", diesLloguer);
         model.addAttribute("usuariLoguejat", usuariLoguejat);
         
-        return "nova-reserva";
+        return "nova-reserva-client";
      }
         
 
@@ -159,6 +167,30 @@ public String mostrarReservesClient(HttpSession session, Model model) {
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
                 return "redirect:/web/usuaris/client/reserves/nova";
             }
+    }
+    
+    @PostMapping("/reserves/anullar/{id}")
+    public String anullarReservaClient(@PathVariable("id") Integer id, HttpSession session, RedirectAttributes redirectAttributes) {
+        Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
+        if (usuariSessio == null) {
+            return "redirect:/web/usuaris/login";
+        }
+
+        try {
+            BigDecimal importRetornat = reservaLogic.anularReservaPerClient(id, usuariSessio.getId());
+
+            if (importRetornat.compareTo(BigDecimal.ZERO) > 0) {
+                redirectAttributes.addFlashAttribute("missatge", 
+                    "Reserva anul·lada amb èxit. Se't retornarà un total de " + importRetornat + " € (100% de l'import). S'ha enviat un correu de confirmació.");
+            } else {
+                redirectAttributes.addFlashAttribute("missatge", 
+                    "Reserva anul·lada amb èxit. Atenció: No se't retornarà cap import per no haver realitzat l'anul·lació amb l'antelació suficient. S'ha enviat un correu de confirmació.");
+            }
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/web/usuaris/client/reserves";
     }
     
     
