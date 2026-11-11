@@ -22,26 +22,40 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 /**
- *
+ * Controlador Spring MVC encarregat de la gestió de la interfaç web pels clientes.
+ * Permet visualitzar el panel principal del client, consultar l'historial i els detalls
+ * de les seves reserves, sol·licitar una nova reserva, anul·lar reserves existents i gestionar el seu perfil.
+ * 
  * @author Carolina
+ * @version 1.0
  */
 
 @Controller
 @RequestMapping("/web/usuaris/client")
 public class ClientController {
     
+    /** Servei amb la lògica de negoci relativa als usuaris. */
     @Autowired
     private UsuarisLogic usuarisLogic;
     
+    /** Servei amb la lògica de negoci relativa a les reserves de vehicles. */
     @Autowired
     private ReservaLogic reservaLogic;
     
+    /** Servei amb la lògica de negoci relativa a la gestió de vehicles. */
     @Autowired
     private VehicleLogic vehicleLogic;
     
-    
-    // Pàgina principal loguejat com a client
+    /**
+     * Mostra la pàgina principal (home) del tauler privat del client.
+     *
+     * @param session Sessió HTTP actual per verificar l'autenticació de l'usuari.
+     * @param model Objecte {@link Model} per transmetre dades a la vista Thymeleaf.
+     * @return Nom de la vista {@code "index-client"} si el client està autenticat,
+     *         o redirecció a {@code "/web/usuaris/login"} en cas contrari.
+     */
     @GetMapping("/home")
     public String mostrarHomeClient(HttpSession session, Model model) {
         Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -58,7 +72,18 @@ public class ClientController {
         return "index-client";
     }
     
-    
+    /**
+     * Mostra el llistat de reserves del client autenticat amb suport per al filtratge
+     * per codi, estat i data d'inici, així com l'obertura d'un modal de detalls.
+     *
+     * @param codi Filtre opcional pel codi identificador de la reserva.
+     * @param estat Filtre opcional per l'estat de la reserva (ex. CONFIRMADA, LLIURADA).
+     * @param data Filtre opcional per la data d'inici del lloguer (YYYY-MM-DD).
+     * @param detall Identificador primari de la reserva per carregar els seus detalls complets al modal.
+     * @param session Sessió HTTP actual.
+     * @param model Objecte {@link Model} per passar les dades a la plantilla.
+     * @return Nom de la plantilla {@code "client-reserves"} o redirecció al login si no hi ha sessió.
+     */
     @GetMapping("/reserves")
 public String mostrarReservesClient(@RequestParam(value = "codi", required = false) String codi,
                                                      @RequestParam(value = "estat", required = false) String estat,
@@ -102,8 +127,17 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
     return "client-reserves";
 }
 
-
-// FORMULARIO CREACIÓN RESERVA CLIENTE
+/**
+     * Prepara i mostra el formulari de confirmació per a una nova reserva de client.
+     * Calcula els dies de lloguer i delega a la capa de lògica els càlculs financers (lloguer i fiança).
+     *
+     * @param id Identificador primari del vehicle seleccionat.
+     * @param dataInici Data i hora d'inici de la reserva.
+     * @param dataFi Data i hora de devolució del vehicle.
+     * @param session Sessió HTTP actual.
+     * @param model Objecte {@link Model} per enviar la reserva preparada i el vehicle a la vista.
+     * @return Nom de la vista {@code "nova-reserva-client"} o redirecció al login.
+     */
     @GetMapping("/reserves/nova")
     public String mostrarNovaReservaClient(
             @RequestParam(value = "vehicleId", required = false) Long id,
@@ -144,7 +178,17 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
         return "nova-reserva-client";
      }
         
-
+/**
+     * Processa la sol·licitud de desat d'una nova reserva sol·licitada per un client.
+     * Persisteix la reserva invocant {@link ReservaLogic#saveReserva(Reserva)} i transmet
+     * l'identificador generat mitjançant flash attributes.
+     *
+     * @param reserva Objecte {@link Reserva} vinculat des del formulari HTML.
+     * @param session Sessió HTTP per verificar l'usuari loguejat.
+     * @param redirectAttributes Atributs de redirecció per enviar missatges d'èxit o error a la vista.
+     * @return Redirecció a {@code "/web/usuaris/client/reserves"} si és correcte,
+     *         o retorn al formulari {@code "/web/usuaris/client/reserves/nova"} si es produeix una excepció.
+     */
 @PostMapping("/reserves/save")
     public String guardarReservaClient(@ModelAttribute("reserva") Reserva reserva, HttpSession session, RedirectAttributes redirectAttributes) {
         Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -174,6 +218,15 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
             }
     }
     
+    /**
+     * Sol·licita l'anul·lació d'una reserva per part del client.
+     * Comprova les polítiques d'antelació i retorna l'import corresponent notificant l'usuari.
+     *
+     * @param id Identificador únic de la reserva a anul·lar.
+     * @param session Sessió HTTP actual.
+     * @param redirectAttributes Atributs de redirecció per mostrar el resultat del reemborsament.
+     * @return Redirecció a la llista de reserves {@code "/web/usuaris/client/reserves"}.
+     */
     @PostMapping("/reserves/anullar/{id}")
     public String anullarReservaClient(@PathVariable("id") Integer id, HttpSession session, RedirectAttributes redirectAttributes) {
         Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -198,7 +251,13 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
         return "redirect:/web/usuaris/client/reserves";
     }
     
-    
+    /**
+     * Mostra el perfil personal del client autenticat permetent consultar les seves dades.
+     *
+     * @param session Sessió HTTP del client.
+     * @param model Objecte {@link Model} per transmetre les dades del perfil.
+     * @return Nom de la vista {@code "perfil"} o redirecció al login.
+     */
     @GetMapping("/perfil")
     public String mostrarPerfilClient(HttpSession session, Model model) {
         Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -213,7 +272,15 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
         return "perfil";
     }
 
-    // GUARDAR CAMBIOS DEL PERFIL
+    /**
+     * Processa l'actualització de les dades editables del perfil del client (telèfon).
+     * Manté intactes la resta d'atributs sensibles de l'usuari (rol, contrasenya, estat, etc.).
+     *
+     * @param usuariForm Objecte {@link Usuaris} amb les dades editades enviades des del formulari.
+     * @param session Sessió HTTP actual.
+     * @param redirectAttributes Atributs per retornar el missatge d'èxit o error.
+     * @return Redirecció a la pàgina de perfil {@code "/web/usuaris/client/perfil"}.
+     */
     @PostMapping("/perfil/save") //ModelAttribute vincula camps enviats per formulari a un objecte
     public String guardarPerfilClient(@ModelAttribute("usuari") Usuaris usuariForm, HttpSession session, RedirectAttributes redirectAttributes) {
         Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
