@@ -50,12 +50,23 @@ public class Projecte1Equip4Application {
             crearUsuariSiNoExisteix(usuarisRepo, "Laura Vila", "lvila@alumnat.copernic.cat", "1212", "622334455", "VALIDAT", "77665544C", true, CLIENT);
 
             // 2. Creació de vehicles
-            crearVehicleSiNoExisteix(vehicleRepo, "3343 DGY", "Seat", "Altea", 2005, Categoria.Monovolum, new BigDecimal("24.56"), EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
-            crearVehicleSiNoExisteix(vehicleRepo, "1123 FRG", "Seat", "Leon", 2014, Categoria.Compacte, new BigDecimal("31.43"), EstatVehicle.En_manteniment, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
-            crearVehicleSiNoExisteix(vehicleRepo, "4312 NGR", "Nissan", "Micra", 2025, Categoria.Utilitari, new BigDecimal("34.76"), EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
-            crearVehicleSiNoExisteix(vehicleRepo, "8162 GWX", "Mazda", "2", 2010, Categoria.Compacte, new BigDecimal("35.12"), EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
-            crearVehicleSiNoExisteix(vehicleRepo, "4365 FDE", "Mercedes", "Vito", 2006, Categoria.Furgoneta, new BigDecimal("40.65"), EstatVehicle.En_manteniment, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
-            crearVehicleSiNoExisteix(vehicleRepo, "5821 LKM", "Volkswagen", "Touran", 2010, Categoria.Monovolum, new BigDecimal("35.00"), EstatVehicle.Disponible, "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2");
+            crearVehicleSiNoExisteix(vehicleRepo, "3343 DGY", "Seat", "Altea", 2005, Categoria.Monovolum,new BigDecimal("24.56"), new BigDecimal("1.02"), new BigDecimal("150.00"),
+                    EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+
+            crearVehicleSiNoExisteix(vehicleRepo, "1123 FRG", "Seat", "Leon", 2014, Categoria.Compacte, new BigDecimal("31.43"), new BigDecimal("1.31"), new BigDecimal("200.00"),
+                    EstatVehicle.En_manteniment, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+
+            crearVehicleSiNoExisteix(vehicleRepo, "4312 NGR", "Nissan", "Micra", 2025, Categoria.Utilitari, new BigDecimal("34.76"), new BigDecimal("1.45"), new BigDecimal("200.00"),
+                    EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+
+            crearVehicleSiNoExisteix(vehicleRepo, "8162 GWX", "Mazda", "2", 2010, Categoria.Compacte, new BigDecimal("35.12"), new BigDecimal("1.46"), new BigDecimal("180.00"),
+                    EstatVehicle.Disponible, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+
+            crearVehicleSiNoExisteix(vehicleRepo, "4365 FDE", "Mercedes", "Vito", 2006, Categoria.Furgoneta, new BigDecimal("40.65"), new BigDecimal("1.69"), new BigDecimal("300.00"),
+                    EstatVehicle.En_manteniment, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+
+            crearVehicleSiNoExisteix(vehicleRepo, "5821 LKM", "Volkswagen", "Touran", 2010, Categoria.Monovolum, new BigDecimal("35.00"), new BigDecimal("1.46"), new BigDecimal("220.00"),
+                    EstatVehicle.Disponible, "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2");
 
             // 3. Creació de reserves
             usuarisRepo.findByEmail("cemacia@alumnat.copernic.cat").ifPresent(client1 -> {
@@ -151,7 +162,9 @@ public class Projecte1Equip4Application {
     }
 
     private void crearVehicleSiNoExisteix(VehicleRepository repo, String matricula,
-            String marca, String model, int anyFabricacio, Categoria categoria, BigDecimal preuDia, EstatVehicle estatVehicle, String fotoVehicle) {
+            String marca, String model, int anyFabricacio, Categoria categoria,
+            BigDecimal preuDia, BigDecimal preuHora, BigDecimal fiancaEstandar,
+            EstatVehicle estatVehicle, String fotoVehicle) {
         if (repo.findByMatriculaIgnoreCase(matricula).isEmpty()) {
             Vehicle v = new Vehicle();
             v.setMatricula(matricula);
@@ -160,6 +173,8 @@ public class Projecte1Equip4Application {
             v.setAnyFabricacio(anyFabricacio);
             v.setCategoria(categoria);
             v.setPreuDia(preuDia);
+            v.setPreuHora(preuHora);
+            v.setFiancaEstandar(fiancaEstandar);
             v.setEstatVehicle(estatVehicle);
             v.setFotoVehicle(fotoVehicle);
             repo.save(v);

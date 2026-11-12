@@ -3,6 +3,7 @@ package cat.copernic.Projecte1.repository;
 import cat.copernic.Projecte1.entity.Enum.Categoria;
 import cat.copernic.Projecte1.entity.Enum.EstatVehicle;
 import cat.copernic.Projecte1.entity.Vehicle;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,7 +40,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
      * estado determinado y están activos en el sistema.
      */
     List<Vehicle> findByEstatVehicleAndActiuTrue(EstatVehicle estatVehicle);
-
+    List<Vehicle> findByActiuTrueAndFiancaEstandarLessThanEqual(BigDecimal fiancaMaxima);
     /**
      * SQL Generado: Consulta combinada filtrando por matrícula (LIKE), marca
      * (LIKE), categoría y estado.

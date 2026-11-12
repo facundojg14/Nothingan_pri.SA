@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .successHandler(customSuccessHandler())
+                // Decideix el missatge segons el motiu (compte no actiu o credencials incorrectes)
                 .failureHandler(customFailureHandler())
                 .permitAll()
                 )

@@ -70,6 +70,20 @@
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-custom w-100 mb-3">Entrar</button>
+                            
+                            <!-- Missatges d'Error (SecurityConfig -> customFailureHandler) -->
+                            <div th:if="${param.error}"
+                                 class="alert alert-danger py-2 px-3 mt-2 mb-3 text-center small"
+                                 role="alert">
+                                El correu o la contrasenya no són correctes.
+                            </div>
+
+                            <!-- Compte no actiu: registre PENDENT, REBUTJAT o de BAIXA -->
+                            <div th:if="${param.pendent}"
+                                 class="alert alert-warning py-2 px-3 mt-2 mb-3 text-center small"
+                                 role="alert">
+                                El teu compte no està actiu: el registre està pendent de validar, ha estat rebutjat o està de baixa.
+                            </div>
 
                             <div class="text-center mt-3 mb-2">
                                 <a th:href="@{/web/usuaris/registre}" class="text-decoration-none small text-primary fw-medium">No tens compte? Registra't</a>
@@ -83,15 +97,6 @@
                         <!-- Missatges d'Error -->
                         <div th:if="${error}" class="alert alert-danger mt-3 mb-0 text-center small" role="alert" th:text="${error}">
                             Credencials incorrectes.
-                        </div>
-
-                        <!-- Error de login enviat per Spring Security (SecurityConfig -> failureHandler) -->
-                        <div th:if="${param.error}" class="alert alert-danger mt-3 mb-0 text-center small" role="alert">
-                            El correu o la contrasenya són incorrectes.
-                        </div>
-
-                        <div th:if="${param.pendent}" class="alert alert-warning mt-3 mb-0 text-center small" role="alert">
-                            El teu compte no està actiu: el registre està pendent de validar, ha estat rebutjat o està de baixa.
                         </div>
 
                         <div th:if="${param.logout}" class="alert alert-info mt-3 mb-0 text-center small" role="alert">

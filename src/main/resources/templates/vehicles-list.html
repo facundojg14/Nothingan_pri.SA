@@ -20,6 +20,7 @@
 
                 <nav class="nav-menu">
                     <a th:href="@{/web/reserves/all}">• Reserves</a>
+                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
                     <a th:href="@{/web/vehicles/all}" class="active">• Vehicles</a>
                     <a th:href="@{/web/usuaris/all}">• Clients</a>
                 </nav>
@@ -28,28 +29,24 @@
             <!-- CONTENIDO PRINCIPAL -->
             <main class="content">
 
-<!-- Capçalera superior per a Agents (Perfil i Logout) -->
-<header class="top-header">
-    <h2>Gestió de vehicles</h2>
+                <!-- Capçalera superior per a Agents (Perfil i Logout) -->
+                <header class="top-header">
+                    <h2>Gestió de vehicles</h2>
 
-    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
-        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-        </a>
+                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
+                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                        </a>
 
+                        <!-- Botó per Tancar Sessió -->
+                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                            Tancar Sessió
+                        </a>
+                    </div>
+                </header>
 
-        <!-- Botó per Tancar Sessió -->
-        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-            Tancar Sessió
-        </a>
-    </div>
-</header>
-                <!-- 
-                  MENSAJES DE ÉXITO Y ERROR (Muestran alertas 'Flash' enviadas desde el controlador):
-                  th:if="${variable}": Renderiza el <div> SOLO si la variable existe en el modelo.
-                  th:text="${variable}": Reemplaza el texto interno con el mensaje.
-                -->
+                <!-- MENSAJES DE ÉXITO Y ERROR -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
@@ -188,11 +185,22 @@
                                 </td>
                                 <td class="actions-cell">
                                     <a th:href="@{/web/vehicles/edit/{id}(id=${v.id})}">Editar</a>
-                                    <a th:href="@{/web/vehicles/delete/{id}(id=${v.id})}"
+
+                                    <!-- Baja lógica: solo si el vehículo está activo -->
+                                    <a th:if="${v.actiu}"
+                                       th:href="@{/web/vehicles/delete/{id}(id=${v.id})}"
                                        class="action-link"
-                                       style="color: var(--danger-color, #d9534f);"
-                                       onclick="return confirm('Estàs segur que vols donar de baixa aquest vehicle?');">
+                                       style="color: #e67e22; margin-left: 8px;"
+                                       onclick="return confirm('Estàs segur que vols donar de baixa aquest vehicle? Es mantindrà a l\'historial però deixarà d\'estar disponible.');">
                                         Baixa
+                                    </a>
+
+                                    <!-- Eliminación física definitiva: solo si nunca ha tenido reservas -->
+                                    <a th:href="@{/web/vehicles/eliminar/{id}(id=${v.id})}"
+                                       class="action-link"
+                                       style="color: var(--danger-color, #d9534f); margin-left: 8px;"
+                                       onclick="return confirm('ATENCIÓ: Aquesta acció eliminarà el vehicle definitivament de la base de dades (només permès si mai ha tingut reserves). Vols continuar?');">
+                                        Eliminar
                                     </a>
                                 </td>
                             </tr>
