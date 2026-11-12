@@ -70,6 +70,13 @@
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-custom w-100 mb-3">Entrar</button>
+                            
+                            <!-- Missatges d'Error -->
+                            <div th:if="${param.error}"
+                                 class="alert alert-danger py-2 px-3 mt-2 mb-3 text-center small"
+                                 role="alert">
+                                El correu o la contrasenya no són correctes.
+                            </div>
 
                             <div class="text-center mt-3 mb-2">
                                 <a th:href="@{/web/usuaris/registre}" class="text-decoration-none small text-primary fw-medium">No tens compte? Registra't</a>

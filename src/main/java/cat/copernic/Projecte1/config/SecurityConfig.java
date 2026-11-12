@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .successHandler(customSuccessHandler())
-                .failureHandler(customFailureHandler())
+                .failureUrl("/web/usuaris/login?error=true")
                 .permitAll()
                 )
                 .logout(logout -> logout
