@@ -21,6 +21,21 @@ import static org.mockito.Mockito.*;
  * Proves unitàries (JUnit5 + Mockito) de les validacions d'usuaris i de
  * l'encriptació de contrasenyes (RN20, RN52 i RN22).
  *
+ * No necessita base de dades: el repositori i l'encriptador són simulats
+ * (@Mock).
+ *
+ * Què prova:
+ * <ol>
+ * <li>validarCamposUnicos: un DNI amb lletres entre els números no és
+ * vàlid.</li>
+ * <li>registrarClientWeb: no es pot registrar un client sense contrasenya i
+ * no es guarda res a la BD.</li>
+ * <li>saveUsuari: la contrasenya es guarda encriptada amb BCrypt (no en text
+ * pla).</li>
+ * <li>saveUsuari: una contrasenya que ja està encriptada no es torna a
+ * encriptar (ex: quan s'edita el perfil).</li>
+ * </ol>
+ *
  * @author Denis
  */
 @ExtendWith(MockitoExtension.class)

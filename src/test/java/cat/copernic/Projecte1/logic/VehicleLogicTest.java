@@ -20,6 +20,18 @@ import static org.mockito.Mockito.*;
 /**
  * Proves unitàries (JUnit5 + Mockito) de la lògica de vehicles (RN22).
  *
+ * No necessita base de dades: els repositoris són simulats (@Mock).
+ *
+ * Què prova:
+ * <ol>
+ * <li>donarDeBaixaVehicle: no es pot donar de baixa un vehicle que té
+ * reserves (RF41) i no es guarda res.</li>
+ * <li>donarDeBaixaVehicle: un vehicle sense reserves es dona de baixa de
+ * forma lògica (estat Baixa i actiu = false), no s'esborra.</li>
+ * <li>existsByMatricula: detecta una matrícula que ja té un altre vehicle,
+ * però no ho considera duplicat si s'està editant el mateix vehicle.</li>
+ * </ol>
+ *
  * @author Facundo
  */
 @ExtendWith(MockitoExtension.class)

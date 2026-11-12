@@ -8,6 +8,8 @@ import cat.copernic.Projecte1.repository.VehicleRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,9 @@ public class VehicleLogic {
     // Repositorio JPA inyectado para realizar operaciones en BD de Vehículos
     @Autowired
     private VehicleRepository vehicleRepo;
+
+    // Logger per registrar les baixes de vehicles al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(VehicleLogic.class);
 
     // Repositorio de reservas inyectado para comprobar reservas asociadas
     @Autowired
@@ -51,6 +56,7 @@ public class VehicleLogic {
     public boolean donarDeBaixaVehicle(Long id) {
         // 1. Si té reserves actives, no es pot donar de baixa
         if (teReservesActives(id)) {
+            logger.warn("No es pot donar de baixa el vehicle {}: té reserves", id);
             return false;
         }
 
@@ -60,6 +66,7 @@ public class VehicleLogic {
             vehicle.setActiu(false);
             vehicle.setEstatVehicle(EstatVehicle.Baixa); // O EstatVehicle.NoDisponible si teniu aquest valor a l'Enum
             vehicleRepo.save(vehicle);
+            logger.info("Vehicle {} donat de baixa", vehicle.getMatricula());
             return true;
         }
 

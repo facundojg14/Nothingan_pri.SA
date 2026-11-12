@@ -1,6 +1,8 @@
 package cat.copernic.Projecte1.config;
 
 import cat.copernic.Projecte1.repository.UsuarisRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,9 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // Logger per registrar els intents de login al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Autowired
     private UsuarisRepository usuarisRepository;
@@ -83,9 +88,14 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler customFailureHandler() {
         return (request, response, exception) -> {
+            // Email que s'ha intentat fer servir (mai es guarda la contrasenya al log)
+            String email = request.getParameter("email");
+
             if (exception instanceof DisabledException) {
+                logger.warn("Login denegat, compte no actiu: {}", email);
                 response.sendRedirect("/web/usuaris/login?pendent");
             } else {
+                logger.warn("Login fallit: {}", email);
                 response.sendRedirect("/web/usuaris/login?error");
             }
         };
@@ -117,6 +127,13 @@ public class SecurityConfig {
                 }
             }
 
+            // Només guardem el rol (ROLE_ADMIN, ROLE_AGENT o ROLE_CLIENT)
+            String rol = authorities.stream()
+                    .map(a -> a.getAuthority())
+                    .filter(a -> a.startsWith("ROLE_"))
+                    .findFirst()
+                    .orElse("-");
+            logger.info("Login correcte: {} ({})", email, rol);
             response.sendRedirect(redirectUrl);
         };
     }

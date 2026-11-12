@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +30,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/web/admin")
 public class AdminController {
+
+    // Logger per registrar els errors inesperats al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
     private UsuarisLogic usuarisService;
@@ -163,6 +168,7 @@ public class AdminController {
             return "redirect:/web/admin/vehicles";
 
         } catch (Exception e) {
+            logger.error("Error en desar el vehicle {}", vehicle.getMatricula(), e);
             model.addAttribute("error", "Error en desar el vehicle: " + e.getMessage());
             model.addAttribute("vehicle", vehicle);
             return "admin-edit-vehicle";
@@ -187,6 +193,7 @@ public class AdminController {
             vehicleLogic.deleteVehicleById(vehicleId);
             redirectAttributes.addFlashAttribute("missatge", "Vehicle eliminat correctament.");
         } catch (Exception e) {
+            logger.error("Error en eliminar el vehicle {}", vehicleId, e);
             redirectAttributes.addFlashAttribute("error", "No es pot eliminar el vehicle perquè té reserves associades.");
         }
 
@@ -330,6 +337,7 @@ public class AdminController {
             carregarDadesFormulari(model);
             return "admin-edit-reserva";
         } catch (Exception e) {
+            logger.error("Error en desar la reserva", e);
             model.addAttribute("error", "S'ha produït un error en desar la reserva: " + e.getMessage());
             model.addAttribute("reserva", reserva);
             carregarDadesFormulari(model);
