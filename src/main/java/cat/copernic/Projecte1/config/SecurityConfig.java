@@ -68,7 +68,8 @@ public class SecurityConfig {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .successHandler(customSuccessHandler())
-                .failureUrl("/web/usuaris/login?error=true")
+                // Decideix el missatge segons el motiu (compte no actiu o credencials incorrectes)
+                .failureHandler(customFailureHandler())
                 .permitAll()
                 )
                 .logout(logout -> logout
