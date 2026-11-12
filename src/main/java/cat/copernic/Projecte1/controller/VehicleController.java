@@ -177,9 +177,10 @@ public class VehicleController {
      */
     @GetMapping("/new")
     public String getForm(Model model) {
-        // Instancia un objeto Vehicle por defecto con ID = 0 (indica creación)
-        Vehicle p = new Vehicle(0, "", "", "", 0, Categoria.SUV, BigDecimal.ZERO, "");
-        model.addAttribute("vehicle", p);
+        if (!model.containsAttribute("vehicle")) {
+            Vehicle p = new Vehicle(0, "", "", "", 0, Categoria.SUV, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, "");
+            model.addAttribute("vehicle", p);
+        }
         return "edit-vehicle";
     }
 
@@ -199,18 +200,22 @@ public class VehicleController {
         if (vehicleLogic.existsByMatricula(vehicle.getMatricula(), vehicle.getId())) {
             redirectAttributes.addFlashAttribute("error", "La matrícula '" + vehicle.getMatricula() + "' ja està registrada al sistema!");
             redirectAttributes.addFlashAttribute("vehicle", vehicle);
-            // Si el ID es mayor que 0 es una edición (vuelve a edit/ID), si es 0 es un alta nueva (vuelve a new)
             return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
         }
 
         try {
-            vehicleLogic.saveVehicle(vehicle); // Persiste en BD
+            vehicleLogic.saveVehicle(vehicle); // Valida y persiste en BD
             redirectAttributes.addFlashAttribute("missatge", "Vehicle desat correctament!");
+        } catch (IllegalArgumentException e) {
+            // Captura errores de validación de negocio (preus, fiança, camps obligatoris)
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("vehicle", vehicle);
+            return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // Captura errores lanzados directamente por la BD (restricciones UNIQUE, etc.)
             logger.error("Error de duplicitat a la base de dades", e);
             redirectAttributes.addFlashAttribute("error", "Error: La matrícula introduïda ja existeix.");
-            return "redirect:/web/vehicles/new";
+            return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
         }
 
         return "redirect:/web/vehicles/all";
@@ -265,4 +270,29 @@ public class VehicleController {
         model.addAttribute("vehicle", vehicle);
         return "edit-vehicle";
     }
+
+    /**
+     * @GetMapping("/eliminar/{id}"): Eliminación física (borrado de BD). Solo
+     * funciona si el vehículo nunca ha sido reservado.
+     */
+    @GetMapping("/eliminar/{id}")
+    public String eliminarDefinitivament(@PathVariable("id") Long vehicleId, RedirectAttributes redirectAttributes) {
+        logger.debug("Intentant eliminar físicament el vehicle " + vehicleId);
+
+        boolean eliminat = vehicleLogic.eliminarVehicleDefinitivament(vehicleId);
+
+        if (eliminat) {
+            redirectAttributes.addFlashAttribute("missatge", "El vehicle s'ha eliminat definitivament de la base de dades.");
+        } else {
+            if (vehicleLogic.teAlgunaReserva(vehicleId)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No es pot eliminar el vehicle perquè ja té reserves registrades al seu historial. Només es pot donar de baixa.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "No s'ha trobat el vehicle.");
+            }
+        }
+
+        return "redirect:/web/vehicles/all";
+    }
+
 }

@@ -34,7 +34,7 @@ public class ReservaController {
     private final EmailService emailService; // <- Injectem el servei de correu
 
     public ReservaController(ReservaLogic reservaLogic,
-            VehicleLogic vehicleLogic, 
+            VehicleLogic vehicleLogic,
             UsuarisLogic usuarisLogic,
             EmailService emailService) { // <- S'afegeix al constructor
         this.reservaLogic = reservaLogic;
@@ -55,14 +55,14 @@ public class ReservaController {
 
         List<Reserva> reserves = reservaLogic.findAllReservas().stream()
                 .filter(r -> dni == null || dni.isBlank()
-                        || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().contains(dni)))
+                || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().contains(dni)))
                 .filter(r -> email == null || email.isBlank()
                 || (r.getUsuari() != null && r.getUsuari().getEmail() != null
                 && r.getUsuari().getEmail().toLowerCase().contains(email.toLowerCase())))
                 .filter(r -> codi == null || codi.isBlank()
-                        || (r.getCodiReserva() != null && r.getCodiReserva().contains(codi)))
+                || (r.getCodiReserva() != null && r.getCodiReserva().contains(codi)))
                 .filter(r -> matricula == null || matricula.isBlank()
-                        || (r.getVehicle() != null && r.getVehicle().getMatricula() != null && r.getVehicle().getMatricula().contains(matricula)))
+                || (r.getVehicle() != null && r.getVehicle().getMatricula() != null && r.getVehicle().getMatricula().contains(matricula)))
                 .filter(r -> data == null || data.isBlank()
                 || (r.getDataReserva() != null
                 && r.getDataReserva().toLocalDate().toString().equals(data)))
@@ -240,12 +240,12 @@ public class ReservaController {
             // Crida a la instància emailService (en minúscula)
             if (reserva.getUsuari() != null) {
                 emailService.enviarEmailAnullacio(
-                    reserva.getUsuari().getEmail(),
-                    reserva.getUsuari().getNom(),
-                    reserva.getCodiReserva(),
-                    percentatgeRetorn,
-                    importRetornat,
-                    motiu
+                        reserva.getUsuari().getEmail(),
+                        reserva.getUsuari().getNom(),
+                        reserva.getCodiReserva(),
+                        percentatgeRetorn,
+                        importRetornat,
+                        motiu
                 );
             }
 
@@ -253,7 +253,7 @@ public class ReservaController {
         } else {
             redirectAttributes.addFlashAttribute("error", "No s'ha pogut anul·lar la reserva.");
         }
-        
+
         return "redirect:/web/reserves/all";
     }
 
@@ -264,5 +264,72 @@ public class ReservaController {
                 .toList();
         model.addAttribute("vehicles", vehiclesActius);
         model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
+    }
+
+    /**
+     * Pantalla de cerca amb filtres per seleccionar la reserva a lliurar.
+     */
+    @GetMapping("/lliurar")
+    public String cercarPerLliurar(
+            @RequestParam(required = false) String codi,
+            @RequestParam(required = false) String dni,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String matricula,
+            @RequestParam(required = false) String dataInici,
+            Model model) {
+
+        List<Reserva> reservesPendents = reservaLogic.cercarReservesPerLliurar(codi, dni, email, matricula, dataInici);
+
+        model.addAttribute("reserves", reservesPendents);
+        model.addAttribute("codi", codi);
+        model.addAttribute("dni", dni);
+        model.addAttribute("email", email);
+        model.addAttribute("matricula", matricula);
+        model.addAttribute("dataInici", dataInici);
+
+        return "lliurar-vehicle-cerca";
+    }
+
+    /**
+     * Formulari de verificació visual, descripció, fotos i confirmació del
+     * lliurament.
+     */
+    @GetMapping("/lliurar/{id}")
+    public String formulariLliurar(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes) {
+        Reserva reserva = reservaLogic.getReservaById(id);
+
+        if (reserva == null || reserva.getEstat() != cat.copernic.Projecte1.entity.Enum.EstatReserva.Confirmada) {
+            redirectAttributes.addFlashAttribute("error", "La reserva no existeix o no està pendent de lliurament.");
+            return "redirect:/web/reserves/lliurar";
+        }
+
+        model.addAttribute("reserva", reserva);
+        model.addAttribute("ara", LocalDateTime.now().withSecond(0).withNano(0));
+
+        return "lliurar-vehicle-form";
+    }
+
+    /**
+     * Processa el formulari de lliurament amb fotos opcionals.
+     */
+    @PostMapping("/lliurar/{id}")
+    public String processarLliurament(
+            @PathVariable Integer id,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime dataHoraLliurament,
+            @RequestParam String descripcioLliurament,
+            @RequestParam(name = "fotos", required = false) org.springframework.web.multipart.MultipartFile[] fotos,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            reservaLogic.confirmarLliuramentVehicle(id, dataHoraLliurament, descripcioLliurament, fotos);
+            redirectAttributes.addFlashAttribute("missatge", "Vehicle lliurat correctament al client!");
+            return "redirect:/web/reserves/all";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/web/reserves/lliurar/" + id;
+        } catch (java.io.IOException e) {
+            redirectAttributes.addFlashAttribute("error", "Error en desar les fotografies del lliurament.");
+            return "redirect:/web/reserves/lliurar/" + id;
+        }
     }
 }
