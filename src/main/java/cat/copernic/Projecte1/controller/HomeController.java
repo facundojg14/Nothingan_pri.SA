@@ -3,9 +3,10 @@ package cat.copernic.Projecte1.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
-/*
- * Controlador de la página principal.
- * Se encarga de mostrar la página de inicio pública.
+/**
+ * Controlador de la pàgina principal pública.
+ *
+ * @author Equip4
  */
 @Controller
 public class HomeController {

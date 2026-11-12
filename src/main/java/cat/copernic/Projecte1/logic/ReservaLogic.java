@@ -22,9 +22,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/*
- * Lógica para gestionar las reservas.
- * Comprueba las condiciones, calcula los precios y realiza las operaciones.
+/**
+ * Lògica de negoci de les reserves.
+ *
+ * Comprova la disponibilitat dels vehicles, calcula el preu del lloguer i la
+ * fiança (amb el descompte Premium), crea i anul·la reserves, lliura el
+ * vehicle al client i fa les cerques i informes de reserves.
+ *
+ * @author Equip4
  */
 @Service
 public class ReservaLogic {
@@ -63,6 +68,12 @@ public class ReservaLogic {
         return reservaRepo.findById(id).orElse(null);
     }
 
+    /**
+     * Obté totes les reserves d'un usuari.
+     *
+     * @param id identificador de l'usuari
+     * @return llista de reserves (buida si l'id és null)
+     */
     public List<Reserva> getReservesPerUsuari(Long id) {
         if (id == null) {
             return List.of();
@@ -74,6 +85,19 @@ public class ReservaLogic {
         return reservaRepo.existsById(id);
     }
 
+    /**
+     * Comprova si un vehicle es pot reservar entre dues dates.
+     *
+     * Un vehicle està disponible si existeix, està actiu, el seu estat és
+     * Disponible i no té cap altra reserva (no anul·lada) que es solapi amb
+     * aquestes dates.
+     *
+     * @param vehicleId identificador del vehicle
+     * @param dataInici data i hora d'inici del lloguer
+     * @param dataFi data i hora de finalització del lloguer
+     * @return true si el vehicle es pot reservar; false en cas contrari o si
+     * les dades no són vàlides
+     */
     public boolean vehicleDisponible(
             Long vehicleId, LocalDateTime dataInici, LocalDateTime dataFi) {
 
@@ -132,6 +156,20 @@ public class ReservaLogic {
         reserva.setImportFianca(fiancaFinal.setScale(2, RoundingMode.HALF_UP));
     }
 
+    /**
+     * Crea una reserva nova (RF50).
+     *
+     * Comprova que les dates siguin correctes, que el vehicle estigui
+     * disponible i actiu i que el client estigui validat. Calcula el preu del
+     * lloguer (preu per dia per nombre de dies) i la fiança estàndard del
+     * vehicle, amb un 25% de descompte si el client és Premium. Genera un codi
+     * de reserva únic i deixa la reserva en estat Confirmada.
+     *
+     * @param reserva reserva amb el vehicle, el client i les dates
+     * @return identificador de la reserva creada
+     * @throws IllegalArgumentException si alguna dada no és correcta, el
+     * vehicle no està disponible o ja està reservat en aquestes dates
+     */
     @Transactional
     public Integer saveReserva(Reserva reserva) {
         if (reserva == null) {
@@ -236,6 +274,17 @@ public class ReservaLogic {
         return guardada.getId();
     }
 
+    /**
+     * Anul·la una reserva des del panell de l'agent o de l'administrador
+     * (RF55).
+     *
+     * Només es pot anul·lar si la reserva existeix i no està Lliurada ni ja
+     * Anul·lada. En anul·lar-la, el vehicle torna a quedar lliure per a
+     * aquestes dates.
+     *
+     * @param id identificador de la reserva
+     * @return true si s'ha anul·lat; false si no existeix o no es pot anul·lar
+     */
     @Transactional
     public boolean anularReserva(Integer id) {
         Reserva reserva = getReservaById(id);
@@ -251,10 +300,31 @@ public class ReservaLogic {
         return true;
     }
 
+    /**
+     * Obté les reserves per a l'informe de reserves per client (RF91),
+     * ordenades per client i per data (de la més recent a la més antiga).
+     *
+     * @param clientId identificador del client, o null per obtenir les de tots
+     * @return llista de reserves de l'informe
+     */
     public List<Reserva> obtenirInformeReserves(Integer clientId) {
         return reservaRepo.findReservesPerInforme(clientId);
     }
 
+    /**
+     * Anul·la una reserva feta pel mateix client (RF55).
+     *
+     * Si l'anul·lació es fa amb l'antelació mínima (paràmetre del sistema
+     * app.reserves.dies-antelacio-devolucio), es retorna tot l'import pagat
+     * (lloguer + fiança). Si no, no es retorna res. S'envia un correu al
+     * client.
+     *
+     * @param idReserva identificador de la reserva
+     * @param idUsuariLoguejat identificador del client que fa la petició
+     * @return import que es retorna al client (0 si no hi ha retorn)
+     * @throws IllegalArgumentException si la reserva no existeix, no és del
+     * client o ja està lliurada o anul·lada
+     */
     @Transactional
     public BigDecimal anularReservaPerClient(Integer idReserva, Long idUsuariLoguejat) {
         Reserva reserva = getReservaById(idReserva);
@@ -302,7 +372,15 @@ public class ReservaLogic {
         return importRetornat;
     }
 
-    // Cerca i filtratge de reserves del client per codi, estat o data.
+    /**
+     * Busca les reserves d'un client aplicant filtres opcionals.
+     *
+     * @param usuariId identificador del client
+     * @param codi part del codi de reserva (opcional)
+     * @param estat estat de la reserva, per exemple Confirmada (opcional)
+     * @param data data d'inici en format AAAA-MM-DD (opcional)
+     * @return reserves del client que compleixen tots els filtres indicats
+     */
     public List<Reserva> filtrarReservesClient(Long usuariId, String codi, String estat, String data) {
         List<Reserva> reserves = getReservesPerUsuari(usuariId);
 

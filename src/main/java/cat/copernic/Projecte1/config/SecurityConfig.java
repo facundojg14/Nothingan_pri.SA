@@ -13,6 +13,15 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
+/**
+ * Configuració de seguretat de l'aplicació (Spring Security).
+ *
+ * Defineix quines rutes són públiques i quines només poden veure l'admin,
+ * l'agent o el client (RN53), el formulari de login amb usuari i contrasenya
+ * (RN51) i què passa quan el login és correcte o falla (RF80).
+ *
+ * @author Equip4
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
