@@ -153,11 +153,11 @@ public class VehicleController {
                 case CLIENT:
                     return "index-client"; // O "index-logged"
                 case ADMIN:
-                    // TO DO: RETURN LA VISTA PERTINENT D'ADMIN
-                    return "index-admin";
+                    // TODO: RETURN LA VISTA PRINCIPAL PER MOSTRAR ELS RESULTATS DE LA CERCA DE VEHICLES
+                    return "index";
                 case AGENT:
-                    // TO DO: RETURN LA VISTA PERTINENT D'AGENT
-                    return "admin-clients";
+                    // TODO: RETURN LA VISTA PRINCIPAL PER MOSTRAR ELS RESULTATS DE LA CERCA DE VEHICLES
+                    return "index";
                 default:
                     return "index";
             }
