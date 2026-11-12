@@ -62,7 +62,10 @@
                            style="padding: 10px 14px; text-decoration: none;">Netejar</a>
                     </form>
 
-                    <a th:href="@{/web/admin/new}" class="btn btn-add">+ Alta de client</a>
+                    <div style="display: flex; gap: 10px;">
+                        <a th:href="@{/web/usuaris/pendents}" class="btn btn-filter" style="text-decoration: none;">Validar registres</a>
+                        <a th:href="@{/web/admin/new}" class="btn btn-add">+ Alta de client</a>
+                    </div>
                 </div>
 
                 <!-- Taula d'usuaris per a l'Administrador -->

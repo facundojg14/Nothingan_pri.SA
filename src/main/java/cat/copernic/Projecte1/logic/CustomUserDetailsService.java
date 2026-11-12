@@ -17,6 +17,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 
+/**
+ * Servei que fa servir Spring Security per carregar l'usuari que intenta fer
+ * login (RF80). Busca l'usuari per email i li dona el rol que té a la BD.
+ *
+ * @author Equip4
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -30,9 +36,21 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String nomRol = (usuari.getRol() != null) ? usuari.getRol().name() : "CLIENT";
 
+        // Només poden entrar els usuaris validats. Si el registre està PENDENT,
+        // REBUTJAT o de BAIXA, el compte queda desactivat i Spring Security
+        // no el deixa entrar (veure SecurityConfig -> failureHandler).
+        String estat = usuari.getEstatRegistre();
+        boolean actiu = !("PENDENT".equalsIgnoreCase(estat)
+                || "REBUTJAT".equalsIgnoreCase(estat)
+                || "BAIXA".equalsIgnoreCase(estat));
+
         return new User(
                 usuari.getEmail(),
                 usuari.getPassword(),
+                actiu, // enabled
+                true, // accountNonExpired
+                true, // credentialsNonExpired
+                true, // accountNonLocked
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + nomRol))
         );
     }
