@@ -24,6 +24,18 @@ import static org.mockito.Mockito.*;
 /**
  * Proves unitàries (JUnit5 + Mockito) de la lògica de reserves (RN22).
  *
+ * No necessita base de dades: els repositoris són simulats (@Mock).
+ *
+ * Què prova:
+ * <ol>
+ * <li>saveReserva: no deixa crear una reserva si la data final és anterior a
+ * la inicial, i no es guarda res a la BD.</li>
+ * <li>vehicleDisponible: un vehicle desactivat (actiu = false) no està
+ * disponible per reservar.</li>
+ * <li>anularReservaPerClient: un client no pot anul·lar la reserva d'un altre
+ * client; la reserva es queda Confirmada.</li>
+ * </ol>
+ *
  * @author Alejandro
  */
 @ExtendWith(MockitoExtension.class)

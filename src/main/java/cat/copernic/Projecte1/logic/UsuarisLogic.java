@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,9 @@ public class UsuarisLogic {
 
     @Autowired
     private UsuarisRepository usuariRepo;
+
+    // Logger per registrar registres i validacions al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(UsuarisLogic.class);
 
     // Encriptador de contrasenyes (definit a PasswordEncoderConfig)
     @Autowired
@@ -57,6 +62,7 @@ public class UsuarisLogic {
 
     public void deleteUsuariById(Long id) {
         usuariRepo.deleteById(id);
+        logger.info("Usuari {} esborrat", id);
     }
 
     /**
@@ -117,6 +123,7 @@ public class UsuarisLogic {
         client.setPremium(false);
 
         Usuaris nouClient = usuariRepo.save(client);
+        logger.info("Nou registre pendent de validar: {}", nouClient.getEmail());
         return nouClient.getId();
     }
 
@@ -163,6 +170,7 @@ public class UsuarisLogic {
 
         usuari.setEstatRegistre(nouEstat); // "VALIDAT" o "REBUTJAT"
         usuariRepo.save(usuari);
+        logger.info("Registre de {} canviat a {}", usuari.getEmail(), nouEstat);
     }
 
     /**
