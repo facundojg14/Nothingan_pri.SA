@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Confirmar Devolució - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <aside class="sidebar">
+                <div class="logo-container">
+                    <a th:href="@{/web/usuaris/login}">
+                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
+                    </a>
+                </div>
+
+                <nav class="nav-menu">
+                    <a th:href="@{/web/reserves/all}">• Reserves</a>
+                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
+                    <a th:href="@{/web/reserves/retornar}" class="active">• Retornar vehicle</a>
+                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
+                    <a th:href="@{/web/usuaris/all}">• Clients</a>
+                </nav>
+            </aside>
+
+            <main class="content">
+
+                <header class="top-header">
+                    <h2>Devolució de vehicles</h2>
+
+                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                        </a>
+                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                            Tancar Sessió
+                        </a>
+                    </div>
+                </header>
+
+                <div class="top-bar">
+                    <h3 th:text="'Confirmar devolució - Reserva ' + ${reserva.codiReserva}">Confirmar devolució</h3>
+                    <a th:href="@{/web/reserves/retornar}" class="btn btn-cancel">Tornar a la cerca</a>
+                </div>
+
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <div class="table-card" style="padding: 20px; margin-bottom: 20px; background-color: #f9fafb;">
+                    <h4 style="margin-top: 0; margin-bottom: 12px;">Dades de la Reserva</h4>
+
+                    <div class="form-grid">
+                        <div>
+                            <strong>Client:</strong>
+                            <span th:text="${reserva.usuari.nom + ' (' + reserva.usuari.dni + ')'}">Client</span>
+                        </div>
+
+                        <div>
+                            <strong>Vehicle:</strong>
+                            <span th:text="${reserva.vehicle.marca + ' ' + reserva.vehicle.model + ' - ' + reserva.vehicle.matricula}">Vehicle</span>
+                        </div>
+
+                        <div>
+                            <strong>Inici previst:</strong>
+                            <span th:text="${#temporals.format(reserva.dataInici, 'dd/MM/yyyy HH:mm')}">12/11/2026</span>
+                        </div>
+
+                        <div>
+                            <strong>Fi prevista:</strong>
+                            <span th:text="${#temporals.format(reserva.dataFi, 'dd/MM/yyyy HH:mm')}">15/11/2026</span>
+                        </div>
+
+                        <div>
+                            <strong>Lliurament real:</strong>
+                            <span th:text="${#temporals.format(reserva.dataHoraLliurament, 'dd/MM/yyyy HH:mm')}">12/11/2026</span>
+                        </div>
+
+                        <div>
+                            <strong>Fiança dipositada:</strong>
+                            <span th:text="${reserva.importFianca + ' €'}">200 €</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-card" style="padding: 24px; margin-bottom: 20px;">
+                    <h4 style="margin-top: 0;">Estat del vehicle en el lliurament</h4>
+
+                    <p th:text="${reserva.descripcioLliurament}">Descripció del lliurament</p>
+
+                    <div th:if="${!#lists.isEmpty(reserva.fotosLliurament)}">
+                        <strong>Fotografies del lliurament:</strong>
+
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                            <a th:each="foto : ${reserva.fotosLliurament}"
+                               th:href="@{${foto}}"
+                               target="_blank">
+                                <img th:src="@{${foto}}"
+                                     alt="Fotografia del lliurament"
+                                     style="width: 150px; height: 110px; object-fit: cover; border-radius: 8px;">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-card" style="padding: 24px;">
+                    <form th:action="@{/web/reserves/retornar/{id}(id=${reserva.id})}" method="post">
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+                                <label for="dataHoraRetorn">Data i hora de devolució *</label>
+                                <input type="datetime-local"
+                                       id="dataHoraRetorn"
+                                       name="dataHoraRetorn"
+                                       th:value="${#temporals.format(ara, 'yyyy-MM-dd''T''HH:mm')}"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Estat del vehicle *</label>
+
+                                <label style="display: block; margin-top: 10px;">
+                                    <input type="checkbox" name="vehiculoAveriado" value="true">
+                                    El vehicle presenta avaries i necessita manteniment
+                                </label>
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Responsabilitat dels desperfectes *</label>
+
+                                <label style="display: block; margin-top: 10px;">
+                                    <input type="checkbox" name="desperfectesImputables" value="true">
+                                    Els desperfectes són imputables al client
+                                </label>
+
+                                <small style="color: #666;">
+                                    Si es marca aquesta opció, es retindrà tota la fiança.
+                                </small>
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="observacions">Observacions de la devolució *</label>
+
+                                <textarea id="observacions"
+                                          name="observacions"
+                                          rows="4"
+                                          maxlength="1000"
+                                          style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit;"
+                                          placeholder="Descriu l'estat del vehicle, possibles desperfectes i incidències..."
+                                          required></textarea>
+                            </div>
+
+                        </div>
+
+                        <div class="button-group" style="margin-top: 24px;">
+                            <button type="submit"
+                                    class="btn btn-add"
+                                    onclick="return confirm('Confirmes la devolució del vehicle i el càlcul de la fiança?');">
+                                Confirmar devolució
+                            </button>
+
+                            <a th:href="@{/web/reserves/retornar}" class="btn btn-cancel">
+                                Cancel·lar
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>
