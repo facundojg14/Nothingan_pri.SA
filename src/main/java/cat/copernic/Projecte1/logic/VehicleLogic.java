@@ -5,32 +5,28 @@ import cat.copernic.Projecte1.entity.Enum.EstatVehicle;
 import cat.copernic.Projecte1.entity.Vehicle;
 import cat.copernic.Projecte1.repository.ReservaRepository;
 import cat.copernic.Projecte1.repository.VehicleRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * CAPA DE LÓGICA DE NEGOCIO (SERVICE) DE VEHÍCULOS
- *
- * @Service: Indica a Spring que esta clase almacena reglas de negocio y lógica
- * de aplicación.
+ * Capa de lògica de negoci (Service) per a la gestió integral de vehicles.
  */
 @Service
 public class VehicleLogic {
 
-    // Repositorio JPA inyectado para realizar operaciones en BD de Vehículos
-    @Autowired
-    private VehicleRepository vehicleRepo;
+    private final VehicleRepository vehicleRepo;
+    private final ReservaRepository reservaRepo;
+    private final ReservaLogic reservaLogic;
 
-    // Repositorio de reservas inyectado para comprobar reservas asociadas
-    @Autowired
-    private ReservaRepository reservaRepo;
-
-    // Lógica de reservas inyectada para consultar la disponibilidad de fechas
-    @Autowired
-    private ReservaLogic reservaLogic;
+    // Logger per registrar les baixes de vehicles al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(VehicleLogic.class);
 
     public VehicleLogic(VehicleRepository vehicleRepo, ReservaRepository reservaRepo, ReservaLogic reservaLogic) {
         this.vehicleRepo = vehicleRepo;
@@ -38,28 +34,32 @@ public class VehicleLogic {
         this.reservaLogic = reservaLogic;
     }
 
-    // Comprovar si el vehicle té reserves
+    /**
+     * Comprova si el vehicle té reserves associades.
+     */
     public boolean teReservesActives(Long vehicleId) {
         if (vehicleId == null) {
             return false;
         }
-        // Utiliza el método que tenemos declarado en ReservaRepository
         return reservaRepo.existsByVehicle_Id(vehicleId);
     }
 
-    // Método de baja lógica
+    /**
+     * Dona de baixa lògica un vehicle si no té reserves associades.
+     */
+    @Transactional
     public boolean donarDeBaixaVehicle(Long id) {
-        // 1. Si té reserves actives, no es pot donar de baixa
         if (teReservesActives(id)) {
+            logger.warn("No es pot donar de baixa el vehicle {}: té reserves", id);
             return false;
         }
 
-        // 2. Canvi d'estat a la base de dades (baixa lògica)
         Vehicle vehicle = getVehicleById(id);
         if (vehicle != null) {
             vehicle.setActiu(false);
-            vehicle.setEstatVehicle(EstatVehicle.Baixa); // O EstatVehicle.NoDisponible si teniu aquest valor a l'Enum
+            vehicle.setEstatVehicle(EstatVehicle.Baixa);
             vehicleRepo.save(vehicle);
+            logger.info("Vehicle {} donat de baixa", vehicle.getMatricula());
             return true;
         }
 
@@ -67,42 +67,70 @@ public class VehicleLogic {
     }
 
     /**
-     * MÉTODOS DE LA LÓGICA DE NEGOCIO
-     */
-    /**
      * Obté tots els vehicles de la base de dades.
-     *
-     * @return List<Vehicle> Llista completa.
      */
     public List<Vehicle> findAllVehicles() {
         return vehicleRepo.findAll();
     }
 
     /**
-     * Desa un vehicle (Crea un de nou o actualitza si ja té ID).
+     * Valida i desa un vehicle (alta o actualització) assegurant la coherència
+     * de preu per dia, preu per hora i fiança estàndard.
      *
-     * @param vehicle Obres del vehicle a desar.
-     * @return Long ID del vehicle desat.
+     * @param vehicle Entitat del vehicle a desar.
+     * @return Identificador del vehicle desat.
+     * @throws IllegalArgumentException Si alguna tarifa, matrícula o dada
+     * obligatòria no és vàlida.
      */
+    @Transactional
     public Long saveVehicle(Vehicle vehicle) {
+        validarDadesVehicle(vehicle);
+
+        // Si el preu per hora no s'ha informat o és 0, es calcula automàticament (preuDia / 24)
+        if (vehicle.getPreuHora() == null || vehicle.getPreuHora().compareTo(BigDecimal.ZERO) <= 0) {
+            BigDecimal preuHoraCalculat = vehicle.getPreuDia()
+                    .divide(BigDecimal.valueOf(24), 2, RoundingMode.HALF_UP);
+            vehicle.setPreuHora(preuHoraCalculat);
+        }
+
         Vehicle ret = vehicleRepo.save(vehicle);
         return ret.getId();
     }
 
     /**
-     * Elimina un vehicle de la base de dades a partir del seu ID.
-     *
-     * @param id Identificador únic del vehicle.
+     * Valida les regles de negoci d'un vehicle abans de desar-lo.
      */
+    private void validarDadesVehicle(Vehicle vehicle) {
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Les dades del vehicle no poden ser nul·les.");
+        }
+        if (vehicle.getMatricula() == null || vehicle.getMatricula().trim().isEmpty()) {
+            throw new IllegalArgumentException("La matrícula del vehicle és obligatòria.");
+        }
+        if (existsByMatricula(vehicle.getMatricula(), vehicle.getId())) {
+            throw new IllegalArgumentException("Ja existeix un altre vehicle registrat amb la matrícula " + vehicle.getMatricula() + ".");
+        }
+        if (vehicle.getPreuDia() == null || vehicle.getPreuDia().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El preu per dia del vehicle ha de ser superior a 0 €.");
+        }
+        if (vehicle.getPreuHora() != null && vehicle.getPreuHora().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El preu per hora del vehicle no pot ser negatiu.");
+        }
+        if (vehicle.getFiancaEstandar() == null || vehicle.getFiancaEstandar().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La fiança estàndard del vehicle no pot ser nul·la ni negativa.");
+        }
+    }
+
+    /**
+     * Elimina un vehicle de la base de dades a partir del seu ID.
+     */
+    @Transactional
     public void deleteVehicleById(Long id) {
         vehicleRepo.deleteById(id);
     }
 
     /**
      * Cerca un vehicle per la seva ID.
-     *
-     * @param id Identificador a cercar.
-     * @return Vehicle trobat o null si no existeix.
      */
     public Vehicle getVehicleById(Long id) {
         return vehicleRepo.findById(id).orElse(null);
@@ -110,10 +138,6 @@ public class VehicleLogic {
 
     /**
      * Cerca vehicles que continguin una determinada matrícula.
-     *
-     * @param matricula Cadena de text amb la matrícula.
-     * @return List<Vehicle> Llista de coincidències o tots si la cerca està
-     * buida.
      */
     public List<Vehicle> findByMatricula(String matricula) {
         if (matricula == null || matricula.trim().isEmpty()) {
@@ -125,11 +149,6 @@ public class VehicleLogic {
     /**
      * Comprova si la matrícula ja existeix en un altre vehicle de la base de
      * dades.
-     *
-     * @param matricula Matrícula a verificar.
-     * @param id ID del vehicle actual (0 si és alta nova).
-     * @return true si la matrícula ja pertany a un altre vehicle diferent al
-     * que s'edita.
      */
     public boolean existsByMatricula(String matricula, long id) {
         if (matricula == null || matricula.trim().isEmpty()) {
@@ -140,7 +159,7 @@ public class VehicleLogic {
     }
 
     /**
-     * Filtratge combinat avançat
+     * Filtratge combinat avançat.
      */
     public List<Vehicle> findByFiltres(String matricula, String marca, String model,
             Integer anyFabricacio, Categoria categoria,
@@ -164,9 +183,7 @@ public class VehicleLogic {
     /**
      * Busca vehicles disponibles per a les dates seleccionades.
      */
-    public List<Vehicle> findVehiclesDisponibles(
-            LocalDateTime dataInici, LocalDateTime dataFi) {
-
+    public List<Vehicle> findVehiclesDisponibles(LocalDateTime dataInici, LocalDateTime dataFi) {
         if (dataInici == null || dataFi == null || !dataFi.isAfter(dataInici)) {
             return List.of();
         }
@@ -175,5 +192,34 @@ public class VehicleLogic {
                 .stream()
                 .filter(v -> reservaLogic.vehicleDisponible(v.getId(), dataInici, dataFi))
                 .toList();
+    }
+
+    /**
+     * Comprova si el vehicle té qualsevol reserva associada.
+     */
+    public boolean teAlgunaReserva(Long vehicleId) {
+        if (vehicleId == null) {
+            return false;
+        }
+        return reservaRepo.existsByVehicle_Id(vehicleId);
+    }
+
+    /**
+     * Eliminació física definitiva de la base de dades (només si no té
+     * historial de reserves).
+     */
+    @Transactional
+    public boolean eliminarVehicleDefinitivament(Long id) {
+        if (teAlgunaReserva(id)) {
+            return false;
+        }
+
+        Vehicle vehicle = getVehicleById(id);
+        if (vehicle != null) {
+            vehicleRepo.deleteById(id);
+            return true;
+        }
+
+        return false;
     }
 }

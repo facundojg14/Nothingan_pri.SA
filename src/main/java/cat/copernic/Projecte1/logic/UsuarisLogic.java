@@ -2,28 +2,56 @@ package cat.copernic.Projecte1.logic;
 
 import cat.copernic.Projecte1.entity.Enum.rol;
 import cat.copernic.Projecte1.entity.Usuaris;
+import cat.copernic.Projecte1.repository.ReservaRepository;
 import cat.copernic.Projecte1.repository.UsuarisRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Lògica de negoci dels usuaris (clients, agents i administradors).
+ *
+ * @author Equip4
+ */
 @Service
 public class UsuarisLogic {
 
     @Autowired
     private UsuarisRepository usuariRepo;
 
+    // Per comprovar si un usuari té reserves abans d'esborrar-lo
+    @Autowired
+    private ReservaRepository reservaRepo;
+
+    // Logger per registrar registres i validacions al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(UsuarisLogic.class);
+
+    // Encriptador de contrasenyes (definit a PasswordEncoderConfig)
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     // --- OPERACIONES BÁSICAS CRUD ---
     public List<Usuaris> findAllUsuaris() {
         return usuariRepo.findAll();
     }
 
+    /**
+     * Crea o actualitza un usuari. Si la contrasenya encara no està
+     * encriptada, l'encripta amb BCrypt abans de guardar-la.
+     *
+     * @param usuari usuari a guardar
+     * @return id de l'usuari guardat
+     */
     public Long saveUsuari(Usuaris usuari) {
         validarCamposUnicos(usuari);
+        xifrarContrasenya(usuari);
         if (usuari.getEstatRegistre() == null || usuari.getEstatRegistre().isBlank()) {
             usuari.setEstatRegistre("PENDENT");
         }
@@ -37,8 +65,39 @@ public class UsuarisLogic {
         return ret.getId();
     }
 
+    /**
+     * Esborra un usuari (client o agent).
+     *
+     * No es pot esborrar si té reserves associades, perquè la base de dades
+     * no ho permet (clau forana) i es perdrien les dades de les reserves.
+     *
+     * @param id id de l'usuari a esborrar
+     * @throws IllegalArgumentException si l'usuari no existeix o té reserves
+     */
     public void deleteUsuariById(Long id) {
+        if (!usuariRepo.existsById(id)) {
+            throw new IllegalArgumentException("No s'ha trobat l'usuari.");
+        }
+
+        if (!reservaRepo.findByUsuariId(id).isEmpty()) {
+            throw new IllegalArgumentException("No es pot esborrar l'usuari perquè té reserves associades.");
+        }
+
         usuariRepo.deleteById(id);
+        logger.info("Usuari {} esborrat", id);
+    }
+
+    /**
+     * Encripta la contrasenya de l'usuari amb BCrypt si encara no ho està.
+     * Les contrasenyes de BCrypt sempre comencen per "$2a$", "$2b$" o "$2y$".
+     *
+     * @param usuari usuari amb la contrasenya a encriptar
+     */
+    public void xifrarContrasenya(Usuaris usuari) {
+        String password = usuari.getPassword();
+        if (password != null && !password.isBlank() && !password.startsWith("$2")) {
+            usuari.setPassword(passwordEncoder.encode(password));
+        }
     }
 
     public Usuaris getUsuariById(Long id) {
@@ -74,17 +133,28 @@ public class UsuarisLogic {
             throw new IllegalArgumentException("La llicència de conduir està caducada.");
         }
 
+        // 5. La contrasenya és obligatòria i es guarda encriptada (RN52)
+        if (client.getPassword() == null || client.getPassword().isBlank()) {
+            throw new IllegalArgumentException("La contrasenya és obligatòria.");
+        }
+        xifrarContrasenya(client);
+
         // Estat inicial i rol per defecte per al registre web (RF81)
         client.setEstatRegistre("PENDENT");
         client.setRol(rol.CLIENT);
         client.setPremium(false);
 
         Usuaris nouClient = usuariRepo.save(client);
+        logger.info("Nou registre pendent de validar: {}", nouClient.getEmail());
         return nouClient.getId();
     }
 
     /**
      * Autenticació d'usuaris controlant els estats PENDENT i REBUTJAT.
+     *
+     * Nota: el login real el fa Spring Security (CustomUserDetailsService +
+     * SecurityConfig). Aquest mètode es manté perquè el fa servir el test
+     * UsuarisLogicTest.
      */
     public Usuaris autenticarIValidarEstat(String email, String password) {
         Optional<Usuaris> usuariOpt = usuariRepo.findByEmail(email);
@@ -122,6 +192,7 @@ public class UsuarisLogic {
 
         usuari.setEstatRegistre(nouEstat); // "VALIDAT" o "REBUTJAT"
         usuariRepo.save(usuari);
+        logger.info("Registre de {} canviat a {}", usuari.getEmail(), nouEstat);
     }
 
     /**
@@ -134,8 +205,9 @@ public class UsuarisLogic {
                 .orElseThrow(() -> new IllegalArgumentException("Usuari no trobat amb ID: " + usuariEditat.getId()));
 
         // Mantener la contraseña existente si no se proporciona una nueva
-        if (!usuariEditat.getPassword().isBlank()) {
+        if (usuariEditat.getPassword() != null && !usuariEditat.getPassword().isBlank()) {
             usuariExistent.setPassword(usuariEditat.getPassword());
+            xifrarContrasenya(usuariExistent);
         }
 
         // Actualització de dades personals

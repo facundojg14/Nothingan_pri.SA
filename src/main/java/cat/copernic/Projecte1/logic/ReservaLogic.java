@@ -15,6 +15,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,10 +32,13 @@ public class ReservaLogic {
     private final ReservaRepository reservaRepo;
     private final VehicleRepository vehicleRepo;
     private final UsuarisRepository usuarisRepo;
-    
+
+    // Logger per registrar les accions de reserves al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(ReservaLogic.class);
+
     @Value("${app.reserves.dies-antelacio-devolucio:2}")
     private int diesAntelacioDevolucio;
-    
+
     @Autowired
     private EmailService emailService;
 
@@ -85,36 +90,40 @@ public class ReservaLogic {
         return reservaRepo.findReservesSolapades(
                 vehicleId, dataInici, dataFi, EstatReserva.Anulada).isEmpty();
     }
-    
+
     /**
-    * Prepara un objeto Reserva calculando precios, fianzas (aplicando el 25% si es Premium) 
-    * y duraciones para la vista de confirmación del cliente.
-    */
-   public void prepararReservaClient(Reserva reserva, Vehicle vehicle, Usuaris usuari, long diesLloguer) {
-       if (reserva == null) return;
+     * Prepara un objeto Reserva calculando precios, fianzas (aplicando el 25%
+     * si es Premium) y duraciones para la vista de confirmación del cliente.
+     */
+    public void prepararReservaClient(Reserva reserva, Vehicle vehicle, Usuaris usuari, long diesLloguer) {
+        if (reserva == null || vehicle == null) {
+            throw new IllegalArgumentException("La reserva i el vehicle són obligatoris.");
+        }
 
-       // 1. Fianza base de 200.00 €
-       BigDecimal fiancaBase = new BigDecimal("200.00");
+        BigDecimal fiancaBase = vehicle.getFiancaEstandar();
 
-       // 2. Aplicar 25% de descuento en la fianza si el usuario es Premium
-       BigDecimal fiancaFinal = fiancaBase;
-       if (usuari != null && Boolean.TRUE.equals(usuari.getPremium())) {
-           fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75")).setScale(2, RoundingMode.HALF_UP);
-       }
+        if (fiancaBase == null || fiancaBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La fiança del vehicle no és vàlida.");
+        }
 
-       // 3. Subtotal alquiler = precioPorDia * dias
-       BigDecimal preuDia = (vehicle != null && vehicle.getPreuDia() != null) ? vehicle.getPreuDia() : BigDecimal.ZERO;
-       BigDecimal subtotalLloguer = preuDia.multiply(BigDecimal.valueOf(diesLloguer)).setScale(2, RoundingMode.HALF_UP);
+        // Aplica el descuento Premium del 25 % a la fianza.
+        BigDecimal fiancaFinal = fiancaBase;
+        if (usuari != null && Boolean.TRUE.equals(usuari.getPremium())) {
+            fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75"));
+        }
 
-       // 4. Total a pagar (alquiler + fianza)
-       BigDecimal totalAPagar = subtotalLloguer.add(fiancaFinal);
+        BigDecimal preuDia = vehicle.getPreuDia() != null
+                ? vehicle.getPreuDia() : BigDecimal.ZERO;
 
-       // Asignamos los valores a la entidad Reserva
-       reserva.setVehicle(vehicle != null ? vehicle : new Vehicle());
-       reserva.setUsuari(usuari);
-       reserva.setPreuLloguer(subtotalLloguer);
-       reserva.setImportFianca(fiancaFinal); // Guardamos ya la fianza final calculada
-   }
+        BigDecimal subtotalLloguer = preuDia
+                .multiply(BigDecimal.valueOf(diesLloguer))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        reserva.setVehicle(vehicle);
+        reserva.setUsuari(usuari);
+        reserva.setPreuLloguer(subtotalLloguer);
+        reserva.setImportFianca(fiancaFinal.setScale(2, RoundingMode.HALF_UP));
+    }
 
     @Transactional
     public Integer saveReserva(Reserva reserva) {
@@ -160,13 +169,12 @@ public class ReservaLogic {
             throw new IllegalArgumentException("El vehicle no té un preu diari vàlid.");
         }
 
-        if (reserva.getImportFianca() == null
-                || reserva.getImportFianca().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("La fiança ha de ser igual o superior a zero.");
+        BigDecimal fiancaBase = vehicle.getFiancaEstandar();
+        
+        if (fiancaBase == null || fiancaBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La fiança del vehicle no és vàlida.");
         }
-        
-        BigDecimal fiancaBase= new BigDecimal("200.00");
-        
+
         Duration durada = Duration.between(reserva.getDataInici(), reserva.getDataFi());
         long dies = durada.toDays();
         if (!durada.minusDays(dies).isZero()) {
@@ -215,7 +223,10 @@ public class ReservaLogic {
         reserva.setDataReserva(LocalDateTime.now());
         reserva.setEstat(EstatReserva.Confirmada);
 
-        return reservaRepo.save(reserva).getId();
+        Reserva guardada = reservaRepo.save(reserva);
+        logger.info("Reserva {} creada per a {} (vehicle {})",
+                guardada.getCodiReserva(), usuari.getEmail(), vehicle.getMatricula());
+        return guardada.getId();
     }
 
     @Transactional
@@ -229,14 +240,15 @@ public class ReservaLogic {
 
         reserva.setEstat(EstatReserva.Anulada);
         reservaRepo.save(reserva);
+        logger.info("Reserva {} anul·lada per un agent/admin", reserva.getCodiReserva());
         return true;
     }
 
     public List<Reserva> obtenirInformeReserves(Integer clientId) {
         return reservaRepo.findReservesPerInforme(clientId);
     }
-    
-     @Transactional
+
+    @Transactional
     public BigDecimal anularReservaPerClient(Integer idReserva, Long idUsuariLoguejat) {
         Reserva reserva = getReservaById(idReserva);
 
@@ -267,7 +279,7 @@ public class ReservaLogic {
         // Guardar canvis
         reservaRepo.save(reserva);
 
-// 3. Enviar correu electrònic d'anul·lació (passant els 6 paràmetres)
+        // 3. Enviar correu electrònic d'anul·lació (passant els 6 paràmetres)
         double percentatgeRetorn = (importRetornat != null && importRetornat.compareTo(BigDecimal.ZERO) > 0) ? 100.0 : 0.0;
 
         emailService.enviarEmailAnullacio(
@@ -275,31 +287,110 @@ public class ReservaLogic {
                 reserva.getUsuari().getNom(),
                 reserva.getCodiReserva(),
                 percentatgeRetorn, // % de retorn (100 o 0)
-                importRetornat,    // Import calculat en BigDecimal
-                null               // Motiu buit quan ho fa el client
+                importRetornat, // Import calculat en BigDecimal
+                null // Motiu buit quan ho fa el client
         );
 
+        logger.info("Reserva {} anul·lada pel client. Import retornat: {} €", reserva.getCodiReserva(), importRetornat);
         return importRetornat;
     }
 
-        
-        // Cerca i filtratge de reserves del client per codi, estat o data.
-        public List<Reserva> filtrarReservesClient(Long usuariId, String codi, String estat, String data) {
-            List<Reserva> reserves = getReservesPerUsuari(usuariId);
+    // Cerca i filtratge de reserves del client per codi, estat o data.
+    public List<Reserva> filtrarReservesClient(Long usuariId, String codi, String estat, String data) {
+        List<Reserva> reserves = getReservesPerUsuari(usuariId);
 
-            return reserves.stream()
-                    // Filtre per Codi (parcial)
-            .filter(r -> codi == null || codi.isBlank() || 
-                    (r.getCodiReserva() != null && r.getCodiReserva().toLowerCase().contains(codi.trim().toLowerCase())))
-            
-            // Filtre per Estat (compara com a text sense importar majúscules/minúscules)
-            .filter(r -> estat == null || estat.isBlank() || 
-                    (r.getEstat() != null && r.getEstat().name().equalsIgnoreCase(estat.trim())))
-            
-            // Filtre per Data (coincidència exacta de la data d'inici YYYY-MM-DD)
-            .filter(r -> data == null || data.isBlank() || 
-                    (r.getDataInici() != null && r.getDataInici().toLocalDate().toString().equals(data.trim())))
-            
-            .toList();
+        return reserves.stream()
+                // Filtre per Codi (parcial)
+                .filter(r -> codi == null || codi.isBlank()
+                || (r.getCodiReserva() != null && r.getCodiReserva().toLowerCase().contains(codi.trim().toLowerCase())))
+                // Filtre per Estat (compara com a text sense importar majúscules/minúscules)
+                .filter(r -> estat == null || estat.isBlank()
+                || (r.getEstat() != null && r.getEstat().name().equalsIgnoreCase(estat.trim())))
+                // Filtre per Data (coincidència exacta de la data d'inici YYYY-MM-DD)
+                .filter(r -> data == null || data.isBlank()
+                || (r.getDataInici() != null && r.getDataInici().toLocalDate().toString().equals(data.trim())))
+                .toList();
+    }
+
+    /**
+     * Cerca reserves pendents de lliurament (Estat = Confirmada) aplicant
+     * filtres opcionals.
+     */
+    public List<Reserva> cercarReservesPerLliurar(String codi, String dni, String email, String matricula, String dataInici) {
+        return reservaRepo.findAll().stream()
+                .filter(r -> r.getEstat() == EstatReserva.Confirmada)
+                .filter(r -> codi == null || codi.isBlank()
+                || (r.getCodiReserva() != null && r.getCodiReserva().toLowerCase().contains(codi.trim().toLowerCase())))
+                .filter(r -> dni == null || dni.isBlank()
+                || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().toLowerCase().contains(dni.trim().toLowerCase())))
+                .filter(r -> email == null || email.isBlank()
+                || (r.getUsuari() != null && r.getUsuari().getEmail() != null && r.getUsuari().getEmail().toLowerCase().contains(email.trim().toLowerCase())))
+                .filter(r -> matricula == null || matricula.isBlank()
+                || (r.getVehicle() != null && r.getVehicle().getMatricula() != null && r.getVehicle().getMatricula().toLowerCase().contains(matricula.trim().toLowerCase())))
+                .filter(r -> dataInici == null || dataInici.isBlank()
+                || (r.getDataInici() != null && r.getDataInici().toLocalDate().toString().equals(dataInici.trim())))
+                .toList();
+    }
+
+    /**
+     * Confirma el lliurament del vehicle al client, guarda les fotos de
+     * desperfectes (si n'hi ha) i actualitza l'estat de la reserva a Lliurada i
+     * del vehicle a Lliurat.
+     */
+    @Transactional
+    public void confirmarLliuramentVehicle(Integer reservaId,
+            LocalDateTime dataHoraLliurament,
+            String descripcioLliurament,
+            org.springframework.web.multipart.MultipartFile[] fotos) throws java.io.IOException {
+
+        Reserva reserva = getReservaById(reservaId);
+        if (reserva == null) {
+            throw new IllegalArgumentException("La reserva no existeix.");
         }
+
+        if (reserva.getEstat() != EstatReserva.Confirmada) {
+            throw new IllegalArgumentException("Només es poden lliurar reserves en estat Confirmada.");
+        }
+
+        if (dataHoraLliurament == null) {
+            throw new IllegalArgumentException("La data i hora de lliurament són obligatòries.");
+        }
+
+        if (descripcioLliurament == null || descripcioLliurament.isBlank()) {
+            throw new IllegalArgumentException("Cal introduir una descripció de l'estat del vehicle.");
+        }
+
+        Vehicle vehicle = reserva.getVehicle();
+        if (vehicle == null || !Boolean.TRUE.equals(vehicle.getActiu())) {
+            throw new IllegalArgumentException("El vehicle associat no està actiu.");
+        }
+
+        // Guardar les fotos si l'agent n'ha adjuntat
+        if (fotos != null && fotos.length > 0) {
+            java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads/lliuraments");
+            if (!java.nio.file.Files.exists(uploadDir)) {
+                java.nio.file.Files.createDirectories(uploadDir);
+            }
+
+            for (org.springframework.web.multipart.MultipartFile foto : fotos) {
+                if (foto != null && !foto.isEmpty()) {
+                    String originalName = foto.getOriginalFilename() != null ? foto.getOriginalFilename() : "foto.jpg";
+                    String safeName = UUID.randomUUID() + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+                    java.nio.file.Path filePath = uploadDir.resolve(safeName);
+                    java.nio.file.Files.copy(foto.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                    reserva.getFotosLliurament().add("/uploads/lliuraments/" + safeName);
+                }
+            }
+        }
+
+        // Actualitzar dades de lliurament i estats
+        reserva.setDataHoraLliurament(dataHoraLliurament);
+        reserva.setDescripcioLliurament(descripcioLliurament.trim());
+        reserva.setEstat(EstatReserva.Lliurada);
+
+        vehicle.setEstatVehicle(EstatVehicle.Lliurat);
+        vehicleRepo.save(vehicle);
+        reservaRepo.save(reserva);
+    }
 }

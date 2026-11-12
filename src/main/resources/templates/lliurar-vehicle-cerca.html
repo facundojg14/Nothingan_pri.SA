@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lliurar Vehicle - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- BARRA LATERAL DE NAVEGACIÓN -->
+            <aside class="sidebar">
+                <div class="logo-container">
+                    <a th:href="@{/web/usuaris/login}">
+                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
+                    </a>
+                </div>
+
+                <nav class="nav-menu">
+                    <a th:href="@{/web/reserves/all}">• Reserves</a>
+                    <a th:href="@{/web/reserves/lliurar}" class="active">• Lliurar vehicle</a>
+                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
+                    <a th:href="@{/web/usuaris/all}">• Clients</a>
+                </nav>
+            </aside>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <main class="content">
+
+                <header class="top-header">
+                    <h2>Lliurament de vehicles</h2>
+
+                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                        </a>
+                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                            Tancar Sessió
+                        </a>
+                    </div>
+                </header>
+
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <div class="top-bar">
+                    <h3>Cerca la reserva per lliurar</h3>
+                    <a th:href="@{/web/reserves/all}" class="btn btn-cancel">Tornar a reserves</a>
+                </div>
+
+                <!-- FORMULARIO DE FILTROS -->
+                <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
+                    <form th:action="@{/web/reserves/lliurar}" method="get">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="codi">Codi Reserva</label>
+                                <input type="text" id="codi" name="codi" placeholder="Ex: RES-1234ABCD" th:value="${codi}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dni">DNI Client</label>
+                                <input type="text" id="dni" name="dni" placeholder="Introdueix el DNI" th:value="${dni}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email Client</label>
+                                <input type="text" id="email" name="email" placeholder="Introdueix l'email" th:value="${email}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="matricula">Matrícula Vehicle</label>
+                                <input type="text" id="matricula" name="matricula" placeholder="Ex: 1234ABC" th:value="${matricula}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataInici">Data d'inici</label>
+                                <input type="date" id="dataInici" name="dataInici" th:value="${dataInici}">
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button type="submit" class="btn btn-filter">Cercar reserva</button>
+                            <a th:href="@{/web/reserves/lliurar}" class="btn btn-cancel">Netejar filtres</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TABLA DE RESULTADOS -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Codi</th>
+                                <th>Client (DNI)</th>
+                                <th>Vehicle</th>
+                                <th>Inici</th>
+                                <th>Fi</th>
+                                <th>Estat</th>
+                                <th>Acció</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${reserves}">
+                                <td th:text="${r.codiReserva}">RES-001</td>
+                                <td>
+                                    <span th:text="${r.usuari != null ? r.usuari.nom + ' (' + r.usuari.dni + ')' : '-'}">Client</span>
+                                </td>
+                                <td>
+                                    <span th:text="${r.vehicle != null ? r.vehicle.marca + ' ' + r.vehicle.model + ' - ' + r.vehicle.matricula : '-'}">Vehicle</span>
+                                </td>
+                                <td th:text="${#temporals.format(r.dataInici, 'dd/MM/yyyy HH:mm')}">12/11/2026 10:00</td>
+                                <td th:text="${#temporals.format(r.dataFi, 'dd/MM/yyyy HH:mm')}">15/11/2026 10:00</td>
+                                <td>
+                                    <span class="badge badge-validat" th:text="${r.estat}">Confirmada</span>
+                                </td>
+                                <td class="actions-cell">
+                                    <a th:href="@{/web/reserves/lliurar/{id}(id=${r.id})}" class="btn btn-add" style="padding: 6px 12px; font-size: 0.85rem;">
+                                        Seleccionar i Lliurar
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(reserves)}">
+                                <td colspan="7" class="empty-state">
+                                    No s'han trobat reserves confirmades pendents de lliurament amb aquests filtres.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

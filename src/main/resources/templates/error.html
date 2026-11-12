@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+ Pàgina d'error general (RN21).
+ Spring Boot la mostra automàticament quan hi ha un error que no s'ha controlat
+ amb un try/catch (pàgina no trobada, sense permís, error inesperat...).
+ El missatge es mostra amb el mateix format que la resta de pàgines (alert-error).
+ L'error tècnic no es mostra a l'usuari: queda guardat al fitxer de logs (RN04).
+-->
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body class="bg-light">
+
+        <div class="login-wrapper">
+            <div class="login-card">
+                <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="login-logo">
+
+                <!-- Missatge d'error segons el codi (status) que envia Spring Boot -->
+                <div class="alert-error" th:switch="${status}">
+                    <span th:case="404">No hem trobat aquesta pàgina. Revisa l'adreça o torna a la pàgina principal.</span>
+                    <span th:case="403">No tens permís per veure aquesta pàgina. Inicia sessió amb un usuari que tingui accés.</span>
+                    <span th:case="400">Les dades enviades no són correctes. Revisa que les dates i els números tinguin el format correcte.</span>
+                    <span th:case="*">S'ha produït un error inesperat. Torna-ho a provar i, si continua, contacta amb l'administrador.</span>
+                </div>
+
+                <p style="color: #94a3b8; font-size: 0.85rem;">
+                    Codi d'error: <span th:text="${status}">500</span>
+                </p>
+
+                <!-- Botons per sortir de la pàgina d'error -->
+                <div class="button-group" style="justify-content: center; margin-top: 20px;">
+                    <a href="javascript:history.back()" class="btn btn-cancel">Tornar enrere</a>
+                    <a th:href="@{/}" class="btn btn-filter">Pàgina principal</a>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>

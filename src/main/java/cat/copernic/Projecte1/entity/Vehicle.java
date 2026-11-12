@@ -9,20 +9,24 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
- * @author facu
+ * Entitat que representa un vehicle de la flota de lloguer.
  */
 @Entity
-
 public class Vehicle {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    
+
     @Column(name = "Matricula", nullable = false, unique = true, length = 15)
     private String matricula;
 
@@ -39,8 +43,14 @@ public class Vehicle {
     @Column(name = "Categoria", nullable = false)
     private Categoria categoria;
 
-    @Column(name = "Preu_Dia", nullable = false, precision = 5, scale = 2)
+    @Column(name = "Preu_Dia", nullable = false, precision = 7, scale = 2)
     private BigDecimal preuDia;
+
+    @Column(name = "Preu_Hora", nullable = false, precision = 7, scale = 2)
+    private BigDecimal preuHora;
+
+    @Column(name = "Fianca_Estandar", nullable = false, precision = 10, scale = 2)
+    private BigDecimal fiancaEstandar;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "Estat_Vehicle", nullable = false)
@@ -52,10 +62,19 @@ public class Vehicle {
     @Column(name = "Foto_vehicle", length = 255)
     private String fotoVehicle;
 
+    // Reserves d'aquest vehicle (relació 1:N amb Reserva).
+    // És el costat invers de Reserva.vehicle: no crea cap columna nova a la BD.
+    // Sense cascade (donar de baixa un vehicle no ha d'esborrar les reserves)
+    // i LAZY per defecte (només es carreguen quan es fa getReserves()).
+    @OneToMany(mappedBy = "vehicle")
+    private List<Reserva> reserves = new ArrayList<>();
+
     public Vehicle() {
     }
 
-    public Vehicle(long id, String matricula, String marca, String model, int anyFabricacio, Categoria categoria, BigDecimal preuDia, String fotoVehicle) {
+    public Vehicle(long id, String matricula, String marca, String model, int anyFabricacio,
+            Categoria categoria, BigDecimal preuDia, BigDecimal preuHora,
+            BigDecimal fiancaEstandar, String fotoVehicle) {
         this.id = id;
         this.matricula = matricula;
         this.marca = marca;
@@ -63,9 +82,42 @@ public class Vehicle {
         this.anyFabricacio = anyFabricacio;
         this.categoria = categoria;
         this.preuDia = preuDia;
+        this.preuHora = (preuHora != null && preuHora.compareTo(BigDecimal.ZERO) > 0)
+                ? preuHora
+                : calcularPreuHoraPerDefecte(preuDia);
+        this.fiancaEstandar = fiancaEstandar;
         this.fotoVehicle = fotoVehicle;
     }
 
+    /**
+     * Garanteix la coherència de tarifes i estats abans de persistir o
+     * actualitzar a BD.
+     */
+    @PrePersist
+    @PreUpdate
+    private void prepararDadesAbansDeDesar() {
+        if (this.matricula != null) {
+            this.matricula = this.matricula.trim().toUpperCase();
+        }
+        if (this.preuDia != null && (this.preuHora == null || this.preuHora.compareTo(BigDecimal.ZERO) <= 0)) {
+            this.preuHora = calcularPreuHoraPerDefecte(this.preuDia);
+        }
+        if (this.fiancaEstandar == null) {
+            this.fiancaEstandar = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        if (this.actiu == null) {
+            this.actiu = true;
+        }
+    }
+
+    private BigDecimal calcularPreuHoraPerDefecte(BigDecimal preuDia) {
+        if (preuDia == null || preuDia.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return preuDia.divide(BigDecimal.valueOf(24), 2, RoundingMode.HALF_UP);
+    }
+
+    // --- GETTERS Y SETTERS ---
     public long getId() {
         return id;
     }
@@ -120,6 +172,25 @@ public class Vehicle {
 
     public void setPreuDia(BigDecimal preuDia) {
         this.preuDia = preuDia;
+        if (preuDia != null && (this.preuHora == null || this.preuHora.compareTo(BigDecimal.ZERO) == 0)) {
+            this.preuHora = calcularPreuHoraPerDefecte(preuDia);
+        }
+    }
+
+    public BigDecimal getPreuHora() {
+        return preuHora;
+    }
+
+    public void setPreuHora(BigDecimal preuHora) {
+        this.preuHora = preuHora;
+    }
+
+    public BigDecimal getFiancaEstandar() {
+        return fiancaEstandar;
+    }
+
+    public void setFiancaEstandar(BigDecimal fiancaEstandar) {
+        this.fiancaEstandar = fiancaEstandar;
     }
 
     public EstatVehicle getEstatVehicle() {
@@ -145,5 +216,16 @@ public class Vehicle {
     public void setFotoVehicle(String fotoVehicle) {
         this.fotoVehicle = fotoVehicle;
     }
-    
+
+    /**
+     * Retorna les reserves d'aquest vehicle.
+     *
+     * No hi ha setter: les reserves s'assignen des de Reserva amb
+     * setVehicle(), que és el costat propietari de la relació.
+     *
+     * @return llista de reserves del vehicle
+     */
+    public List<Reserva> getReserves() {
+        return reserves;
+    }
 }

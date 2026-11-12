@@ -4,6 +4,7 @@ import cat.copernic.Projecte1.entity.Enum.rol;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
+import cat.copernic.Projecte1.logic.FitxersLogic;
 import cat.copernic.Projecte1.logic.ReservaLogic;
 import cat.copernic.Projecte1.logic.UsuarisLogic;
 import cat.copernic.Projecte1.logic.VehicleLogic;
@@ -33,6 +34,9 @@ public class UsuarisController {
 
     @Autowired
     private VehicleLogic vehicleLogic;
+
+    @Autowired
+    private FitxersLogic fitxersLogic;
 
     // --- LLISTAT GENERAL I FILTRATGE MÚLTIPLE (RF26 / CERCA EMAIL) ---
     @GetMapping("/all")
@@ -107,8 +111,13 @@ public class UsuarisController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteById(@PathVariable("id") Long usuariId) {
-        usuarisService.deleteUsuariById(usuariId);
+    public String deleteById(@PathVariable("id") Long usuariId, RedirectAttributes redirectAttributes) {
+        try {
+            usuarisService.deleteUsuariById(usuariId);
+            redirectAttributes.addFlashAttribute("missatge", "Client esborrat correctament.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/web/usuaris/all";
     }
 
@@ -116,35 +125,6 @@ public class UsuarisController {
     @GetMapping("/login")
     public String mostrarLogin() {
         return "login";
-    }
-
-    @PostMapping("/login")
-    public String processarLogin(@RequestParam("email") String email, HttpSession session,
-            @RequestParam("password") String password,
-            Model model) {
-        try {
-            Usuaris usuari = usuarisService.autenticarIValidarEstat(email, password);
-            session.setAttribute("usuariLoguejat", usuari);
-
-            rol rolUsuari = (usuari.getRol() != null)
-                    ? rol.valueOf(usuari.getRol().toString())
-                    : rol.CLIENT;
-
-            if (rolUsuari == rol.CLIENT) {
-                return "redirect:/web/usuaris/client/home";
-            } else if (rolUsuari == rol.ADMIN) {
-                return "redirect:/web/admin/usuaris";
-            } else {
-                return "redirect:/web/reserves/all";
-            }
-
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "login";
-        } catch (IllegalStateException e) {
-            model.addAttribute("alertaPendent", e.getMessage());
-            return "login";
-        }
     }
 
     // Tancar sessió
@@ -167,6 +147,11 @@ public class UsuarisController {
             @RequestParam("fitxerLlicencia") MultipartFile fitxerLlicencia,
             Model model) {
         try {
+            // Guardem les imatges del DNI i de la llicència a la carpeta uploads
+            String prefix = usuari.getDni() != null ? usuari.getDni() : "client";
+            usuari.setImatgedni(fitxersLogic.guardarFitxer(fitxerDni, "dni_" + prefix));
+            usuari.setImatgeLlicencia(fitxersLogic.guardarFitxer(fitxerLlicencia, "llicencia_" + prefix));
+
             usuarisService.registrarClientWeb(usuari);
             return "redirect:/web/usuaris/login?registrePendent=true";
 
@@ -186,8 +171,22 @@ public class UsuarisController {
     }
 
     @PostMapping("/validar/{id}")
-    public String validarRegistre(@PathVariable("id") Long id, @RequestParam("estat") String nouEstat) {
-        usuarisService.canviarEstatRegistre(id, nouEstat);
+    public String validarRegistre(@PathVariable("id") Long id, @RequestParam("estat") String nouEstat,
+            RedirectAttributes redirectAttributes) {
+        // Només acceptem els dos estats possibles
+        if (!"VALIDAT".equals(nouEstat) && !"REBUTJAT".equals(nouEstat)) {
+            redirectAttributes.addFlashAttribute("error", "Estat no vàlid.");
+            return "redirect:/web/usuaris/pendents";
+        }
+
+        try {
+            usuarisService.canviarEstatRegistre(id, nouEstat);
+            redirectAttributes.addFlashAttribute("missatge", "VALIDAT".equals(nouEstat)
+                    ? "Registre validat. L'usuari ja és client i pot iniciar sessió."
+                    : "Registre rebutjat.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/web/usuaris/pendents";
     }
 // ==========================================

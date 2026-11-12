@@ -1,5 +1,7 @@
 package cat.copernic.Projecte1.logic;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -9,6 +11,9 @@ import java.math.BigDecimal;
 
 @Service
 public class EmailService {
+
+    // Logger per registrar els enviaments i errors al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
@@ -20,6 +25,7 @@ public class EmailService {
     public void enviarEmailAnullacio(String toEmail, String nomClient, String codiReserva, 
                                       double percentatgeRetorn, BigDecimal importRetornat, String motiu) {
         if (mailSender == null || toEmail == null || toEmail.isBlank()) {
+            logger.warn("No s'ha enviat el correu de la reserva {}: falta el servidor de correu o l'email", codiReserva);
             return;
         }
 
@@ -50,8 +56,9 @@ public class EmailService {
 
         try {
             mailSender.send(message);
+            logger.info("Correu d'anul·lació enviat a {} (reserva {})", toEmail, codiReserva);
         } catch (Exception e) {
-            System.err.println("Error enviant correu d'anul·lació: " + e.getMessage());
+            logger.error("Error enviant correu d'anul·lació a {}: {}", toEmail, e.getMessage());
         }
     }
 }

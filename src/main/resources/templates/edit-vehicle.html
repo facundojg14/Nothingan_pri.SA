@@ -20,6 +20,7 @@
 
                 <nav class="nav-menu">
                     <a th:href="@{/web/reserves/all}">• Reserves</a>
+                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
                     <a th:href="@{/web/vehicles/all}" class="active">• Vehicles</a>
                     <a th:href="@{/web/usuaris/all}">• Clients</a>
                 </nav>
@@ -28,7 +29,6 @@
             <!-- CONTENIDO PRINCIPAL -->
             <main class="content">
 
-                <!-- CABECERA -->
                 <!-- Capçalera superior per a Agents (Perfil i Logout) -->
                 <header class="top-header">
                     <h2>Gestió de vehicles</h2>
@@ -61,20 +61,10 @@
                 <!-- FORMULARIO DE EDICIÓN Y CREACIÓN -->
                 <div class="table-card" style="padding: 24px;">
 
-                    <!-- 
-                      th:action="@{/web/vehicles/save}": Destino HTTP POST.
-                      th:object="${vehicle}": Vincula el formulario completo al objeto Java Vehicle recibido del controller.
-                    -->
                     <form th:action="@{/web/vehicles/save}"
                           th:object="${vehicle}"
                           method="post">
 
-                        <!-- 
-                          Campo oculto ID: 
-                          th:field="*{id}" asigna la propiedad 'id' de 'vehicle'.
-                          Si el ID es 0 o nulo -> Spring lo tratará como un alta (INSERT).
-                          Si tiene un valor > 0 -> Spring lo tratará como una modificación (UPDATE).
-                        -->
                         <input type="hidden" th:field="*{id}" />
 
                         <div class="form-grid">
@@ -82,7 +72,6 @@
                             <!-- Campo: Matrícula -->
                             <div class="form-group">
                                 <label for="matricula">Matrícula <span style="color: red;">*</span></label>
-                                <!-- th:field="*{matricula}": Vincula bidireccionalmente el valor de la propiedad matricula -->
                                 <input type="text"
                                        id="matricula"
                                        th:field="*{matricula}"
@@ -126,7 +115,6 @@
                                 <label for="categoria">Categoria <span style="color: red;">*</span></label>
                                 <select id="categoria" th:field="*{categoria}" required>
                                     <option value="" selected disabled>Selecciona una categoria...</option>
-                                    <!-- Carga dinámicamente las opciones del Enum Categoria -->
                                     <option th:each="cat : ${T(cat.copernic.Projecte1.entity.Enum.Categoria).values()}" 
                                             th:value="${cat}" 
                                             th:text="${cat}">SUV</option>
@@ -145,11 +133,34 @@
                                        required>
                             </div>
 
+                            <!-- Campo: Precio por Hora (autocalculat preuDia / 24) -->
+                            <div class="form-group">
+                                <label for="preuHora">Preu per Hora (€) <span style="color: red;">*</span></label>
+                                <input type="number"
+                                       id="preuHora"
+                                       th:field="*{preuHora}"
+                                       step="0.01"
+                                       min="0"
+                                       max="999.99"
+                                       required>
+                            </div>
+
+                            <!-- Campo: Fianza Estándar -->
+                            <div class="form-group">
+                                <label for="fiancaEstandar">Fiança Estàndard (€) <span style="color: red;">*</span></label>
+                                <input type="number"
+                                       id="fiancaEstandar"
+                                       th:field="*{fiancaEstandar}"
+                                       step="0.01"
+                                       min="0"
+                                       max="9999.99"
+                                       required>
+                            </div>
+
                             <!-- Desplegable Estado del Vehículo -->
                             <div class="form-group">
                                 <label for="estatVehicle">Estat del Vehicle <span style="color: red;">*</span></label>
                                 <select id="estatVehicle" th:field="*{estatVehicle}" required>
-                                    <!-- Carga las opciones del Enum EstatVehicle (Disponible, Taller, etc.) -->
                                     <option th:each="estat : ${T(cat.copernic.Projecte1.entity.Enum.EstatVehicle).values()}" 
                                             th:value="${estat}" 
                                             th:text="${estat}">Disponible</option>
@@ -169,7 +180,6 @@
                             <!-- Checkbox: Activo -->
                             <div class="form-group" style="grid-column: span 2;">
                                 <label for="actiu" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <!-- th:field en un checkbox mapea el valor boolean (true/false) -->
                                     <input type="checkbox"
                                            id="actiu"
                                            th:field="*{actiu}"
@@ -180,8 +190,8 @@
 
                         </div>
 
-                        <!-- Botones Submit y Cancelar -->
-                        <div class="button-group" style="margin-top: 24px;">
+                        <!-- Botones Submit, Cancelar y Eliminar -->
+                        <div class="button-group" style="margin-top: 24px; display: flex; gap: 10px; align-items: center;">
                             <button type="submit" class="btn btn-filter">
                                 Desar vehicle
                             </button>
@@ -189,6 +199,15 @@
                             <a th:href="@{/web/vehicles/all}"
                                class="btn btn-cancel">
                                 Cancel·lar
+                            </a>
+
+                            <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
+                            <a th:if="${vehicle.id > 0}"
+                               th:href="@{/web/vehicles/eliminar/{id}(id=${vehicle.id})}"
+                               class="btn"
+                               style="background-color: #d9534f; color: white; margin-left: auto; text-decoration: none;"
+                               onclick="return confirm('ATENCIÓ: Esborraràs aquest vehicle definitivament de la base de dades. Només es permet si mai ha tingut cap reserva. Continuar?');">
+                                Eliminar vehicle
                             </a>
                         </div>
 
@@ -198,6 +217,18 @@
 
             </main>
         </div>
+
+        <script>
+            document.getElementById('preuDia').addEventListener('input', function () {
+                const preuDia = parseFloat(this.value);
+                const preuHoraInput = document.getElementById('preuHora');
+                if (!isNaN(preuDia) && preuDia >= 0) {
+                    preuHoraInput.value = (preuDia / 24).toFixed(2);
+                } else {
+                    preuHoraInput.value = '0.00';
+                }
+            });
+        </script>
 
     </body>
 </html>

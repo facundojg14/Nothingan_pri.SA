@@ -1,7 +1,9 @@
 package cat.copernic.Projecte1.entity;
 
 import cat.copernic.Projecte1.entity.Enum.EstatReserva;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,6 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /*
@@ -71,6 +75,19 @@ public class Reserva {
     @Column(length = 1000)
     private String observacions;
 
+    // --- NUEVOS CAMPOS PARA EL LLIURAMENT DEL VEHICLE ---
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Column(name = "data_hora_lliurament")
+    private LocalDateTime dataHoraLliurament;
+
+    @Column(name = "descripcio_lliurament", length = 1000)
+    private String descripcioLliurament;
+
+    @ElementCollection
+    @CollectionTable(name = "reserva_fotos_lliurament", joinColumns = @JoinColumn(name = "reserva_id"))
+    @Column(name = "ruta_foto")
+    private List<String> fotosLliurament = new ArrayList<>();
+
     // Vehículo y usuario asociados a la reserva.
     @ManyToOne
     @JoinColumn(name = "vehicle_id", nullable = false)
@@ -84,7 +101,7 @@ public class Reserva {
     public Reserva() {
     }
 
-    // Métodos para consultar y modificar los atributos de la reserva.
+    // Getters y Setters
     public Integer getId() {
         return id;
     }
@@ -189,6 +206,30 @@ public class Reserva {
         this.observacions = observacions;
     }
 
+    public LocalDateTime getDataHoraLliurament() {
+        return dataHoraLliurament;
+    }
+
+    public void setDataHoraLliurament(LocalDateTime dataHoraLliurament) {
+        this.dataHoraLliurament = dataHoraLliurament;
+    }
+
+    public String getDescripcioLliurament() {
+        return descripcioLliurament;
+    }
+
+    public void setDescripcioLliurament(String descripcioLliurament) {
+        this.descripcioLliurament = descripcioLliurament;
+    }
+
+    public List<String> getFotosLliurament() {
+        return fotosLliurament;
+    }
+
+    public void setFotosLliurament(List<String> fotosLliurament) {
+        this.fotosLliurament = fotosLliurament;
+    }
+
     public Vehicle getVehicle() {
         return vehicle;
     }
@@ -203,5 +244,40 @@ public class Reserva {
 
     public void setUsuari(Usuaris usuari) {
         this.usuari = usuari;
+    }
+
+    // --- CAMPS PER AL RETORN I LIQUIDACIÓ DE FIANÇA ---
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Column(name = "data_hora_retorn")
+    private LocalDateTime dataHoraRetorn;
+
+    @Column(name = "desperfectes_imputables")
+    private Boolean desperfectesImputables = false;
+
+    @Column(name = "carrec_extra_pendent", precision = 10, scale = 2)
+    private BigDecimal carrecExtraPendent = BigDecimal.ZERO;
+
+    public LocalDateTime getDataHoraRetorn() {
+        return dataHoraRetorn;
+    }
+
+    public void setDataHoraRetorn(LocalDateTime dataHoraRetorn) {
+        this.dataHoraRetorn = dataHoraRetorn;
+    }
+
+    public Boolean getDesperfectesImputables() {
+        return desperfectesImputables;
+    }
+
+    public void setDesperfectesImputables(Boolean desperfectesImputables) {
+        this.desperfectesImputables = desperfectesImputables;
+    }
+
+    public BigDecimal getCarrecExtraPendent() {
+        return carrecExtraPendent;
+    }
+
+    public void setCarrecExtraPendent(BigDecimal carrecExtraPendent) {
+        this.carrecExtraPendent = carrecExtraPendent;
     }
 }
