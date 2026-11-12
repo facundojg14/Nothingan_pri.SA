@@ -9,10 +9,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entitat que representa un vehicle de la flota de lloguer.
@@ -58,6 +61,13 @@ public class Vehicle {
 
     @Column(name = "Foto_vehicle", length = 255)
     private String fotoVehicle;
+
+    // Reserves d'aquest vehicle (relació 1:N amb Reserva).
+    // És el costat invers de Reserva.vehicle: no crea cap columna nova a la BD.
+    // Sense cascade (donar de baixa un vehicle no ha d'esborrar les reserves)
+    // i LAZY per defecte (només es carreguen quan es fa getReserves()).
+    @OneToMany(mappedBy = "vehicle")
+    private List<Reserva> reserves = new ArrayList<>();
 
     public Vehicle() {
     }
@@ -205,5 +215,17 @@ public class Vehicle {
 
     public void setFotoVehicle(String fotoVehicle) {
         this.fotoVehicle = fotoVehicle;
+    }
+
+    /**
+     * Retorna les reserves d'aquest vehicle.
+     *
+     * No hi ha setter: les reserves s'assignen des de Reserva amb
+     * setVehicle(), que és el costat propietari de la relació.
+     *
+     * @return llista de reserves del vehicle
+     */
+    public List<Reserva> getReserves() {
+        return reserves;
     }
 }
