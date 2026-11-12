@@ -31,22 +31,20 @@
 </head>
 <body class="bg-light">
 
-<!-- Capçalera superior per a Agents (Perfil i Logout) -->
-<header class="top-header">
-    <h2>Gestió de reserves</h2>
-
-    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
-        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+<!-- Capçalera superior correcta per a Clients -->
+    <header class="home-header">
+        <a th:href="@{/web/usuaris/client/home}" class="home-logo">
+            <img th:src="@{/img/logo.png}" alt="Nothingan Pri">
         </a>
 
-        <!-- Botó per Tancar Sessió -->
-        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-            Tancar Sessió
-        </a>
-    </div>
-</header>
+        <nav class="home-nav">
+            <a th:href="@{/web/usuaris/client/reserves}">Les meves reserves</a>
+            <a th:href="@{/web/usuaris/client/perfil}" class="user-nav-item">
+                <span th:text="${usuariLoguejat != null ? usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+            </a>
+            <a th:href="@{/web/usuaris/logout}" style="color: #dc2626; font-weight: 600; text-decoration: none; margin-left: 10px;">Tancar sessió</a>
+        </nav>
+    </header>
 
     <main class="page-container">
         <div class="page-header-title">
