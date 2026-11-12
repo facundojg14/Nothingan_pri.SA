@@ -14,6 +14,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
+/**
+ * Entitat que representa un usuari de l'aplicació: client, agent o
+ * administrador (segons el camp rol).
+ *
+ * Guarda les dades personals, el document d'identitat, la llicència de
+ * conduir, l'estat del registre (PENDENT, VALIDAT, REBUTJAT o BAIXA) i si el
+ * client és Premium. Un usuari pot tenir moltes reserves (relació 1:N).
+ *
+ * @author Equip4
+ */
 @Entity
 public class Usuaris {
 
@@ -233,8 +243,8 @@ public class Usuaris {
     /**
      * Obté la reputació del client a partir del seu estat Premium.
      *
-     * @return {@link ReputacioClient#PREMIUM} si és client premium,
-     * {@link ReputacioClient#NORMAL} en cas contrari.
+     * @return {@link cat.copernic.Projecte1.entity.Enum.ReputacioClient#PREMIUM} si és client premium,
+     * {@link cat.copernic.Projecte1.entity.Enum.ReputacioClient#NORMAL} en cas contrari.
      */
     public cat.copernic.Projecte1.entity.Enum.ReputacioClient getReputacio() {
         return Boolean.TRUE.equals(this.premium)

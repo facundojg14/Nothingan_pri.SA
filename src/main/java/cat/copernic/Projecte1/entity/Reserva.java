@@ -18,9 +18,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
-/*
- * Entidad que representa una reserva.
- * Guarda sus fechas, importes, estado y los datos del vehículo y usuario asociados.
+/**
+ * Entitat que representa una reserva d'un vehicle per part d'un client.
+ *
+ * Guarda les dates, els imports (lloguer, fiança i liquidació final), l'estat
+ * de la reserva i les dades del lliurament i del retorn del vehicle.
+ * Cada reserva pertany a un usuari i a un vehicle (relació N:1).
+ *
+ * @author Equip4
  */
 @Entity
 public class Reserva {

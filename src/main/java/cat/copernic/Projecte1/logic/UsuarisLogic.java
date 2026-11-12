@@ -184,7 +184,11 @@ public class UsuarisLogic {
     }
 
     /**
-     * RF82: Aprovar o Rebutjar un registre per l'administrador/agent.
+     * Valida o rebutja la sol·licitud de registre d'un client (RF82).
+     *
+     * @param idUsuari identificador de l'usuari pendent
+     * @param nouEstat nou estat: "VALIDAT" o "REBUTJAT"
+     * @throws IllegalArgumentException si l'usuari no existeix
      */
     public void canviarEstatRegistre(Long idUsuari, String nouEstat) {
         Usuaris usuari = usuariRepo.findById(idUsuari)
@@ -250,6 +254,18 @@ public class UsuarisLogic {
         return usuariRepo.findByDniContainingIgnoreCase(dni);
     }
 
+    /**
+     * Filtra els clients per diversos criteris alhora (RF26).
+     * Els criteris buits no es tenen en compte.
+     *
+     * @param email part de l'email
+     * @param nacionalitat part de la nacionalitat
+     * @param poblacio part de la població
+     * @param dni part del DNI
+     * @param nom part del nom
+     * @param telefon part del telèfon
+     * @return usuaris que compleixen tots els criteris indicats
+     */
     public List<Usuaris> filtrarClients(String email, String nacionalitat, String poblacio, String dni, String nom, String telefon) {
         return usuariRepo.findClientByFiltreMultiple(
                 cleanParam(email),
@@ -266,9 +282,18 @@ public class UsuarisLogic {
         return (param != null && !param.trim().isEmpty()) ? param.trim() : null;
     }
 
-    //METODO BIEN DOCUMENTADO
-    // Usuaris usuaris trae el objeto de usuaris de la entity usuaris
-    //throw illegalargumentexception indica que este metodo puede devolver excepciones osea lo de los errores
+    /**
+     * Valida les dades d'un usuari abans de guardar-lo (RN20).
+     *
+     * Comprova que el nom no estigui buit, que el DNI tingui 8 números i una
+     * lletra, que el telèfon tingui 9 dígits i que l'email, el DNI i el
+     * telèfon no els tingui ja un altre usuari.
+     *
+     * @param usuari usuari a validar (si té id, és una modificació i no es
+     * compara amb ell mateix)
+     * @throws IllegalArgumentException amb el missatge de l'error si alguna
+     * dada no és vàlida o ja existeix
+     */
     public void validarCamposUnicos(Usuaris usuari) throws IllegalArgumentException {
 
         // 1. Validar si l'Email ja existeix

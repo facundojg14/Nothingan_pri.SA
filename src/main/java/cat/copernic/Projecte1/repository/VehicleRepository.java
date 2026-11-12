@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 /**
  * REPOSITORIO DE VEHÍCULOS (CAPA DE ACCESO A DATOS - DAO)
  *
- * JpaRepository<Vehicle, Long>: Spring Data JPA genera automáticamente las
+ * {@code JpaRepository<Vehicle, Long>}: Spring Data JPA genera automáticamente las
  * consultas SQL para operaciones CRUD sobre la entidad Vehicle (cuyo ID es tipo
  * Long).
  */

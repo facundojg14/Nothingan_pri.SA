@@ -27,6 +27,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador web del panell de l'administrador.
+ *
+ * Gestiona els agents (RF10-RF15), els clients, els vehicles, les reserves,
+ * l'informe de reserves per client (RF91) i el perfil de l'administrador.
+ *
+ * @author Equip4
+ */
 @Controller
 @RequestMapping("/web/admin")
 public class AdminController {
