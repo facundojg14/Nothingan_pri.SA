@@ -1,10 +1,4 @@
 <!DOCTYPE html>
-<!--
- Página de gestión de reservas del panel de agente.
- Permite consultar y filtrar reservas por DNI, email, código,
- matrícula y fecha, visualizar sus detalles y anularlas cuando corresponda.
- También permite acceder al formulario para crear nuevas reservas.
--->
 <html lang="ca" xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
@@ -27,6 +21,7 @@
 
                 <nav class="nav-menu">
                     <a th:href="@{/web/reserves/all}" class="active">• Reserves</a>
+                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
                     <a th:href="@{/web/vehicles/all}">• Vehicles</a>
                     <a th:href="@{/web/usuaris/all}">• Clients</a>
                 </nav>
@@ -35,18 +30,15 @@
             <!-- Contenido principal de la página. -->
             <main class="content">
 
-                <!-- Capçalera superior amb Perfil i Logout (sense cercle blau) -->
                 <!-- Capçalera superior per a Agents (Perfil i Logout) -->
                 <header class="top-header">
                     <h2>Gestió de reserves</h2>
 
                     <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
                         <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
                             <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
                         </a>
 
-                        <!-- Botó per Tancar Sessió -->
                         <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
                             Tancar Sessió
                         </a>
@@ -57,12 +49,17 @@
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
-                <!-- Título y botón para crear una reserva. -->
+                <!-- Título y botones de acción superior. -->
                 <div class="top-bar">
                     <h3>Llistat de reserves</h3>
-                    <a th:href="@{/web/reserves/new}" class="btn btn-add">
-                        + Nova reserva
-                    </a>
+                    <div style="display: flex; gap: 10px;">
+                        <a th:href="@{/web/reserves/lliurar}" class="btn btn-filter" style="text-decoration: none;">
+                            Lliurar vehicle
+                        </a>
+                        <a th:href="@{/web/reserves/new}" class="btn btn-add">
+                            + Nova reserva
+                        </a>
+                    </div>
                 </div>
 
                 <!-- RF42: filtros para buscar reservas. -->
@@ -172,11 +169,18 @@
                                         Veure
                                     </a>
 
+                                    <!-- Acceso directo a entregar el vehículo si está Confirmada -->
+                                    <a th:if="${r.estat != null and r.estat.name() == 'Confirmada'}"
+                                       th:href="@{/web/reserves/lliurar/{id}(id=${r.id})}"
+                                       style="color: #16a34a; font-weight: 600; margin-left: 8px; text-decoration: none;">
+                                        Lliurar
+                                    </a>
+
                                     <!-- Permite anular reservas que todavía se pueden cancelar. -->
                                     <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada'}"
                                           th:action="@{/web/reserves/cancelar/{id}(id=${r.id})}"
                                           method="post"
-                                          style="display: inline;"
+                                          style="display: inline; margin-left: 8px;"
                                           onsubmit="return confirm('Segur que vols anul·lar aquesta reserva?');">
                                         <button type="submit" class="action-link">Anul·lar</button>
                                     </form>
@@ -212,13 +216,11 @@
 
                     <div class="form-grid">
 
-                        <!-- Muestra el código de reserva. -->
                         <div class="form-group">
                             <label>Codi de reserva</label>
                             <p th:text="${reservaSeleccionada.codiReserva}"></p>
                         </div>
 
-                        <!-- Datos del cliente. -->
                         <div class="form-group">
                             <label>Client</label>
                             <p th:text="${reservaSeleccionada.usuari != null ? reservaSeleccionada.usuari.nom : '-'}"></p>
@@ -229,13 +231,11 @@
                             <p th:text="${reservaSeleccionada.usuari != null ? reservaSeleccionada.usuari.dni : '-'}"></p>
                         </div>
 
-                        <!-- Datos del vehículo. -->
                         <div class="form-group">
                             <label>Vehicle</label>
                             <p th:text="${reservaSeleccionada.vehicle != null ? reservaSeleccionada.vehicle.matricula : '-'}"></p>
                         </div>
 
-                        <!-- Fechas del alquiler. -->
                         <div class="form-group">
                             <label>Data d'inici</label>
                             <p th:text="${reservaSeleccionada.dataInici != null ? #temporals.format(reservaSeleccionada.dataInici, 'dd/MM/yyyy HH:mm') : '-'}"></p>
@@ -246,7 +246,6 @@
                             <p th:text="${reservaSeleccionada.dataFi != null ? #temporals.format(reservaSeleccionada.dataFi, 'dd/MM/yyyy HH:mm') : '-'}"></p>
                         </div>
 
-                        <!-- Importes de la reserva. -->
                         <div class="form-group">
                             <label>Preu del lloguer</label>
                             <p th:text="${reservaSeleccionada.preuLloguer != null ? #numbers.formatDecimal(reservaSeleccionada.preuLloguer, 1, 2) + ' €' : '-'}"></p>
@@ -257,25 +256,42 @@
                             <p th:text="${reservaSeleccionada.importFianca != null ? #numbers.formatDecimal(reservaSeleccionada.importFianca, 1, 2) + ' €' : '-'}"></p>
                         </div>
 
-                        <!-- Estado actual de la reserva. -->
                         <div class="form-group">
                             <label>Estat</label>
                             <p th:text="${reservaSeleccionada.estat != null ? reservaSeleccionada.estat : '-'}"></p>
                         </div>
 
-                        <!-- Observaciones registradas en la reserva. -->
                         <div class="form-group">
                             <label>Observacions</label>
                             <p th:text="${reservaSeleccionada.observacions != null and !reservaSeleccionada.observacions.isEmpty() ? reservaSeleccionada.observacions : '-'}"></p>
                         </div>
 
-                        <!-- Calcula y muestra el total del alquiler y la fianza. -->
                         <div class="form-group">
                             <label>Total de la reserva</label>
                             <p th:text="${reservaSeleccionada.preuLloguer != null and reservaSeleccionada.importFianca != null
                                ? #numbers.formatDecimal(reservaSeleccionada.preuLloguer + reservaSeleccionada.importFianca, 1, 2) + ' €'
                                : '-'}"
                                style="font-weight: bold; color: #1d4ed8;"></p>
+                        </div>
+
+                        <!-- Información de entrega si el vehículo ya ha sido entregado -->
+                        <div class="form-group" th:if="${reservaSeleccionada.dataHoraLliurament != null}">
+                            <label>Data i hora de lliurament real</label>
+                            <p th:text="${#temporals.format(reservaSeleccionada.dataHoraLliurament, 'dd/MM/yyyy HH:mm')}"></p>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;" th:if="${reservaSeleccionada.descripcioLliurament != null}">
+                            <label>Estat del vehicle en el lliurament</label>
+                            <p th:text="${reservaSeleccionada.descripcioLliurament}"></p>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;" th:if="${reservaSeleccionada.fotosLliurament != null and !#lists.isEmpty(reservaSeleccionada.fotosLliurament)}">
+                            <label>Fotografies del lliurament</label>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+                                <a th:each="foto : ${reservaSeleccionada.fotosLliurament}" th:href="@{${foto}}" target="_blank">
+                                    <img th:src="@{${foto}}" alt="Foto lliurament" style="width: 120px; height: 90px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                </a>
+                            </div>
                         </div>
 
                     </div>
@@ -285,5 +301,4 @@
         </div>
 
     </body>
-
 </html>

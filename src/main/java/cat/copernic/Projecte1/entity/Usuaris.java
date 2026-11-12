@@ -207,4 +207,25 @@ public class Usuaris {
     public void setRol(rol rol) {
         this.rol = rol;
     }
+
+    /**
+     * Obté la reputació del client a partir del seu estat Premium.
+     *
+     * @return {@link ReputacioClient#PREMIUM} si és client premium,
+     * {@link ReputacioClient#NORMAL} en cas contrari.
+     */
+    public cat.copernic.Projecte1.entity.Enum.ReputacioClient getReputacio() {
+        return Boolean.TRUE.equals(this.premium)
+                ? cat.copernic.Projecte1.entity.Enum.ReputacioClient.PREMIUM
+                : cat.copernic.Projecte1.entity.Enum.ReputacioClient.NORMAL;
+    }
+
+    /**
+     * Estableix la reputació del client i sincronitza el camp {@code premium}.
+     *
+     * @param reputacio Nivell de reputació a assignar.
+     */
+    public void setReputacio(cat.copernic.Projecte1.entity.Enum.ReputacioClient reputacio) {
+        this.premium = (reputacio == cat.copernic.Projecte1.entity.Enum.ReputacioClient.PREMIUM);
+    }
 }
