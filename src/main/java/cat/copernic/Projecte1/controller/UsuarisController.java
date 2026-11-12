@@ -111,8 +111,13 @@ public class UsuarisController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteById(@PathVariable("id") Long usuariId) {
-        usuarisService.deleteUsuariById(usuariId);
+    public String deleteById(@PathVariable("id") Long usuariId, RedirectAttributes redirectAttributes) {
+        try {
+            usuarisService.deleteUsuariById(usuariId);
+            redirectAttributes.addFlashAttribute("missatge", "Client esborrat correctament.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/web/usuaris/all";
     }
 

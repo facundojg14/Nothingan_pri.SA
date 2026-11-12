@@ -101,8 +101,13 @@ public class AdminController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deleteClientAdmin(@PathVariable("id") Long id) {
-        usuarisService.deleteUsuariById(id);
+    public String deleteClientAdmin(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+        try {
+            usuarisService.deleteUsuariById(id);
+            redirectAttributes.addFlashAttribute("missatge", "Client esborrat correctament.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/web/admin/usuaris";
     }
 
@@ -496,8 +501,12 @@ public class AdminController {
 
     @GetMapping("/agents/delete/{id}")
     public String deleteAgentAdmin(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
-        usuarisService.deleteUsuariById(id);
-        redirectAttributes.addFlashAttribute("missatge", "Agent eliminat correctament.");
+        try {
+            usuarisService.deleteUsuariById(id);
+            redirectAttributes.addFlashAttribute("missatge", "Agent eliminat correctament.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/web/admin/agents";
     }
 

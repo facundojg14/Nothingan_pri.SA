@@ -2,6 +2,7 @@ package cat.copernic.Projecte1.logic;
 
 import cat.copernic.Projecte1.entity.Enum.rol;
 import cat.copernic.Projecte1.entity.Usuaris;
+import cat.copernic.Projecte1.repository.ReservaRepository;
 import cat.copernic.Projecte1.repository.UsuarisRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +25,10 @@ public class UsuarisLogic {
 
     @Autowired
     private UsuarisRepository usuariRepo;
+
+    // Per comprovar si un usuari té reserves abans d'esborrar-lo
+    @Autowired
+    private ReservaRepository reservaRepo;
 
     // Logger per registrar registres i validacions al fitxer de logs (RN04)
     private final Logger logger = LoggerFactory.getLogger(UsuarisLogic.class);
@@ -60,7 +65,24 @@ public class UsuarisLogic {
         return ret.getId();
     }
 
+    /**
+     * Esborra un usuari (client o agent).
+     *
+     * No es pot esborrar si té reserves associades, perquè la base de dades
+     * no ho permet (clau forana) i es perdrien les dades de les reserves.
+     *
+     * @param id id de l'usuari a esborrar
+     * @throws IllegalArgumentException si l'usuari no existeix o té reserves
+     */
     public void deleteUsuariById(Long id) {
+        if (!usuariRepo.existsById(id)) {
+            throw new IllegalArgumentException("No s'ha trobat l'usuari.");
+        }
+
+        if (!reservaRepo.findByUsuariId(id).isEmpty()) {
+            throw new IllegalArgumentException("No es pot esborrar l'usuari perquè té reserves associades.");
+        }
+
         usuariRepo.deleteById(id);
         logger.info("Usuari {} esborrat", id);
     }

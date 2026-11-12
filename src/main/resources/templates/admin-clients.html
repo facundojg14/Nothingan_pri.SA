@@ -47,6 +47,10 @@
                     </div>
                 </header>
 
+                <!-- Missatges d'èxit i d'error -->
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
                 <!-- Barra de Filtre per DNI i Botó Alta -->
                 <div class="top-bar">
                     <form th:action="@{/web/admin/usuaris}" method="get" class="filter-group">
