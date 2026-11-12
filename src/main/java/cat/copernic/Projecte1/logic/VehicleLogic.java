@@ -10,6 +10,8 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,9 @@ public class VehicleLogic {
     private final VehicleRepository vehicleRepo;
     private final ReservaRepository reservaRepo;
     private final ReservaLogic reservaLogic;
+
+    // Logger per registrar les baixes de vehicles al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(VehicleLogic.class);
 
     public VehicleLogic(VehicleRepository vehicleRepo, ReservaRepository reservaRepo, ReservaLogic reservaLogic) {
         this.vehicleRepo = vehicleRepo;
@@ -45,6 +50,7 @@ public class VehicleLogic {
     @Transactional
     public boolean donarDeBaixaVehicle(Long id) {
         if (teReservesActives(id)) {
+            logger.warn("No es pot donar de baixa el vehicle {}: té reserves", id);
             return false;
         }
 
@@ -53,6 +59,7 @@ public class VehicleLogic {
             vehicle.setActiu(false);
             vehicle.setEstatVehicle(EstatVehicle.Baixa);
             vehicleRepo.save(vehicle);
+            logger.info("Vehicle {} donat de baixa", vehicle.getMatricula());
             return true;
         }
 

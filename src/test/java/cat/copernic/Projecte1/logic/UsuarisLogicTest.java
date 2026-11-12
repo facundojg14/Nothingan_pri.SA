@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -28,6 +29,10 @@ public class UsuarisLogicTest {
     
     @Mock
     private UsuarisRepository usuariRepo;
+
+    // Necessari perquè UsuarisLogic ara encripta la contrasenya amb BCrypt
+    @Mock
+    private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsuarisLogic usuarisLogic;
