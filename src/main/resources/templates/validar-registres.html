@@ -11,39 +11,14 @@
         <div class="layout">
 
             <!-- Menú Lateral Administrador -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}" style="text-decoration: none; display: inline-block;">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo" style="cursor: pointer;">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/admin/usuaris}" class="active">• Clients</a>
-                    <a th:href="@{/web/admin/vehicles}">• Vehicles</a>
-                    <a th:href="@{/web/admin/reserves}">• Reserves</a>
-                    <a th:href="@{/web/admin/informes}">• Informes</a>
-                    <a th:href="@{/web/admin/agents}">• Agents</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('pendents')}"></aside>
 
             <!-- Contingut Principal -->
             <main class="content">
 
                 <!-- Capçalera superior amb Perfil i Logout -->
-                <header class="top-header">
-                    <h2>Validar registres de clients</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <a th:href="@{/web/admin/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Validar registres de clients')}"></header>
 
                 <!-- Missatges d'èxit i d'error -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
@@ -51,7 +26,7 @@
 
                 <div class="top-bar">
                     <p style="margin: 0;">Revisa les dades i els documents de cada sol·licitud abans de validar-la (RF82).</p>
-                    <a th:href="@{/web/admin/usuaris}" class="btn btn-cancel" style="text-decoration: none;">Tornar a clients</a>
+                    <a th:href="@{/web/admin/usuaris/all}" class="btn btn-cancel" style="text-decoration: none;">Tornar a clients</a>
                 </div>
 
                 <!-- Taula de registres pendents -->
@@ -91,12 +66,12 @@
 
                                 <!-- Validar o rebutjar la sol·licitud -->
                                 <td>
-                                    <form th:action="@{/web/usuaris/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
+                                    <form th:action="@{/web/admin/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
                                         <input type="hidden" name="estat" value="VALIDAT">
                                         <button type="submit" class="btn btn-add" style="padding: 6px 12px;"
                                                 onclick="return confirm('Validar aquest registre?')">Validar</button>
                                     </form>
-                                    <form th:action="@{/web/usuaris/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
+                                    <form th:action="@{/web/admin/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
                                         <input type="hidden" name="estat" value="REBUTJAT">
                                         <button type="submit" class="btn btn-cancel" style="padding: 6px 12px;"
                                                 onclick="return confirm('Rebutjar aquest registre?')">Rebutjar</button>

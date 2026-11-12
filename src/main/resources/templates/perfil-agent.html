@@ -97,40 +97,14 @@
     <div class="layout">
 
         <!-- Menú lateral de navegació per a l'Agent -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <a th:href="@{/web/usuaris/login}">
-                    <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                </a>
-            </div>
-
-            <nav class="nav-menu">
-                <a th:href="@{/web/reserves/all}">• Reserves</a>
-                <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                <a th:href="@{/web/vehicles/all}">• Vehicles</a>
-                <a th:href="@{/web/usuaris/all}">• Clients</a>
-            </nav>
-        </aside>
+        <!-- Menú lateral comú (fragments/layout.html) -->
+        <aside th:replace="~{fragments/layout :: menu('perfil')}"></aside>
 
         <!-- Contingut Principal -->
         <main class="content">
 
             <!-- Capçalera superior amb Perfil i Logout -->
-            <header class="top-header">
-                <h2>El meu perfil</h2>
-
-                <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                    <!-- Enllaç directament al Perfil amb el nom de l'usuari/agent -->
-                    <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 600;">
-                        <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                    </a>
-
-                    <!-- Botó directament per Tancar Sessió -->
-                    <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                        Tancar Sessió
-                    </a>
-                </div>
-            </header>
+            <header th:replace="~{fragments/layout :: capcalera('El meu perfil')}"></header>
 
             <!-- MISSATGES DE FEEDBACK -->
             <div th:if="${missatge}" class="alert-success" style="background-color: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-top: 20px; font-size: 0.9rem; font-weight: 500;" th:text="${missatge}">
@@ -142,7 +116,7 @@
 
             <!-- TARGETA PRINCIPAL DEL PERFIL AGENT -->
             <div class="profile-card">
-                <form th:action="@{/web/usuaris/perfil/save}" th:object="${usuari}" method="post">
+                <form th:action="@{__${session.rutaBase}__/perfil/save}" th:object="${usuari}" method="post">
                     
                     <!-- ID OCULT -->
                     <input type="hidden" th:field="*{id}" />
@@ -206,7 +180,7 @@
                         <button type="submit" class="btn btn-add" style="padding: 10px 20px; font-weight: 600; cursor: pointer;">
                             Desar canvis
                         </button>
-                        <a th:href="@{/web/reserves/all}" class="btn btn-cancel" style="padding: 10px 20px; font-weight: 600; text-decoration: none;">
+                        <a th:href="@{__${session.rutaBase}__/reserves/all}" class="btn btn-cancel" style="padding: 10px 20px; font-weight: 600; text-decoration: none;">
                             Cancel·lar
                         </a>
                     </div>

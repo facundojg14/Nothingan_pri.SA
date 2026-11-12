@@ -12,38 +12,13 @@
         <div class="layout">
 
             <!-- Menú lateral de navegación. -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}" class="active">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('reserves')}"></aside>
 
             <main class="content">
 
                 <!-- Cabecera y sesión del usuario. -->
-                <header class="top-header">
-                    <h2>Gestió de reserves</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de reserves')}"></header>
 
                 <!-- Mensajes de éxito y error. -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
@@ -54,10 +29,10 @@
                     <h3>Llistat de reserves</h3>
 
                     <div style="display: flex; gap: 10px;">
-                        <a th:href="@{/web/reserves/lliurar}" class="btn btn-filter" style="text-decoration: none;">
+                        <a th:href="@{__${session.rutaBase}__/reserves/lliurar}" class="btn btn-filter" style="text-decoration: none;">
                             Lliurar vehicle
                         </a>
-                        <a th:href="@{/web/reserves/new}" class="btn btn-add">
+                        <a th:href="@{__${session.rutaBase}__/reserves/new}" class="btn btn-add">
                             + Nova reserva
                         </a>
                     </div>
@@ -65,7 +40,7 @@
 
                 <!-- Filtros de búsqueda. -->
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
-                    <form th:action="@{/web/reserves/all}" method="get">
+                    <form th:action="@{__${session.rutaBase}__/reserves/all}" method="get">
                         <div class="form-grid">
 
                             <div class="form-group">
@@ -102,7 +77,7 @@
 
                         <div class="button-group" style="margin-top: 15px;">
                             <button type="submit" class="btn btn-filter">Filtrar</button>
-                            <a th:href="@{/web/reserves/all}" class="btn btn-cancel">
+                            <a th:href="@{__${session.rutaBase}__/reserves/all}" class="btn btn-cancel">
                                 Netejar filtres
                             </a>
                         </div>
@@ -149,7 +124,7 @@
                                 <td class="actions-cell">
 
                                     <!-- Consultar detalles conservando los filtros. -->
-                                    <a th:href="@{/web/reserves/detall/{id}(
+                                    <a th:href="@{__${session.rutaBase}__/reserves/detall/{id}(
                                        id=${r.id},
                                        dni=${dni},
                                        email=${email},
@@ -162,14 +137,14 @@
 
                                     <!-- Entregar vehículos confirmados. -->
                                     <a th:if="${r.estat != null and r.estat.name() == 'Confirmada'}"
-                                       th:href="@{/web/reserves/lliurar/{id}(id=${r.id})}"
+                                       th:href="@{__${session.rutaBase}__/reserves/lliurar/{id}(id=${r.id})}"
                                        style="color: #16a34a; font-weight: 600; margin-left: 8px; text-decoration: none;">
                                         Lliurar
                                     </a>
 
                                     <!-- Anular reservas que todavía se pueden cancelar. -->
                                     <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada'}"
-                                          th:action="@{/web/reserves/cancelar/{id}(id=${r.id})}"
+                                          th:action="@{__${session.rutaBase}__/reserves/cancelar/{id}(id=${r.id})}"
                                           method="post"
                                           style="display: inline; margin-left: 8px;"
                                           onsubmit="return confirm('Segur que vols anul·lar aquesta reserva?');">
@@ -195,7 +170,7 @@
                     <div class="top-bar">
                         <h3>Detalls de la reserva: <span th:text="${reservaSeleccionada.codiReserva}"></span></h3>
 
-                        <a th:href="@{/web/reserves/all(
+                        <a th:href="@{__${session.rutaBase}__/reserves/all(
                            dni=${dni},
                            email=${email},
                            codi=${codi},

@@ -1,5 +1,6 @@
 package cat.copernic.Projecte1.config;
 
+import cat.copernic.Projecte1.controller.RutaBase;
 import cat.copernic.Projecte1.repository.UsuarisRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +17,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 /**
  * Configuració de seguretat de l'aplicació (Spring Security).
  *
- * Defineix quines rutes són públiques i quines només poden veure l'admin,
- * l'agent o el client (RN53), el formulari de login amb usuari i contrasenya
+ * Defineix quines rutes són públiques i quines només poden veure l'admin
+ * ({@code /web/admin/**}), l'agent ({@code /web/agent/**}) o el client (RN53), el formulari de login amb usuari i contrasenya
  * (RN51) i què passa quan el login és correcte o falla (RF80).
  *
  * @author Equip4
@@ -51,20 +52,14 @@ public class SecurityConfig {
                 ).permitAll()
 
                 // 2. Rutes protegides per Rol
-                // Només ADMIN: panell d'administració i validar registres (RF82)
-                .requestMatchers("/web/admin/**", "/web/usuaris/pendents", "/web/usuaris/validar/**").hasRole("ADMIN")
+                // Cada rol té el seu prefix. L'admin i l'agent fan servir les mateixes
+                // pantalles (reserves, vehicles, clients, perfil), però cadascun amb la seva URL.
+                // Només ADMIN: /web/admin/... (inclou agents, informes i validar registres)
+                .requestMatchers("/web/admin/**").hasRole("ADMIN")
+                // Només AGENT: /web/agent/...
+                .requestMatchers("/web/agent/**").hasRole("AGENT")
                 // Només CLIENT: zona privada del client
                 .requestMatchers("/web/usuaris/client/**").hasRole("CLIENT")
-                // AGENT o ADMIN: gestió de reserves, vehicles i clients
-                .requestMatchers(
-                        "/web/reserves/**",
-                        "/web/vehicles/**",
-                        "/web/usuaris/all",
-                        "/web/usuaris/new",
-                        "/web/usuaris/edit/**",
-                        "/web/usuaris/save",
-                        "/web/usuaris/delete/**"
-                ).hasAnyRole("AGENT", "ADMIN")
                 // Les imatges pujades (DNI, llicències, fotos) són dades personals (RN53)
                 .requestMatchers("/uploads/**").hasAnyRole("AGENT", "ADMIN")
 
@@ -119,6 +114,8 @@ public class SecurityConfig {
 
             usuarisRepository.findByEmail(email).ifPresent(usuari -> {
                 request.getSession().setAttribute("usuariLoguejat", usuari);
+                // Prefix de les URL internes segons el rol: /web/admin o /web/agent
+                request.getSession().setAttribute(RutaBase.ATRIBUT_SESSIO, RutaBase.perRol(usuari.getRol()));
             });
 
             var authorities = authentication.getAuthorities();
@@ -126,10 +123,10 @@ public class SecurityConfig {
 
             for (var authority : authorities) {
                 if (authority.getAuthority().equals("ROLE_ADMIN")) {
-                    redirectUrl = "/web/admin/usuaris";
+                    redirectUrl = RutaBase.ADMIN + "/usuaris/all";
                     break;
                 } else if (authority.getAuthority().equals("ROLE_AGENT")) {
-                    redirectUrl = "/web/usuaris/all";
+                    redirectUrl = RutaBase.AGENT + "/usuaris/all";
                     break;
                 } else if (authority.getAuthority().equals("ROLE_CLIENT")) {
                     redirectUrl = "/web/usuaris/client/home";
