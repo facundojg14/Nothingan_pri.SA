@@ -104,7 +104,7 @@ public class ReservaLogic {
             return;
         }
 
-        // 1. Calcular fianza base (llamándola fiancaBase, no fiancaFinal)
+        // 1. Calcular fianza base 
         BigDecimal fiancaBase = (vehicle != null && usuari != null)
                 ? fiancaService.calcularFiancaInicial(vehicle, usuari)
                 : BigDecimal.ZERO;
