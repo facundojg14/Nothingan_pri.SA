@@ -2,9 +2,11 @@ package cat.copernic.Projecte1.logic;
 
 import cat.copernic.Projecte1.entity.Enum.EstatReserva;
 import cat.copernic.Projecte1.entity.Enum.EstatVehicle;
+import cat.copernic.Projecte1.entity.Incidencies;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
+import cat.copernic.Projecte1.repository.IncidenciesRepository;
 import cat.copernic.Projecte1.repository.ReservaRepository;
 import cat.copernic.Projecte1.repository.UsuarisRepository;
 import cat.copernic.Projecte1.repository.VehicleRepository;
@@ -41,6 +43,9 @@ public class ReservaLogic {
 
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private IncidenciesRepository incidenciesRepo;
 
     private final FiancaService fiancaService;
 
@@ -399,5 +404,17 @@ public class ReservaLogic {
         vehicle.setEstatVehicle(EstatVehicle.Lliurat);
         vehicleRepo.save(vehicle);
         reservaRepo.save(reserva);
+    }
+    
+    /**
+     * Obté la llista d'incidències associades a una reserva concreta.
+     * @param reservaId ID de reserva
+     * @return incidències associades a la reserva concreta.
+     */
+    public List<Incidencies> getIncidenciesPerReserva(Integer reservaId) {
+        if (reservaId == null) {
+            return List.of();
+        }
+        return incidenciesRepo.findByReserva_Id(reservaId);
     }
 }
