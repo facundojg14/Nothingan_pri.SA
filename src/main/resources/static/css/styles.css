@@ -1027,3 +1027,9 @@ body {
     transform: rotate(180deg);
 }
 
+.login-error {
+    color: #dc5555;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 18px;
+}
