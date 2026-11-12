@@ -22,6 +22,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controlador web dels usuaris.
+ *
+ * Gestiona el login i el logout (RF80), el registre públic de clients (RF81),
+ * la validació de registres per l'administrador (RF82), la gestió de clients
+ * per l'agent (RF20-RF26) i el perfil de l'agent.
+ *
+ * @author Equip4
+ */
 @Controller
 @RequestMapping("/web/usuaris")
 public class UsuarisController {

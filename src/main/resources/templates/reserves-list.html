@@ -192,7 +192,7 @@
                      class="table-card" style="padding: 24px; margin-top: 20px;">
 
                     <div class="top-bar">
-                        <h3>Detalls de la reserva</h3>
+                        <h3>Detalls de la reserva: <span th:text="${reservaSeleccionada.codiReserva}"></span></h3>
 
                         <a th:href="@{/web/reserves/all(
                            dni=${dni},
@@ -367,8 +367,100 @@
                     </div>
                 </div>
 
+                <!-- RF40: tabla con el listado de reservas. -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Codi</th>
+                                <th>Client</th>
+                                <th>Vehicle</th>
+                                <th>Data inici</th>
+                                <th>Data fi</th>
+                                <th>Preu</th>
+                                <th>Estat</th>
+                                <th>Accions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <!-- Muestra los datos de cada reserva. -->
+                            <tr th:each="r : ${reserves}">
+                                <td th:text="${r.codiReserva != null ? r.codiReserva : '-'}"></td>
+                                <td th:text="${r.usuari != null ? r.usuari.nom : '-'}"></td>
+                                <td th:text="${r.vehicle != null ? r.vehicle.matricula : '-'}"></td>
+
+                                <td th:text="${r.dataInici != null ? #temporals.format(r.dataInici, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+                                <td th:text="${r.dataFi != null ? #temporals.format(r.dataFi, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+
+                                <!-- Muestra el precio del alquiler. -->
+                                <td>
+                                    <span th:if="${r.preuLloguer != null}"
+                                          th:text="${#numbers.formatDecimal(r.preuLloguer, 1, 2) + ' €'}"></span>
+                                    <span th:unless="${r.preuLloguer != null}">-</span>
+                                </td>
+
+                                <!-- Muestra el estado con su estilo correspondiente. -->
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${r.estat != null and r.estat.name() == 'Confirmada'} ? ' badge-validat' : (${r.estat != null and r.estat.name() == 'Anulada'} ? ' badge-rebutjat' : ' badge-baixa')"
+                                          th:text="${r.estat != null ? r.estat : '-'}"></span>
+                                </td>
+
+                                <!-- Acciones disponibles para cada reserva. -->
+                                <td class="actions-cell">
+
+                                    <!-- Abre los detalles conservando los filtros. -->
+                                    <a th:href="@{/web/reserves/detall/{id}(
+                                       id=${r.id},
+                                       dni=${dni},
+                                       email=${email},
+                                       codi=${codi},
+                                       matricula=${matricula},
+                                       data=${data}
+                                       )}">
+                                        Veure
+                                    </a>
+
+                                    <!-- Acceso directo a entregar el vehículo si está Confirmada -->
+                                    <a th:if="${r.estat != null and r.estat.name() == 'Confirmada'}"
+                                       th:href="@{/web/reserves/lliurar/{id}(id=${r.id})}"
+                                       style="color: #16a34a; font-weight: 600; margin-left: 8px; text-decoration: none;">
+                                        Lliurar
+                                    </a>
+
+                                    <!-- Permite anular reservas que todavía se pueden cancelar. -->
+                                    <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada'}"
+                                          th:action="@{/web/reserves/cancelar/{id}(id=${r.id})}"
+                                          method="post"
+                                          style="display: inline; margin-left: 8px;"
+                                          onsubmit="return confirm('Segur que vols anul·lar aquesta reserva?');">
+                                        <button type="submit" class="action-link">Anul·lar</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Mensaje cuando no hay reservas para mostrar. -->
+                            <tr th:if="${#lists.isEmpty(reserves)}">
+                                <td colspan="8" class="empty-state">
+                                    No s'han trobat reserves.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </main>
         </div>
+
+        <script th:if="${reservaSeleccionada != null}">
+            document.addEventListener('DOMContentLoaded', function () {
+                const panel = document.getElementById('detall-reserva');
+                if (panel) {
+                    panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            });
+        </script>
 
     </body>
 </html>

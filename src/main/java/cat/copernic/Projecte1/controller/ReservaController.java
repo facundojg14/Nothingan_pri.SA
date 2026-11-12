@@ -18,10 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/*
- * Controlador de reservas de agentes.
- * Permite listar y filtrar reservas, consultar detalles,
- * buscar vehículos disponibles, crear reservas y anularlas.
+/**
+ * Controlador web de les reserves per a l'agent.
+ *
+ * Permet llistar i filtrar reserves (RF52, RF54), consultar-ne el detall
+ * (RF53), buscar vehicles disponibles, crear reserves (RF50), anul·lar-les
+ * (RF55) i lliurar el vehicle al client (RF49).
+ *
+ * @author Equip4
  */
 @Controller
 @RequestMapping("/web/reserves")

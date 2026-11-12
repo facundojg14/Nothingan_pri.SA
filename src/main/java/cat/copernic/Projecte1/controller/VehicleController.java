@@ -23,11 +23,11 @@ import java.time.Duration;
 /**
  * CONTROLADOR WEB DE VEHÍCULOS
  *
- * @Controller: Marca la clase como un controlador de Spring MVC (devuelve
+ * {@code @Controller}: Marca la clase como un controlador de Spring MVC (devuelve
  * nombres de vistas HTML).
- * @RequestMapping("/web/vehicles"): Define la ruta base HTTP para todas las
+ * {@code @RequestMapping("/web/vehicles")}: Define la ruta base HTTP para todas las
  * URLs de este controlador.
- * @Scope("request"): Spring crea una instancia nueva de este controlador por
+ * {@code @Scope("request")}: Spring crea una instancia nueva de este controlador por
  * cada petición HTTP.
  */
 @Controller
@@ -46,7 +46,7 @@ public class VehicleController {
      * MÉTODOS Y ENDPOINTS DE LA APLICACIÓN
      */
     /**
-     * @GetMapping("/all"): Atiende peticiones GET a /web/vehicles/all
+     * {@code @GetMapping("/all")}: Atiende peticiones GET a /web/vehicles/all
      *
      * ¿QUÉ HACE?: Muestra la lista de vehículos aplicando filtros opcionales de
      * búsqueda. ¿QUÉ CAPTURA?: Parámetros opcionales de filtro y la interfaz
@@ -100,7 +100,7 @@ public class VehicleController {
     }
 
     /**
-     * @GetMapping("/cercar"): Atiende peticiones GET a /web/vehicles/cercar
+     * {@code @GetMapping("/cercar")}: Atiende peticiones GET a /web/vehicles/cercar
      *
      * ¿QUÉ HACE?: Busca vehículos disponibles exclusivamente entre un rango de
      * fechas e calcula los días de alquiler. ¿QUÉ CAPTURA?: dataInici, dataFi y
@@ -168,7 +168,7 @@ public class VehicleController {
     }
 
     /**
-     * @GetMapping("/new"): Atiende peticiones GET a /web/vehicles/new
+     * {@code @GetMapping("/new")}: Atiende peticiones GET a /web/vehicles/new
      *
      * ¿QUÉ HACE?: Prepara un objeto Vehicle vacío por defecto para rellenarlo
      * en el formulario de alta. ¿QUÉ CAPTURA?: El objeto Model de Spring MVC.
@@ -185,7 +185,7 @@ public class VehicleController {
     }
 
     /**
-     * @PostMapping("/save"): Atiende peticiones POST a /web/vehicles/save
+     * {@code @PostMapping("/save")}: Atiende peticiones POST a /web/vehicles/save
      *
      * ¿QUÉ HACE?: Procesa la recepción del formulario para crear o guardar
      * cambios de un vehículo. ¿QUÉ CAPTURA?: El objeto Vehicle relleno y un
@@ -222,7 +222,7 @@ public class VehicleController {
     }
 
     /**
-     * @GetMapping("/delete/{id}"): Atiende GET a /web/vehicles/delete/{id}
+     * {@code @GetMapping("/delete/{id}")}: Atiende GET a /web/vehicles/delete/{id}
      *
      * ¿QUÉ HACE?: Elimina el vehículo correspondiente a la ID especificada en
      * la URL. ¿QUÉ CAPTURA?: El parámetro {id} de la ruta codificado como Long
@@ -253,7 +253,7 @@ public class VehicleController {
     }
 
     /**
-     * @GetMapping("/edit/{id}"): Atiende GET a /web/vehicles/edit/{id}
+     * {@code @GetMapping("/edit/{id}")}: Atiende GET a /web/vehicles/edit/{id}
      *
      * ¿QUÉ HACE?: Busca un vehículo por ID y lo pasa a la vista para editar sus
      * datos. ¿QUÉ CAPTURA?: El parámetro {id} de la ruta y la interfaz Model.
@@ -272,7 +272,7 @@ public class VehicleController {
     }
 
     /**
-     * @GetMapping("/eliminar/{id}"): Eliminación física (borrado de BD). Solo
+     * {@code @GetMapping("/eliminar/{id}")}: Eliminación física (borrado de BD). Solo
      * funciona si el vehículo nunca ha sido reservado.
      */
     @GetMapping("/eliminar/{id}")

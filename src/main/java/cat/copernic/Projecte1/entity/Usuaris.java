@@ -8,9 +8,22 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
+/**
+ * Entitat que representa un usuari de l'aplicació: client, agent o
+ * administrador (segons el camp rol).
+ *
+ * Guarda les dades personals, el document d'identitat, la llicència de
+ * conduir, l'estat del registre (PENDENT, VALIDAT, REBUTJAT o BAIXA) i si el
+ * client és Premium. Un usuari pot tenir moltes reserves (relació 1:N).
+ *
+ * @author Equip4
+ */
 @Entity
 public class Usuaris {
 
@@ -49,6 +62,13 @@ public class Usuaris {
     // Estats i perfil
     private String estatRegistre; // "PENDENT", "VALIDAT", "REBUTJAT", "BAIXA"
     private Boolean premium;
+
+    // Reserves que ha fet aquest usuari (relació 1:N amb Reserva).
+    // És el costat invers de Reserva.usuari: no crea cap columna nova a la BD.
+    // Sense cascade (esborrar un usuari no ha d'esborrar les seves reserves)
+    // i LAZY per defecte (només es carreguen quan es fa getReserves()).
+    @OneToMany(mappedBy = "usuari")
+    private List<Reserva> reserves = new ArrayList<>();
 
     public Usuaris() {
     }
@@ -209,10 +229,22 @@ public class Usuaris {
     }
 
     /**
+     * Retorna les reserves fetes per aquest usuari.
+     *
+     * No hi ha setter: les reserves s'assignen des de Reserva amb
+     * setUsuari(), que és el costat propietari de la relació.
+     *
+     * @return llista de reserves de l'usuari
+     */
+    public List<Reserva> getReserves() {
+        return reserves;
+    }
+
+    /**
      * Obté la reputació del client a partir del seu estat Premium.
      *
-     * @return {@link ReputacioClient#PREMIUM} si és client premium,
-     * {@link ReputacioClient#NORMAL} en cas contrari.
+     * @return {@link cat.copernic.Projecte1.entity.Enum.ReputacioClient#PREMIUM} si és client premium,
+     * {@link cat.copernic.Projecte1.entity.Enum.ReputacioClient#NORMAL} en cas contrari.
      */
     public cat.copernic.Projecte1.entity.Enum.ReputacioClient getReputacio() {
         return Boolean.TRUE.equals(this.premium)

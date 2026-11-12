@@ -89,6 +89,7 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
                                                      @RequestParam(value = "estat", required = false) String estat,
                                                      @RequestParam(value= "data", required = false) String data,
                                                      @RequestParam(value="detall", required = false) Integer detall,
+                                                     @RequestParam(value="incidencies", required = false) Integer idReservaIncidencies,
                                                       HttpSession session, Model model) {
     //Obtenir usuari autenticat desde la sessió http
     Usuaris usuariSessio = (Usuaris) session.getAttribute("usuariLoguejat");
@@ -118,8 +119,16 @@ public String mostrarReservesClient(@RequestParam(value = "codi", required = fal
         }
     }
     
-    model.addAttribute("reserves", reserves); // enviat al html i renderitzat per th:each"r: ${reserves}
+    // Modal d'incidències de la reserva (només si pertany a l'usuari i està Retornada)
+    if (idReservaIncidencies != null) {
+        Reserva reservaInc = reservaLogic.getReservaById(idReservaIncidencies);
+        if (reservaInc != null && reservaInc.getUsuari().getId().equals(usuariLoguejat.getId())) {
+            model.addAttribute("reservaIncidencies", reservaInc);
+            model.addAttribute("llistaIncidencies", reservaLogic.getIncidenciesPerReserva(idReservaIncidencies));
+        }
+    }
     
+    model.addAttribute("reserves", reserves); // enviat al html i renderitzat per th:each"r: ${reserves}
     model.addAttribute("codiFiltre", codi);
     model.addAttribute("estatFiltre", estat);
     model.addAttribute("dataFiltre", data);

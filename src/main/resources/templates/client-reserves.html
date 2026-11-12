@@ -131,6 +131,12 @@
                                    style="background-color: #0284c7; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-left: 5px;">
                                     Detalls
                                 </a>
+                                <!-- NOU BOTÓ INCIDÈNCIES (Només visible si l'estat és Retornada) -->
+                                <a th:if="${r.estat == T(cat.copernic.Projecte1.entity.Enum.EstatReserva).Retornada}"
+                                   th:href="@{'/web/usuaris/client/reserves'(codi=${codiFiltre}, estat=${estatFiltre}, data=${dataFiltre}, incidencies=${r.id})}" 
+                                   style="background-color: #f59e0b; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-left: 5px;">
+                                    Incidències
+                                </a>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(reserves)}">
@@ -221,6 +227,71 @@
                     <strong>Observacions:</strong> 
                     <span th:text="${reservaSeleccionada.observacions != null and !reservaSeleccionada.observacions.isBlank() ? reservaSeleccionada.observacions : 'Cap observació'}">Cap observació</span>
                 </p>
+            </div>
+
+            <!-- Botó de tancar -->
+            <div style="margin-top: 24px; text-align: right;">
+                <a th:href="@{/web/usuaris/client/reserves(codi=${codiFiltre}, estat=${estatFiltre}, data=${dataFiltre})}" 
+                   class="btn-reset" 
+                   style="display: inline-block; padding: 8px 18px; text-decoration: none; border-radius: 8px; background: #e2e8f0; color: #475569; font-weight: 600;">
+                    Tancar
+                </a>
+            </div>
+        </div>
+    </div>
+    
+        <!-- CARTELL MODAL D'INCIDÈNCIES DE LA RESERVA -->
+    <div th:if="${reservaIncidencies != null}" 
+         style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+
+        <div style="background: white; border-radius: 16px; padding: 28px; width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+
+            <!-- Capçalera -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #0b2246; font-size: 1.25rem;">
+                    Incidències de la reserva <span th:text="${reservaIncidencies.codiReserva}" style="color: #f59e0b;">RES-1021</span>
+                </h3>
+                <a th:href="@{/web/usuaris/client/reserves(codi=${codiFiltre}, estat=${estatFiltre}, data=${dataFiltre})}" 
+                   style="text-decoration: none; color: #64748b; font-size: 1.5rem; font-weight: bold;">&times;</a>
+            </div>
+
+            <!-- Missatge si no hi ha incidències registrades -->
+            <div th:if="${#lists.isEmpty(llistaIncidencies)}" style="text-align: center; padding: 25px; color: #64748b; background: #f8fafc; border-radius: 10px;">
+                No s'ha registrat cap incidència en aquesta reserva.
+            </div>
+
+            <!-- Llistat d'incidències -->
+            <div th:unless="${#lists.isEmpty(llistaIncidencies)}" style="display: flex; flex-direction: column; gap: 16px;">
+                <div th:each="inc : ${llistaIncidencies}" style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; background: #f8fafc;">
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span class="badge" style="background-color: #fef3c7; color: #b45309; padding: 4px 10px; border-radius: 6px; font-weight: 700;"
+                              th:text="${inc.tipus != null ? inc.tipus : 'Incidència'}">Tipus</span>
+                        <small style="color: #64748b;" th:text="${inc.data_Hora != null ? #temporals.format(inc.data_Hora, 'dd/MM/yyyy') : '-'}">12/11/2026</small>
+                    </div>
+
+                    <p style="margin: 6px 0; font-size: 0.92rem; color: #334155;">
+                        <strong>Descripció:</strong> <span th:text="${inc.descripcio != null ? inc.descripcio : '-'}">Descripció</span>
+                    </p>
+
+                    <p style="margin: 6px 0; font-size: 0.92rem; color: #334155;">
+                        <strong>Resolució:</strong> <span th:text="${inc.resolucio != null and !inc.resolucio.isBlank() ? inc.resolucio : 'Pendent de resolució'}">Resolució</span>
+                    </p>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.9rem; color: #475569;">
+                        <span><strong>Quilometratge:</strong> <span th:text="${inc.quilometratge + ' km'}">12000 km</span></span>
+                        <span>
+                            <strong>Import associat:</strong> 
+                            <strong style="color: #dc2626; white-space: nowrap;" 
+                                    th:text="${inc.importe != null ? #numbers.formatDecimal(inc.importe, 1, 2) + ' €' : '0.00 €'}">0.00 €</strong>
+                        </span>
+                    </div>
+
+                    <!-- Foto de la incidència si existeix -->
+                    <div th:if="${inc.foto_incidencia != null and !inc.foto_incidencia.isBlank()}" style="margin-top: 12px;">
+                        <img th:src="${inc.foto_incidencia}" alt="Foto incidència" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    </div>
+                </div>
             </div>
 
             <!-- Botó de tancar -->

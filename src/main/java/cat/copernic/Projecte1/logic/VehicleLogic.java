@@ -45,7 +45,11 @@ public class VehicleLogic {
     }
 
     /**
-     * Dona de baixa lògica un vehicle si no té reserves associades.
+     * Dona de baixa lògica un vehicle (RF41): no s'esborra de la base de
+     * dades, es marca com a inactiu i amb estat Baixa.
+     *
+     * @param id identificador del vehicle
+     * @return true si s'ha donat de baixa; false si té reserves o no existeix
      */
     @Transactional
     public boolean donarDeBaixaVehicle(Long id) {
@@ -159,7 +163,17 @@ public class VehicleLogic {
     }
 
     /**
-     * Filtratge combinat avançat.
+     * Filtra els vehicles per diversos criteris alhora (RF45).
+     * Els criteris buits o nuls no es tenen en compte.
+     *
+     * @param matricula part de la matrícula
+     * @param marca part de la marca
+     * @param model part del model
+     * @param anyFabricacio any de fabricació exacte
+     * @param categoria categoria del vehicle
+     * @param dataInici inici del període en què ha d'estar disponible
+     * @param dataFi fi del període en què ha d'estar disponible
+     * @return vehicles que compleixen tots els filtres indicats
      */
     public List<Vehicle> findByFiltres(String matricula, String marca, String model,
             Integer anyFabricacio, Categoria categoria,

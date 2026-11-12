@@ -437,6 +437,7 @@
 
                 // Aplica el descuento Premium únicamente a la fianza.
                 const premium = u.dataset.premium === 'true';
+
                 const descompte = premium ? fiancaBase * 0.25 : 0;
                 const fiancaFinal = Math.round((fiancaBase - descompte) * 100) / 100;
                 const totalReserva = preuTotal + fiancaFinal;
@@ -457,7 +458,14 @@
 
                         <div style="display:flex;justify-content:space-between;">
                             <span>Fiança del vehicle</span>
-                            <strong style="color:#1e293b;">${euros(fiancaBase)}</strong>
+                            <strong style="color:#1e293b;">${euros(fiancaFinal)}</strong>
+                        </div>
+
+                        ${premium ? `
+                        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:13px;color:#15803d;">
+                            <span>Descompte premium aplicat (25 %)</span>
+                            <span>−${euros(descompte)}</span>
+                        </div>` : ''}
                         </div>
 
                         <div style="display:flex;justify-content:space-between;">
