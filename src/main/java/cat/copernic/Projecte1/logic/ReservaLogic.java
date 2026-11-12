@@ -47,13 +47,17 @@ public class ReservaLogic {
     @Autowired
     private IncidenciesRepository incidenciesRepo;
 
+    private final FiancaService fiancaService;
+
     public ReservaLogic(
             ReservaRepository reservaRepo,
             VehicleRepository vehicleRepo,
-            UsuarisRepository usuarisRepo) {
+            UsuarisRepository usuarisRepo,
+            FiancaService fiancaService) {
         this.reservaRepo = reservaRepo;
         this.vehicleRepo = vehicleRepo;
         this.usuarisRepo = usuarisRepo;
+        this.fiancaService = fiancaService;
     }
 
     public List<Reserva> findAllReservas() {
@@ -101,31 +105,36 @@ public class ReservaLogic {
      * si es Premium) y duraciones para la vista de confirmación del cliente.
      */
     public void prepararReservaClient(Reserva reserva, Vehicle vehicle, Usuaris usuari, long diesLloguer) {
-        if (reserva == null) {
-            return;
+        if (reserva == null || vehicle == null) {
+            throw new IllegalArgumentException("La reserva i el vehicle són obligatoris.");
         }
 
-        // 1. Fianza base de 200.00 €
-        BigDecimal fiancaBase = new BigDecimal("200.00");
+        // 1. Calcular fianza base 
+        BigDecimal fiancaBase = (vehicle != null && usuari != null)
+                ? fiancaService.calcularFiancaInicial(vehicle, usuari)
+                : BigDecimal.ZERO;
 
-        // 2. Aplicar 25% de descuento en la fianza si el usuario es Premium
+        if (fiancaBase == null || fiancaBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La fiança del vehicle no és vàlida.");
+        }
+
+        // Aplica el descuento Premium del 25 % a la fianza.
         BigDecimal fiancaFinal = fiancaBase;
         if (usuari != null && Boolean.TRUE.equals(usuari.getPremium())) {
-            fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75")).setScale(2, RoundingMode.HALF_UP);
+            fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75"));
         }
 
-        // 3. Subtotal alquiler = precioPorDia * dias
-        BigDecimal preuDia = (vehicle != null && vehicle.getPreuDia() != null) ? vehicle.getPreuDia() : BigDecimal.ZERO;
-        BigDecimal subtotalLloguer = preuDia.multiply(BigDecimal.valueOf(diesLloguer)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal preuDia = vehicle.getPreuDia() != null
+                ? vehicle.getPreuDia() : BigDecimal.ZERO;
 
-        // 4. Total a pagar (alquiler + fianza)
-        BigDecimal totalAPagar = subtotalLloguer.add(fiancaFinal);
+        BigDecimal subtotalLloguer = preuDia
+                .multiply(BigDecimal.valueOf(diesLloguer))
+                .setScale(2, RoundingMode.HALF_UP);
 
-        // Asignamos los valores a la entidad Reserva
-        reserva.setVehicle(vehicle != null ? vehicle : new Vehicle());
+        reserva.setVehicle(vehicle);
         reserva.setUsuari(usuari);
         reserva.setPreuLloguer(subtotalLloguer);
-        reserva.setImportFianca(fiancaFinal); // Guardamos ya la fianza final calculada
+        reserva.setImportFianca(fiancaFinal.setScale(2, RoundingMode.HALF_UP));
     }
 
     @Transactional
@@ -172,12 +181,11 @@ public class ReservaLogic {
             throw new IllegalArgumentException("El vehicle no té un preu diari vàlid.");
         }
 
-        if (reserva.getImportFianca() == null
-                || reserva.getImportFianca().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("La fiança ha de ser igual o superior a zero.");
+        BigDecimal fiancaBase = vehicle.getFiancaEstandar();
+        
+        if (fiancaBase == null || fiancaBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("La fiança del vehicle no és vàlida.");
         }
-
-        BigDecimal fiancaBase = new BigDecimal("200.00");
 
         Duration durada = Duration.between(reserva.getDataInici(), reserva.getDataFi());
         long dies = durada.toDays();

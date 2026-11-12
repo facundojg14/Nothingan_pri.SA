@@ -8,7 +8,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
@@ -49,6 +52,13 @@ public class Usuaris {
     // Estats i perfil
     private String estatRegistre; // "PENDENT", "VALIDAT", "REBUTJAT", "BAIXA"
     private Boolean premium;
+
+    // Reserves que ha fet aquest usuari (relació 1:N amb Reserva).
+    // És el costat invers de Reserva.usuari: no crea cap columna nova a la BD.
+    // Sense cascade (esborrar un usuari no ha d'esborrar les seves reserves)
+    // i LAZY per defecte (només es carreguen quan es fa getReserves()).
+    @OneToMany(mappedBy = "usuari")
+    private List<Reserva> reserves = new ArrayList<>();
 
     public Usuaris() {
     }
@@ -206,6 +216,18 @@ public class Usuaris {
 
     public void setRol(rol rol) {
         this.rol = rol;
+    }
+
+    /**
+     * Retorna les reserves fetes per aquest usuari.
+     *
+     * No hi ha setter: les reserves s'assignen des de Reserva amb
+     * setUsuari(), que és el costat propietari de la relació.
+     *
+     * @return llista de reserves de l'usuari
+     */
+    public List<Reserva> getReserves() {
+        return reserves;
     }
 
     /**
