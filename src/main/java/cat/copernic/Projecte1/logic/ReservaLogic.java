@@ -42,13 +42,17 @@ public class ReservaLogic {
     @Autowired
     private EmailService emailService;
 
+    private final FiancaService fiancaService;
+
     public ReservaLogic(
             ReservaRepository reservaRepo,
             VehicleRepository vehicleRepo,
-            UsuarisRepository usuarisRepo) {
+            UsuarisRepository usuarisRepo,
+            FiancaService fiancaService) {
         this.reservaRepo = reservaRepo;
         this.vehicleRepo = vehicleRepo;
         this.usuarisRepo = usuarisRepo;
+        this.fiancaService = fiancaService;
     }
 
     public List<Reserva> findAllReservas() {
@@ -100,8 +104,10 @@ public class ReservaLogic {
             return;
         }
 
-        // 1. Fianza base de 200.00 €
-        BigDecimal fiancaBase = new BigDecimal("200.00");
+        // 1. Calcular fianza base (llamándola fiancaBase, no fiancaFinal)
+        BigDecimal fiancaBase = (vehicle != null && usuari != null)
+                ? fiancaService.calcularFiancaInicial(vehicle, usuari)
+                : BigDecimal.ZERO;
 
         // 2. Aplicar 25% de descuento en la fianza si el usuario es Premium
         BigDecimal fiancaFinal = fiancaBase;
