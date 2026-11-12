@@ -9,21 +9,39 @@ import java.util.Optional;
 
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Lògica de negoci dels usuaris (clients, agents i administradors).
+ *
+ * @author Equip4
+ */
 @Service
 public class UsuarisLogic {
 
     @Autowired
     private UsuarisRepository usuariRepo;
 
+    // Encriptador de contrasenyes (definit a PasswordEncoderConfig)
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     // --- OPERACIONES BÁSICAS CRUD ---
     public List<Usuaris> findAllUsuaris() {
         return usuariRepo.findAll();
     }
 
+    /**
+     * Crea o actualitza un usuari. Si la contrasenya encara no està
+     * encriptada, l'encripta amb BCrypt abans de guardar-la.
+     *
+     * @param usuari usuari a guardar
+     * @return id de l'usuari guardat
+     */
     public Long saveUsuari(Usuaris usuari) {
         validarCamposUnicos(usuari);
+        xifrarContrasenya(usuari);
         if (usuari.getEstatRegistre() == null || usuari.getEstatRegistre().isBlank()) {
             usuari.setEstatRegistre("PENDENT");
         }
@@ -39,6 +57,19 @@ public class UsuarisLogic {
 
     public void deleteUsuariById(Long id) {
         usuariRepo.deleteById(id);
+    }
+
+    /**
+     * Encripta la contrasenya de l'usuari amb BCrypt si encara no ho està.
+     * Les contrasenyes de BCrypt sempre comencen per "$2a$", "$2b$" o "$2y$".
+     *
+     * @param usuari usuari amb la contrasenya a encriptar
+     */
+    public void xifrarContrasenya(Usuaris usuari) {
+        String password = usuari.getPassword();
+        if (password != null && !password.isBlank() && !password.startsWith("$2")) {
+            usuari.setPassword(passwordEncoder.encode(password));
+        }
     }
 
     public Usuaris getUsuariById(Long id) {
@@ -74,6 +105,12 @@ public class UsuarisLogic {
             throw new IllegalArgumentException("La llicència de conduir està caducada.");
         }
 
+        // 5. La contrasenya és obligatòria i es guarda encriptada (RN52)
+        if (client.getPassword() == null || client.getPassword().isBlank()) {
+            throw new IllegalArgumentException("La contrasenya és obligatòria.");
+        }
+        xifrarContrasenya(client);
+
         // Estat inicial i rol per defecte per al registre web (RF81)
         client.setEstatRegistre("PENDENT");
         client.setRol(rol.CLIENT);
@@ -85,6 +122,10 @@ public class UsuarisLogic {
 
     /**
      * Autenticació d'usuaris controlant els estats PENDENT i REBUTJAT.
+     *
+     * Nota: el login real el fa Spring Security (CustomUserDetailsService +
+     * SecurityConfig). Aquest mètode es manté perquè el fa servir el test
+     * UsuarisLogicTest.
      */
     public Usuaris autenticarIValidarEstat(String email, String password) {
         Optional<Usuaris> usuariOpt = usuariRepo.findByEmail(email);
@@ -134,8 +175,9 @@ public class UsuarisLogic {
                 .orElseThrow(() -> new IllegalArgumentException("Usuari no trobat amb ID: " + usuariEditat.getId()));
 
         // Mantener la contraseña existente si no se proporciona una nueva
-        if (!usuariEditat.getPassword().isBlank()) {
+        if (usuariEditat.getPassword() != null && !usuariEditat.getPassword().isBlank()) {
             usuariExistent.setPassword(usuariEditat.getPassword());
+            xifrarContrasenya(usuariExistent);
         }
 
         // Actualització de dades personals
