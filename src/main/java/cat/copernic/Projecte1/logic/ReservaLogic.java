@@ -485,6 +485,106 @@ public class ReservaLogic {
     }
     
     /**
+     * Busca reservas pendientes de devolución aplicando filtros opcionales.
+     */
+    public List<Reserva> cercarReservesPerRetornar(
+            String codi, String dni, String email, String matricula, String dataInici) {
+
+        return reservaRepo.findAll().stream()
+                .filter(r -> r.getEstat() == EstatReserva.Lliurada)
+                .filter(r -> codi == null || codi.isBlank()
+                || (r.getCodiReserva() != null && r.getCodiReserva().toLowerCase().contains(codi.trim().toLowerCase())))
+                .filter(r -> dni == null || dni.isBlank()
+                || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().toLowerCase().contains(dni.trim().toLowerCase())))
+                .filter(r -> email == null || email.isBlank()
+                || (r.getUsuari() != null && r.getUsuari().getEmail() != null && r.getUsuari().getEmail().toLowerCase().contains(email.trim().toLowerCase())))
+                .filter(r -> matricula == null || matricula.isBlank()
+                || (r.getVehicle() != null && r.getVehicle().getMatricula() != null && r.getVehicle().getMatricula().toLowerCase().contains(matricula.trim().toLowerCase())))
+                .filter(r -> dataInici == null || dataInici.isBlank()
+                || (r.getDataInici() != null && r.getDataInici().toLocalDate().toString().equals(dataInici.trim())))
+                .toList();
+    }
+    
+    /**
+     * Confirma la devolución, calcula la fianza y actualiza el estado del vehículo.
+     */
+    @Transactional
+    public void confirmarRetornVehicle(
+            Integer reservaId,
+            LocalDateTime dataHoraRetorn,
+            String observacions,
+            boolean desperfectesImputables,
+            boolean vehiculoAveriado) {
+
+        Reserva reserva = getReservaById(reservaId);
+
+        if (reserva == null || reserva.getEstat() != EstatReserva.Lliurada) {
+            throw new IllegalArgumentException("La reserva no existeix o no està pendent de devolució.");
+        }
+
+        if (dataHoraRetorn == null
+                || reserva.getDataHoraLliurament() == null
+                || dataHoraRetorn.isBefore(reserva.getDataHoraLliurament())) {
+            throw new IllegalArgumentException("La data de devolució no és vàlida.");
+        }
+
+        if (observacions == null || observacions.isBlank()) {
+            throw new IllegalArgumentException("Cal introduir les observacions de la devolució.");
+        }
+
+        Vehicle vehicle = reserva.getVehicle();
+
+        if (vehicle == null) {
+            throw new IllegalArgumentException("La reserva no té cap vehicle associat.");
+        }
+
+        BigDecimal fianca = reserva.getImportFianca() != null
+                ? reserva.getImportFianca() : BigDecimal.ZERO;
+
+        BigDecimal preuHora = vehicle.getPreuHora() != null
+                ? vehicle.getPreuHora() : BigDecimal.ZERO;
+
+        long horesRetard = reserva.getDataFi() != null
+                && dataHoraRetorn.isAfter(reserva.getDataFi())
+                ? Duration.between(reserva.getDataFi(), dataHoraRetorn).toHours()
+                : 0;
+
+        BigDecimal carrecRetard = preuHora
+                .multiply(BigDecimal.valueOf(horesRetard))
+                .setScale(2, RoundingMode.HALF_UP);
+        
+        reserva.setCarrecExtraPendent(carrecRetard);
+
+        BigDecimal fiancaRetinguda;
+        BigDecimal fiancaRetornada;
+
+        if (desperfectesImputables) {
+            fiancaRetinguda = fianca;
+            fiancaRetornada = BigDecimal.ZERO;
+        } else {
+            fiancaRetinguda = carrecRetard.min(fianca);
+            fiancaRetornada = fianca.subtract(fiancaRetinguda);
+        }
+
+        reserva.setDataHoraRetorn(dataHoraRetorn);
+        reserva.setObservacions(observacions.trim());
+        reserva.setDesperfectesImputables(desperfectesImputables);
+        reserva.setFiancaRetinguda(fiancaRetinguda);
+        reserva.setFiancaRetornada(fiancaRetornada);
+        reserva.setEstat(EstatReserva.Retornada);
+
+        vehicle.setEstatVehicle(vehiculoAveriado
+                ? EstatVehicle.En_manteniment
+                : EstatVehicle.Disponible);
+
+        vehicleRepo.save(vehicle);
+        reservaRepo.save(reserva);
+
+        logger.info("Reserva {} retornada. Fiança retinguda: {} €, retornada: {} €",
+                reserva.getCodiReserva(), fiancaRetinguda, fiancaRetornada);
+        }
+
+    /**
      * Obté la llista d'incidències associades a una reserva concreta.
      * @param reservaId ID de reserva
      * @return incidències associades a la reserva concreta.

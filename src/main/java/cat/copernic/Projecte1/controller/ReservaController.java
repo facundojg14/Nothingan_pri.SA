@@ -336,4 +336,83 @@ public class ReservaController {
             return "redirect:/web/reserves/lliurar/" + id;
         }
     }
+    
+    /**
+     * Busca reservas pendientes de devolución aplicando filtros.
+     */
+    @GetMapping("/retornar")
+    public String cercarPerRetornar(
+            @RequestParam(required = false) String codi,
+            @RequestParam(required = false) String dni,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String matricula,
+            @RequestParam(required = false) String dataInici,
+            Model model) {
+
+        List<Reserva> reserves = reservaLogic.cercarReservesPerRetornar(
+                codi, dni, email, matricula, dataInici);
+
+        model.addAttribute("reserves", reserves);
+        model.addAttribute("codi", codi);
+        model.addAttribute("dni", dni);
+        model.addAttribute("email", email);
+        model.addAttribute("matricula", matricula);
+        model.addAttribute("dataInici", dataInici);
+
+        return "retornar-vehicle-cerca";
+    }
+
+    /**
+     * Muestra el formulario de devolución de una reserva.
+     */
+    @GetMapping("/retornar/{id}")
+    public String formulariRetornar(
+            @PathVariable Integer id,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        Reserva reserva = reservaLogic.getReservaById(id);
+
+        if (reserva == null
+                || reserva.getEstat() != cat.copernic.Projecte1.entity.Enum.EstatReserva.Lliurada) {
+            redirectAttributes.addFlashAttribute(
+                    "error", "La reserva no existeix o no està pendent de devolució.");
+            return "redirect:/web/reserves/retornar";
+        }
+
+        model.addAttribute("reserva", reserva);
+        model.addAttribute("ara", LocalDateTime.now().withSecond(0).withNano(0));
+
+        return "retornar-vehicle-form";
+    }
+    
+    /**
+     * Procesa la devolución del vehículo.
+     */
+    @PostMapping("/retornar/{id}")
+    public String processarRetorn(
+            @PathVariable Integer id,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(
+                    iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime dataHoraRetorn,
+            @RequestParam String observacions,
+            @RequestParam(defaultValue = "false") boolean desperfectesImputables,
+            @RequestParam(defaultValue = "false") boolean vehiculoAveriado,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            reservaLogic.confirmarRetornVehicle(
+                    id, dataHoraRetorn, observacions,
+                    desperfectesImputables, vehiculoAveriado);
+
+            redirectAttributes.addFlashAttribute(
+                    "missatge", "Vehicle retornat correctament.");
+
+            return "redirect:/web/reserves/all";
+
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/web/reserves/retornar/" + id;
+        }
+    }
 }
