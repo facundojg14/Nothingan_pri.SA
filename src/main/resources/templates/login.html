@@ -87,6 +87,24 @@
                             </div>
                         </form>
 
+                        <!-- Missatges d'Error -->
+                        <div th:if="${error}" class="alert alert-danger mt-3 mb-0 text-center small" role="alert" th:text="${error}">
+                            Credencials incorrectes.
+                        </div>
+
+                        <!-- Error de login enviat per Spring Security (SecurityConfig -> failureHandler) -->
+                        <div th:if="${param.error}" class="alert alert-danger mt-3 mb-0 text-center small" role="alert">
+                            El correu o la contrasenya són incorrectes.
+                        </div>
+
+                        <div th:if="${param.pendent}" class="alert alert-warning mt-3 mb-0 text-center small" role="alert">
+                            El teu compte no està actiu: el registre està pendent de validar, ha estat rebutjat o està de baixa.
+                        </div>
+
+                        <div th:if="${param.logout}" class="alert alert-info mt-3 mb-0 text-center small" role="alert">
+                            Has tancat la sessió correctament.
+                        </div>
+
                         <!-- Missatges d'Avís -->
                         <div th:if="${param.registrePendent}" class="alert alert-info mt-3 mb-0 text-center small" role="alert">
                             La teva sol·licitud s'ha enviat correctament! Està pendent de revisió per un agent.

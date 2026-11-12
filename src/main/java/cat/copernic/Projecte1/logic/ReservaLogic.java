@@ -15,6 +15,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,9 @@ public class ReservaLogic {
     private final ReservaRepository reservaRepo;
     private final VehicleRepository vehicleRepo;
     private final UsuarisRepository usuarisRepo;
+
+    // Logger per registrar les accions de reserves al fitxer de logs (RN04)
+    private final Logger logger = LoggerFactory.getLogger(ReservaLogic.class);
     
     @Value("${app.reserves.dies-antelacio-devolucio:2}")
     private int diesAntelacioDevolucio;
@@ -215,7 +220,10 @@ public class ReservaLogic {
         reserva.setDataReserva(LocalDateTime.now());
         reserva.setEstat(EstatReserva.Confirmada);
 
-        return reservaRepo.save(reserva).getId();
+        Reserva guardada = reservaRepo.save(reserva);
+        logger.info("Reserva {} creada per a {} (vehicle {})",
+                guardada.getCodiReserva(), usuari.getEmail(), vehicle.getMatricula());
+        return guardada.getId();
     }
 
     @Transactional
@@ -229,6 +237,7 @@ public class ReservaLogic {
 
         reserva.setEstat(EstatReserva.Anulada);
         reservaRepo.save(reserva);
+        logger.info("Reserva {} anul·lada per un agent/admin", reserva.getCodiReserva());
         return true;
     }
 
@@ -279,6 +288,7 @@ public class ReservaLogic {
                 null               // Motiu buit quan ho fa el client
         );
 
+        logger.info("Reserva {} anul·lada pel client. Import retornat: {} €", reserva.getCodiReserva(), importRetornat);
         return importRetornat;
     }
 
