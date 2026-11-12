@@ -42,13 +42,17 @@ public class ReservaLogic {
     @Autowired
     private EmailService emailService;
 
+    private final FiancaService fiancaService;
+
     public ReservaLogic(
             ReservaRepository reservaRepo,
             VehicleRepository vehicleRepo,
-            UsuarisRepository usuarisRepo) {
+            UsuarisRepository usuarisRepo,
+            FiancaService fiancaService) {
         this.reservaRepo = reservaRepo;
         this.vehicleRepo = vehicleRepo;
         this.usuarisRepo = usuarisRepo;
+        this.fiancaService = fiancaService;
     }
 
     public List<Reserva> findAllReservas() {
@@ -100,7 +104,10 @@ public class ReservaLogic {
             throw new IllegalArgumentException("La reserva i el vehicle són obligatoris.");
         }
 
-        BigDecimal fiancaBase = vehicle.getFiancaEstandar();
+        // 1. Calcular fianza base 
+        BigDecimal fiancaBase = (vehicle != null && usuari != null)
+                ? fiancaService.calcularFiancaInicial(vehicle, usuari)
+                : BigDecimal.ZERO;
 
         if (fiancaBase == null || fiancaBase.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("La fiança del vehicle no és vàlida.");
