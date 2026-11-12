@@ -456,7 +456,7 @@
                 // Aplica el descuento premium a la fianza.
                 const importFianca = Number(fianca.value);
                 const premium = u.dataset.premium === 'true';
-                const descompte = premium ? importFianca * 0.1 : 0;
+                const descompte = premium ? importFianca * 0.25 : 0;
                 const fiancaFinal = importFianca - descompte;
                 const totalReserva = preuTotal + fiancaFinal;
 
@@ -481,7 +481,7 @@
 
                         ${premium ? `
                         <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:13px;color:#15803d;">
-                            <span>Descompte premium (10 %)</span>
+                            <span>Descompte premium (25 %)</span>
                             <span>−${euros(descompte)}</span>
                         </div>` : ''}
 
