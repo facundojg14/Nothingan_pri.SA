@@ -11,41 +11,14 @@
         <div class="layout">
 
             <!-- Menú Lateral Administrador -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/admin/usuaris}">• Clients</a>
-                    <a th:href="@{/web/admin/vehicles}">• Vehicles</a>
-                    <a th:href="@{/web/admin/reserves}">• Reserves</a>
-                    <a th:href="@{/web/admin/informes}">• Informes</a>
-                    <a th:href="@{/web/admin/agents}" class="active">• Agents</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('agents')}"></aside>
 
             <!-- Contingut Principal -->
             <main class="content">
 
                 <!-- Capçalera superior -->
-                <header class="top-header">
-                    <h2>Gestió de clients</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Enllaç directament al Perfil amb el nom de l'usuari -->
-                        <a th:href="@{/web/admin/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <!-- Botó directament per Tancar Sessió -->
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió dels agents')}"></header>
 
                 <!-- Missatges d'èxit i error -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>

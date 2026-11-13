@@ -11,41 +11,14 @@
         <div class="layout">
 
             <!-- Menú Lateral Esquerre -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}" class="active">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('clients')}"></aside>
 
             <!-- Contingut Principal -->
             <main class="content">
 
                 <!-- Capçalera superior per a Agents (Perfil i Logout) -->
-                <header class="top-header">
-                    <h2>Gestió de clients</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
-                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <!-- Botó per Tancar Sessió -->
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de clients')}"></header>
 
                 <!-- Missatges d'èxit i d'error -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
@@ -53,7 +26,7 @@
 
                 <!-- Barra de Cerca per Email i Botó Alta -->
                 <div class="top-bar">
-                    <form th:action="@{/web/usuaris/all}" method="get" class="filter-group">
+                    <form th:action="@{__${session.rutaBase}__/usuaris/all}" method="get" class="filter-group">
                         <div class="input-wrapper">
                             <label for="filterEmail">Buscar per Email</label>
                             <input type="text" id="filterEmail" name="email" th:value="${emailFiltre != null ? emailFiltre : param.email}" placeholder="client@exemple.cat"/>
@@ -62,12 +35,12 @@
 
                         <!-- Botó per netejar quan hi ha cerca per email -->
                         <a th:if="${(emailFiltre != null and !emailFiltre.empty) or (param.email != null and !#strings.isEmpty(param.email))}" 
-                           th:href="@{/web/usuaris/all}" 
+                           th:href="@{__${session.rutaBase}__/usuaris/all}" 
                            class="btn btn-cancel" 
                            style="padding: 10px 14px; text-decoration: none;">Netejar</a>
                     </form>
 
-                    <a th:href="@{/web/usuaris/new}" class="btn btn-add">+ Alta de client</a>
+                    <a th:href="@{__${session.rutaBase}__/usuaris/new}" class="btn btn-add">+ Alta de client</a>
                 </div>
 
                 <!-- ========================================== -->
@@ -76,7 +49,7 @@
                 <div class="card-filtres" style="background: #ffffff; padding: 18px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e0e0e0;">
                     <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Filtres avançats</h3>
                     
-                    <form th:action="@{/web/usuaris/all}" method="get" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+                    <form th:action="@{__${session.rutaBase}__/usuaris/all}" method="get" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
                         
                         <div class="input-wrapper" style="flex: 1; min-width: 150px;">
                             <label for="fNom">Nom</label>
@@ -107,7 +80,7 @@
                             <button class="btn btn-filter" type="submit" style="padding: 9px 16px;">Filtrar</button>
                             
                             <!-- Botó per netejar filtres múltiples -->
-                            <a th:href="@{/web/usuaris/all}" class="btn btn-cancel" style="padding: 9px 16px; text-decoration: none;">Netejar filtres</a>
+                            <a th:href="@{__${session.rutaBase}__/usuaris/all}" class="btn btn-cancel" style="padding: 9px 16px; text-decoration: none;">Netejar filtres</a>
                         </div>
                     </form>
                 </div>
@@ -146,9 +119,9 @@
 
                                 <!-- Columna d'accions -->
                                 <td class="actions-cell">
-                                    <a th:href="@{/web/usuaris/view/{id}(id=${u.id})}">Veure</a> · 
-                                    <a th:href="@{/web/usuaris/edit/{id}(id=${u.id})}">Editar</a> · 
-                                    <a th:href="@{/web/usuaris/delete/{id}(id=${u.id})}" onclick="return confirm('Estàs segur de donar de baixa aquest client?')">Baixa</a>
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/view/{id}(id=${u.id})}">Veure</a> · 
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/edit/{id}(id=${u.id})}">Editar</a> · 
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/delete/{id}(id=${u.id})}" onclick="return confirm('Estàs segur de donar de baixa aquest client?')">Baixa</a>
                                 </td>
                             </tr>
 

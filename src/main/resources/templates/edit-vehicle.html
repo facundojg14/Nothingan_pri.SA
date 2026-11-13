@@ -11,46 +11,19 @@
         <div class="layout">
 
             <!-- BARRA LATERAL DE NAVEGACIÓN -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}" class="active">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('vehicles')}"></aside>
 
             <!-- CONTENIDO PRINCIPAL -->
             <main class="content">
 
                 <!-- Capçalera superior per a Agents (Perfil i Logout) -->
-                <header class="top-header">
-                    <h2>Gestió de vehicles</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
-                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <!-- Botó per Tancar Sessió -->
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de vehicles')}"></header>
 
                 <div class="top-bar">
                     <h3>Formulari Vehicle</h3>
 
-                    <a th:href="@{/web/vehicles/all}"
+                    <a th:href="@{__${session.rutaBase}__/vehicles/all}"
                        class="btn btn-cancel">
                         Tornar al llistat
                     </a>
@@ -62,7 +35,7 @@
                 <!-- FORMULARIO DE EDICIÓN Y CREACIÓN -->
                 <div class="table-card" style="padding: 24px;">
 
-                    <form th:action="@{/web/vehicles/save}"
+                    <form th:action="@{__${session.rutaBase}__/vehicles/save}"
                           th:object="${vehicle}"
                           method="post">
 
@@ -197,14 +170,14 @@
                                 Desar vehicle
                             </button>
 
-                            <a th:href="@{/web/vehicles/all}"
+                            <a th:href="@{__${session.rutaBase}__/vehicles/all}"
                                class="btn btn-cancel">
                                 Cancel·lar
                             </a>
 
                             <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
                             <a th:if="${vehicle.id > 0}"
-                               th:href="@{/web/vehicles/eliminar/{id}(id=${vehicle.id})}"
+                               th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${vehicle.id})}"
                                class="btn"
                                style="background-color: #d9534f; color: white; margin-left: auto; text-decoration: none;"
                                onclick="return confirm('ATENCIÓ: Esborraràs aquest vehicle definitivament de la base de dades. Només es permet si mai ha tingut cap reserva. Continuar?');">

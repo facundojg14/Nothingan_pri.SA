@@ -1,8 +1,6 @@
 package cat.copernic.Projecte1.controller;
 
 import cat.copernic.Projecte1.entity.Enum.Categoria;
-import cat.copernic.Projecte1.entity.Enum.rol;
-import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
 import cat.copernic.Projecte1.logic.VehicleLogic;
 import jakarta.servlet.http.HttpSession;
@@ -18,20 +16,21 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.time.Duration;
 
 /**
  * CONTROLADOR WEB DE VEHÍCULOS
  *
  * {@code @Controller}: Marca la clase como un controlador de Spring MVC (devuelve
  * nombres de vistas HTML).
- * {@code @RequestMapping("/web/vehicles")}: Define la ruta base HTTP para todas las
- * URLs de este controlador.
+ * {@code @RequestMapping}: Define las rutas base HTTP: /web/agent/vehicles (agent)
+ * i /web/admin/vehicles (administrador). La pantalla és la mateixa per als dos.
+ * El cercador públic de vehicles (/web/vehicles/cercar) és a HomeController.
  * {@code @Scope("request")}: Spring crea una instancia nueva de este controlador por
  * cada petición HTTP.
  */
 @Controller
-@RequestMapping("/web/vehicles")
+// La mateixa pantalla serveix per a l'agent i per a l'administrador (cada un amb el seu prefix)
+@RequestMapping({"/web/agent/vehicles", "/web/admin/vehicles"})
 @Scope("request")
 public class VehicleController {
 
@@ -100,74 +99,6 @@ public class VehicleController {
     }
 
     /**
-     * {@code @GetMapping("/cercar")}: Atiende peticiones GET a /web/vehicles/cercar
-     *
-     * ¿QUÉ HACE?: Busca vehículos disponibles exclusivamente entre un rango de
-     * fechas e calcula los días de alquiler. ¿QUÉ CAPTURA?: dataInici, dataFi y
-     * Model. ¿DE DÓNDE LO SACA?: Parámetros GET enviados desde el formulario de
-     * reserva (ej. index.html). ¿QUÉ DEVUELVE?: La plantilla HTML "index" (con
-     * lista de coches disponibles o error).
-     */
-    @GetMapping("/cercar")
-    public String cercarVehicles(
-            @RequestParam("dataInici")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dataInici,
-            @RequestParam("dataFi")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dataFi,
-            Model model, HttpSession session) {
-
-        Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
-
-        if (!dataFi.isAfter(dataInici)) {
-            model.addAttribute("error", "La data final ha de ser posterior a la inicial.");
-            return determinarVistaSegonsRol(usuariLoguejat, model);
-        }
-
-        // Obtención de vehículos libres en ese intervalo
-        List<Vehicle> vehicles = vehicleLogic.findVehiclesDisponibles(dataInici, dataFi);
-
-        model.addAttribute("vehicles", vehicles);
-        model.addAttribute("dataInici", dataInici);
-        model.addAttribute("dataFi", dataFi);
-
-        // Cálculo de días enteros de alquiler basándose en los minutos de diferencia entre fechas
-        long diesLloguer = (long) Math.ceil(
-                Duration.between(dataInici, dataFi).toMinutes() / 1440.0
-        );
-
-        model.addAttribute("diesLloguer", diesLloguer);
-
-        return determinarVistaSegonsRol(usuariLoguejat, model);
-    }
-
-    // Mètode auxiliar per determinar quina plantilla carregar segons el rol de la sessió
-    private String determinarVistaSegonsRol(Usuaris usuariLoguejat, Model model) {
-        if (usuariLoguejat != null) {
-            model.addAttribute("usuariLoguejat", usuariLoguejat);
-
-            rol rolUsuari = (usuariLoguejat.getRol() != null)
-                    ? rol.valueOf(usuariLoguejat.getRol().toString())
-                    : rol.CLIENT;
-
-            switch (rolUsuari) {
-                case CLIENT:
-                    return "index-client"; // O "index-logged"
-                case ADMIN:
-                    // TODO: RETURN LA VISTA PRINCIPAL PER MOSTRAR ELS RESULTATS DE LA CERCA DE VEHICLES
-                    return "index";
-                case AGENT:
-                    // TODO: RETURN LA VISTA PRINCIPAL PER MOSTRAR ELS RESULTATS DE LA CERCA DE VEHICLES
-                    return "index";
-                default:
-                    return "index";
-            }
-        }
-
-        // Si no hi ha cap sessió oberta, mostrem la pàgina pública general
-        return "index";
-    }
-
-    /**
      * {@code @GetMapping("/new")}: Atiende peticiones GET a /web/vehicles/new
      *
      * ¿QUÉ HACE?: Prepara un objeto Vehicle vacío por defecto para rellenarlo
@@ -195,12 +126,12 @@ public class VehicleController {
      * formulario si hay errores.
      */
     @PostMapping("/save")
-    public String save(@ModelAttribute("vehicle") Vehicle vehicle, RedirectAttributes redirectAttributes) {
+    public String save(@ModelAttribute("vehicle") Vehicle vehicle, HttpSession session, RedirectAttributes redirectAttributes) {
         // Comprueba si ya existe otro vehículo registrado con la misma matrícula
         if (vehicleLogic.existsByMatricula(vehicle.getMatricula(), vehicle.getId())) {
             redirectAttributes.addFlashAttribute("error", "La matrícula '" + vehicle.getMatricula() + "' ja està registrada al sistema!");
             redirectAttributes.addFlashAttribute("vehicle", vehicle);
-            return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
+            return (vehicle.getId() > 0) ? "redirect:" + RutaBase.obtenir(session) + "/vehicles/edit/" + vehicle.getId() : "redirect:" + RutaBase.obtenir(session) + "/vehicles/new";
         }
 
         try {
@@ -210,15 +141,15 @@ public class VehicleController {
             // Captura errores de validación de negocio (preus, fiança, camps obligatoris)
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addFlashAttribute("vehicle", vehicle);
-            return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
+            return (vehicle.getId() > 0) ? "redirect:" + RutaBase.obtenir(session) + "/vehicles/edit/" + vehicle.getId() : "redirect:" + RutaBase.obtenir(session) + "/vehicles/new";
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // Captura errores lanzados directamente por la BD (restricciones UNIQUE, etc.)
             logger.error("Error de duplicitat a la base de dades", e);
             redirectAttributes.addFlashAttribute("error", "Error: La matrícula introduïda ja existeix.");
-            return (vehicle.getId() > 0) ? "redirect:/web/vehicles/edit/" + vehicle.getId() : "redirect:/web/vehicles/new";
+            return (vehicle.getId() > 0) ? "redirect:" + RutaBase.obtenir(session) + "/vehicles/edit/" + vehicle.getId() : "redirect:" + RutaBase.obtenir(session) + "/vehicles/new";
         }
 
-        return "redirect:/web/vehicles/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
     }
 
     /**
@@ -231,7 +162,7 @@ public class VehicleController {
      * /web/vehicles/all.
      */
     @GetMapping("/delete/{id}")
-    public String deleteById(@PathVariable("id") Long vehicleId, RedirectAttributes redirectAttributes) {
+    public String deleteById(@PathVariable("id") Long vehicleId, HttpSession session, RedirectAttributes redirectAttributes) {
         logger.debug("Intentant donar de baixa el vehicle " + vehicleId);
 
         // 1. Intentar la baixa lògica (comprova si té reserves actives i canvia l'estat)
@@ -249,7 +180,7 @@ public class VehicleController {
             }
         }
 
-        return "redirect:/web/vehicles/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
     }
 
     /**
@@ -262,10 +193,10 @@ public class VehicleController {
      * listado si no se encuentra.
      */
     @GetMapping("/edit/{id}")
-    public String editById(@PathVariable("id") Long vehicleId, Model model) {
+    public String editById(@PathVariable("id") Long vehicleId, Model model, HttpSession session) {
         Vehicle vehicle = vehicleLogic.getVehicleById(vehicleId);
         if (vehicle == null) {
-            return "redirect:/web/vehicles/all";
+            return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
         }
         model.addAttribute("vehicle", vehicle);
         return "edit-vehicle";
@@ -276,7 +207,7 @@ public class VehicleController {
      * funciona si el vehículo nunca ha sido reservado.
      */
     @GetMapping("/eliminar/{id}")
-    public String eliminarDefinitivament(@PathVariable("id") Long vehicleId, RedirectAttributes redirectAttributes) {
+    public String eliminarDefinitivament(@PathVariable("id") Long vehicleId, HttpSession session, RedirectAttributes redirectAttributes) {
         logger.debug("Intentant eliminar físicament el vehicle " + vehicleId);
 
         boolean eliminat = vehicleLogic.eliminarVehicleDefinitivament(vehicleId);
@@ -292,7 +223,7 @@ public class VehicleController {
             }
         }
 
-        return "redirect:/web/vehicles/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
     }
 
 }

@@ -8,6 +8,7 @@ import cat.copernic.Projecte1.logic.EmailService;
 import cat.copernic.Projecte1.logic.ReservaLogic;
 import cat.copernic.Projecte1.logic.UsuarisLogic;
 import cat.copernic.Projecte1.logic.VehicleLogic;
+import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -19,16 +20,20 @@ import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Controlador web de les reserves per a l'agent.
+ * Controlador web de les reserves (agent i administrador).
  *
  * Permet llistar i filtrar reserves (RF52, RF54), consultar-ne el detall
  * (RF53), buscar vehicles disponibles, crear reserves (RF50), anul·lar-les
- * (RF55) i lliurar el vehicle al client (RF49).
+ * (RF55), i lliurar (RF49) i retornar (RF48) el vehicle.
+ *
+ * La fan servir l'agent ({@code /web/agent/reserves}) i l'administrador
+ * ({@code /web/admin/reserves}).
  *
  * @author Equip4
  */
 @Controller
-@RequestMapping("/web/reserves")
+// La mateixa pantalla serveix per a l'agent i per a l'administrador (cada un amb el seu prefix)
+@RequestMapping({"/web/agent/reserves", "/web/admin/reserves"})
 @RequestScope
 public class ReservaController {
 
@@ -177,14 +182,14 @@ public class ReservaController {
 
     @PostMapping("/save")
     public String save(@ModelAttribute Reserva reserva,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session, RedirectAttributes redirectAttributes) {
         try {
             // Validació extra: Evitar reservar un vehicle no actiu o no disponible
             if (reserva.getVehicle() != null && reserva.getVehicle().getId() > 0) {
                 Vehicle v = vehicleLogic.getVehicleById(reserva.getVehicle().getId());
                 if (v != null && (!Boolean.TRUE.equals(v.getActiu()) || v.getEstatVehicle() != EstatVehicle.Disponible)) {
                     redirectAttributes.addFlashAttribute("error", "Aquest vehicle està donat de baixa i no es pot reservar.");
-                    return "redirect:/web/reserves/new";
+                    return "redirect:" + RutaBase.obtenir(session) + "/reserves/new";
                 }
             }
 
@@ -192,10 +197,10 @@ public class ReservaController {
             redirectAttributes.addFlashAttribute("missatge", "Reserva creada correctament.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/web/reserves/new";
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/new";
         }
 
-        return "redirect:/web/reserves/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
     @GetMapping("/detall/{id}")
@@ -205,7 +210,7 @@ public class ReservaController {
             @RequestParam(required = false) String codi,
             @RequestParam(required = false) String matricula,
             @RequestParam(required = false) String data,
-            RedirectAttributes attributes) {
+            HttpSession session, RedirectAttributes attributes) {
 
         attributes.addAttribute("detall", id);
 
@@ -225,14 +230,14 @@ public class ReservaController {
             attributes.addAttribute("data", data);
         }
 
-        return "redirect:/web/reserves/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
     @PostMapping("/cancelar/{id}")
     public String cancel(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "") String motiu,
             @RequestParam(required = false, defaultValue = "100") double percentatgeRetorn,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session, RedirectAttributes redirectAttributes) {
 
         Reserva reserva = reservaLogic.getReservaById(id);
 
@@ -258,7 +263,7 @@ public class ReservaController {
             redirectAttributes.addFlashAttribute("error", "No s'ha pogut anul·lar la reserva.");
         }
 
-        return "redirect:/web/reserves/all";
+        return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
     // Mètode privat afegit per carregar dades dels desplegables al formulari
@@ -299,12 +304,12 @@ public class ReservaController {
      * lliurament.
      */
     @GetMapping("/lliurar/{id}")
-    public String formulariLliurar(@PathVariable Integer id, Model model, RedirectAttributes redirectAttributes) {
+    public String formulariLliurar(@PathVariable Integer id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
         Reserva reserva = reservaLogic.getReservaById(id);
 
         if (reserva == null || reserva.getEstat() != cat.copernic.Projecte1.entity.Enum.EstatReserva.Confirmada) {
             redirectAttributes.addFlashAttribute("error", "La reserva no existeix o no està pendent de lliurament.");
-            return "redirect:/web/reserves/lliurar";
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/lliurar";
         }
 
         model.addAttribute("reserva", reserva);
@@ -322,18 +327,18 @@ public class ReservaController {
             @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime dataHoraLliurament,
             @RequestParam String descripcioLliurament,
             @RequestParam(name = "fotos", required = false) org.springframework.web.multipart.MultipartFile[] fotos,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session, RedirectAttributes redirectAttributes) {
 
         try {
             reservaLogic.confirmarLliuramentVehicle(id, dataHoraLliurament, descripcioLliurament, fotos);
             redirectAttributes.addFlashAttribute("missatge", "Vehicle lliurat correctament al client!");
-            return "redirect:/web/reserves/all";
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/web/reserves/lliurar/" + id;
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/lliurar/" + id;
         } catch (java.io.IOException e) {
             redirectAttributes.addFlashAttribute("error", "Error en desar les fotografies del lliurament.");
-            return "redirect:/web/reserves/lliurar/" + id;
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/lliurar/" + id;
         }
     }
     
@@ -369,7 +374,7 @@ public class ReservaController {
     public String formulariRetornar(
             @PathVariable Integer id,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session, RedirectAttributes redirectAttributes) {
 
         Reserva reserva = reservaLogic.getReservaById(id);
 
@@ -377,7 +382,7 @@ public class ReservaController {
                 || reserva.getEstat() != cat.copernic.Projecte1.entity.Enum.EstatReserva.Lliurada) {
             redirectAttributes.addFlashAttribute(
                     "error", "La reserva no existeix o no està pendent de devolució.");
-            return "redirect:/web/reserves/retornar";
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/retornar";
         }
 
         model.addAttribute("reserva", reserva);
@@ -398,7 +403,7 @@ public class ReservaController {
             @RequestParam String observacions,
             @RequestParam(defaultValue = "false") boolean desperfectesImputables,
             @RequestParam(defaultValue = "false") boolean vehiculoAveriado,
-            RedirectAttributes redirectAttributes) {
+            HttpSession session, RedirectAttributes redirectAttributes) {
 
         try {
             reservaLogic.confirmarRetornVehicle(
@@ -408,11 +413,11 @@ public class ReservaController {
             redirectAttributes.addFlashAttribute(
                     "missatge", "Vehicle retornat correctament.");
 
-            return "redirect:/web/reserves/all";
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
 
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/web/reserves/retornar/" + id;
+            return "redirect:" + RutaBase.obtenir(session) + "/reserves/retornar/" + id;
         }
     }
 }
