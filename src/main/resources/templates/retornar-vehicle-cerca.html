@@ -10,47 +10,23 @@
 
         <div class="layout">
 
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}" class="active">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('retornar')}"></aside>
 
             <main class="content">
 
-                <header class="top-header">
-                    <h2>Devolució de vehicles</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Devolució de vehicles')}"></header>
 
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
                 <div class="top-bar">
                     <h3>Cerca la reserva per retornar</h3>
-                    <a th:href="@{/web/reserves/all}" class="btn btn-cancel">Tornar a reserves</a>
+                    <a th:href="@{__${session.rutaBase}__/reserves/all}" class="btn btn-cancel">Tornar a reserves</a>
                 </div>
 
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
-                    <form th:action="@{/web/reserves/retornar}" method="get">
+                    <form th:action="@{__${session.rutaBase}__/reserves/retornar}" method="get">
 
                         <div class="form-grid">
                             <div class="form-group">
@@ -81,7 +57,7 @@
 
                         <div class="button-group" style="margin-top: 15px;">
                             <button type="submit" class="btn btn-filter">Cercar reserva</button>
-                            <a th:href="@{/web/reserves/retornar}" class="btn btn-cancel">Netejar filtres</a>
+                            <a th:href="@{__${session.rutaBase}__/reserves/retornar}" class="btn btn-cancel">Netejar filtres</a>
                         </div>
 
                     </form>
@@ -112,7 +88,7 @@
                                     <span class="badge badge-validat" th:text="${r.estat}">Lliurada</span>
                                 </td>
                                 <td class="actions-cell">
-                                    <a th:href="@{/web/reserves/retornar/{id}(id=${r.id})}" class="btn btn-add" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    <a th:href="@{__${session.rutaBase}__/reserves/retornar/{id}(id=${r.id})}" class="btn btn-add" style="padding: 6px 12px; font-size: 0.85rem;">
                                         Seleccionar i retornar
                                     </a>
                                 </td>
