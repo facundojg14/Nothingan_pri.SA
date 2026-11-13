@@ -11,41 +11,14 @@
         <div class="layout">
 
             <!-- BARRA LATERAL DE NAVEGACIÓN -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}" class="active">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('vehicles')}"></aside>
 
             <!-- CONTENIDO PRINCIPAL -->
             <main class="content">
 
                 <!-- Capçalera superior per a Agents (Perfil i Logout) -->
-                <header class="top-header">
-                    <h2>Gestió de vehicles</h2>
-
-                    <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Enllaç directament al Perfil d'Agent amb el nom de l'usuari -->
-                        <a th:href="@{/web/usuaris/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
-                            <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
-                        </a>
-
-                        <!-- Botó per Tancar Sessió -->
-                        <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-                            Tancar Sessió
-                        </a>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de vehicles')}"></header>
 
                 <!-- MENSAJES DE ÉXITO Y ERROR -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
@@ -55,14 +28,14 @@
                 <div class="top-bar">
                     <h3>Llistat de vehicles</h3>
 
-                    <a th:href="@{/web/vehicles/new}" class="btn btn-add">
+                    <a th:href="@{__${session.rutaBase}__/vehicles/new}" class="btn btn-add">
                         + Nou vehicle
                     </a>
                 </div>
 
                 <!-- FORMULARIO DE FILTROS COMBINADOS -->
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
-                    <form th:action="@{/web/vehicles/all}" method="get">
+                    <form th:action="@{__${session.rutaBase}__/vehicles/all}" method="get">
                         <div class="form-grid">
 
                             <!-- Filtro 1: Matrícula -->
@@ -138,7 +111,7 @@
                         <!-- Botones de acción del filtro -->
                         <div class="button-group" style="margin-top: 15px;">
                             <button type="submit" class="btn btn-filter">Filtrar</button>
-                            <a th:href="@{/web/vehicles/all}" class="btn btn-cancel">Netejar filtres</a>
+                            <a th:href="@{__${session.rutaBase}__/vehicles/all}" class="btn btn-cancel">Netejar filtres</a>
                         </div>
                     </form>
                 </div>
@@ -185,11 +158,11 @@
                                     <span th:unless="${v.actiu}" class="badge badge-rebutjat">No</span>
                                 </td>
                                 <td class="actions-cell">
-                                    <a th:href="@{/web/vehicles/edit/{id}(id=${v.id})}">Editar</a>
+                                    <a th:href="@{__${session.rutaBase}__/vehicles/edit/{id}(id=${v.id})}">Editar</a>
 
                                     <!-- Baja lógica: solo si el vehículo está activo -->
                                     <a th:if="${v.actiu}"
-                                       th:href="@{/web/vehicles/delete/{id}(id=${v.id})}"
+                                       th:href="@{__${session.rutaBase}__/vehicles/delete/{id}(id=${v.id})}"
                                        class="action-link"
                                        style="color: #e67e22; margin-left: 8px;"
                                        onclick="return confirm('Estàs segur que vols donar de baixa aquest vehicle? Es mantindrà a l\'historial però deixarà d\'estar disponible.');">
@@ -197,7 +170,7 @@
                                     </a>
 
                                     <!-- Eliminación física definitiva: solo si nunca ha tenido reservas -->
-                                    <a th:href="@{/web/vehicles/eliminar/{id}(id=${v.id})}"
+                                    <a th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${v.id})}"
                                        class="action-link"
                                        style="color: var(--danger-color, #d9534f); margin-left: 8px;"
                                        onclick="return confirm('ATENCIÓ: Aquesta acció eliminarà el vehicle definitivament de la base de dades (només permès si mai ha tingut reserves). Vols continuar?');">

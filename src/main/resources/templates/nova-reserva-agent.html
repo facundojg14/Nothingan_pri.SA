@@ -23,41 +23,20 @@
         <div class="layout">
 
             <!-- Menú lateral de navegación. -->
-            <aside class="sidebar">
-                <div class="logo-container">
-                    <a th:href="@{/web/usuaris/login}">
-                        <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
-                    </a>
-
-                </div>
-
-                <nav class="nav-menu">
-                    <a th:href="@{/web/reserves/all}" class="active">• Reserves</a>
-                    <a th:href="@{/web/reserves/lliurar}">• Lliurar vehicle</a>
-                    <a th:href="@{/web/reserves/retornar}">• Retornar vehicle</a>
-                    <a th:href="@{/web/vehicles/all}">• Vehicles</a>
-                    <a th:href="@{/web/usuaris/all}">• Clients</a>
-                </nav>
-            </aside>
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('reserves')}"></aside>
 
             <!-- Contenido principal de la página. -->
             <main class="content">
 
                 <!-- Cabecera con el título y el usuario. -->
-                <header class="top-header">
-                    <h2>Gestió de reserves</h2>
-
-                    <div class="user-dropdown">
-                        <span>(agent) ▾</span>
-                        <div class="user-avatar"></div>
-                    </div>
-                </header>
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de reserves')}"></header>
 
                 <!-- Título de la página y botón para volver. -->
                 <div class="top-bar">
                     <h3>Nova reserva</h3>
 
-                    <a th:href="@{/web/reserves/all}"
+                    <a th:href="@{__${session.rutaBase}__/reserves/all}"
                        class="btn btn-cancel">
                         Tornar al llistat
                     </a>
@@ -77,7 +56,7 @@
                     </h3>
 
                     <!-- Formulario para consultar la disponibilidad por fechas. -->
-                    <form th:action="@{/web/reserves/disponibles}"
+                    <form th:action="@{__${session.rutaBase}__/reserves/disponibles}"
                           method="get">
 
                         <div style="display: grid;
@@ -138,7 +117,7 @@
                 <!-- Formulario para crear una reserva. -->
                 <div class="table-card" style="padding: 24px;">
 
-                    <form th:action="@{/web/reserves/save}"
+                    <form th:action="@{__${session.rutaBase}__/reserves/save}"
                           th:object="${reserva}"
                           method="post">
 
@@ -322,7 +301,7 @@
                                 Desar reserva
                             </button>
 
-                            <a th:href="@{/web/reserves/all}"
+                            <a th:href="@{__${session.rutaBase}__/reserves/all}"
                                class="btn btn-cancel">
                                 Cancel·lar
                             </a>
