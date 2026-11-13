@@ -260,7 +260,7 @@
                     
                     <div class="vehicle-summary-card" th:if="${vehicle != null}">
                         <div class="vehicle-summary-photo" th:if="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
-                            <img th:src="${vehicle.fotoVehicle}" th:alt="${vehicle.marca}">
+                            <img th:src="@{'/img/' + ${vehicle.fotoVehicle}}" th:alt="${vehicle.marca}">
                         </div>
                         <div class="vehicle-summary-photo" th:unless="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
                             🚗

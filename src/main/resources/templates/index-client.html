@@ -559,7 +559,7 @@
                         <div class="vehicle-photo"
                              th:if="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
 
-                            <img th:src="${vehicle.fotoVehicle}"
+                            <img th:src="@{'/img/' + ${vehicle.fotoVehicle}}"
                                  th:alt="${vehicle.marca + ' ' + vehicle.model}"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
 
