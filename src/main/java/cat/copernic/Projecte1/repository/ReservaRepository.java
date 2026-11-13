@@ -35,6 +35,9 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
     // Comprueba si existe alguna reserva asociada al vehículo excluyendo un estado concreto (ej. ANULADA)
     boolean existsByVehicle_IdAndEstatNot(long vehicleId, EstatReserva estat);
 
+    // Comprueba si el vehículo tiene alguna reserva en uno de los estados indicados (ej. Confirmada o Lliurada)
+    boolean existsByVehicle_IdAndEstatIn(long vehicleId, List<EstatReserva> estats);
+
     // Busca las reservas de un vehículo que coinciden con unas fechas.
     @Query("SELECT r FROM Reserva r WHERE r.vehicle.id = :vehicleId "
             + "AND r.estat <> :anulada "

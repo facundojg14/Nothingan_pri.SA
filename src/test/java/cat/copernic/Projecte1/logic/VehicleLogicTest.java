@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -52,8 +54,8 @@ public class VehicleLogicTest {
     @Test
     @DisplayName("1. donarDeBaixaVehicle: no es pot donar de baixa un vehicle que té reserves (RF41)")
     void testDonarDeBaixa_NoEsPotSiTeReserves() {
-        // GIVEN: El vehicle 1 té reserves
-        when(reservaRepo.existsByVehicle_Id(1L)).thenReturn(true);
+        // GIVEN: El vehicle 1 té reserves actives (Confirmada o Lliurada)
+        when(reservaRepo.existsByVehicle_IdAndEstatIn(eq(1L), anyList())).thenReturn(true);
 
         // WHEN
         boolean resultat = vehicleLogic.donarDeBaixaVehicle(1L);
@@ -72,7 +74,7 @@ public class VehicleLogicTest {
         vehicle.setEstatVehicle(EstatVehicle.Disponible);
         vehicle.setActiu(true);
 
-        when(reservaRepo.existsByVehicle_Id(2L)).thenReturn(false);
+        when(reservaRepo.existsByVehicle_IdAndEstatIn(eq(2L), anyList())).thenReturn(false);
         when(vehicleRepo.findById(2L)).thenReturn(Optional.of(vehicle));
 
         // WHEN

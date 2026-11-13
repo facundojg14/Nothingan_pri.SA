@@ -1,6 +1,7 @@
 package cat.copernic.Projecte1.logic;
 
 import cat.copernic.Projecte1.entity.Enum.Categoria;
+import cat.copernic.Projecte1.entity.Enum.EstatReserva;
 import cat.copernic.Projecte1.entity.Enum.EstatVehicle;
 import cat.copernic.Projecte1.entity.Vehicle;
 import cat.copernic.Projecte1.repository.ReservaRepository;
@@ -35,13 +36,19 @@ public class VehicleLogic {
     }
 
     /**
-     * Comprova si el vehicle té reserves associades.
+     * Comprova si el vehicle té reserves actives, és a dir, en estat
+     * Confirmada (pendent de lliurar) o Lliurada (el client té el vehicle).
+     * Les reserves Anulada o Retornada ja han acabat i no impedeixen la baixa.
+     *
+     * @param vehicleId identificador del vehicle
+     * @return true si té alguna reserva Confirmada o Lliurada
      */
     public boolean teReservesActives(Long vehicleId) {
         if (vehicleId == null) {
             return false;
         }
-        return reservaRepo.existsByVehicle_Id(vehicleId);
+        return reservaRepo.existsByVehicle_IdAndEstatIn(vehicleId,
+                List.of(EstatReserva.Confirmada, EstatReserva.Lliurada));
     }
 
     /**
