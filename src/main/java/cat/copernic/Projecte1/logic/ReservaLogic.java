@@ -143,10 +143,9 @@ public class ReservaLogic {
         }
 
         // Aplica el descuento Premium del 25 % a la fianza.
-        BigDecimal fiancaFinal = fiancaBase;
-        if (usuari != null && Boolean.TRUE.equals(usuari.getPremium())) {
-            fiancaFinal = fiancaBase.multiply(new BigDecimal("0.75"));
-        }
+        BigDecimal fiancaFinal = (usuari != null)
+                ? fiancaService.calcularFiancaInicial(vehicle, usuari)
+                : BigDecimal.ZERO;
 
         BigDecimal preuDia = vehicle.getPreuDia() != null
                 ? vehicle.getPreuDia() : BigDecimal.ZERO;
@@ -237,11 +236,8 @@ public class ReservaLogic {
 
         reserva.setPreuLloguer(preuTotal);
 
-        BigDecimal fianca = fiancaBase;
-        if (Boolean.TRUE.equals(usuari.getPremium())) {
-            fianca = fianca.multiply(new BigDecimal("0.75"));
-        }
-        reserva.setImportFianca(fianca.setScale(2, RoundingMode.HALF_UP));
+        BigDecimal fianca = fiancaService.calcularFiancaInicial(vehicle, usuari);
+        reserva.setImportFianca(fianca);
 
         if (reserva.getCodiReserva() == null || reserva.getCodiReserva().isBlank()) {
             String codi;
@@ -538,41 +534,12 @@ public class ReservaLogic {
             throw new IllegalArgumentException("La reserva no té cap vehicle associat.");
         }
 
-        BigDecimal fianca = reserva.getImportFianca() != null
-                ? reserva.getImportFianca() : BigDecimal.ZERO;
+        // Deleguem el càlcul complet a FiancaService (hores de retard arrodonides cap amunt,
+        // retenció del 100% si hi ha desperfectes imputables, càrrec extra i actualització d'estats)
+        fiancaService.processarRetornVehicle(reserva, dataHoraRetorn, desperfectesImputables);
 
-        BigDecimal preuHora = vehicle.getPreuHora() != null
-                ? vehicle.getPreuHora() : BigDecimal.ZERO;
-
-        long horesRetard = reserva.getDataFi() != null
-                && dataHoraRetorn.isAfter(reserva.getDataFi())
-                ? Duration.between(reserva.getDataFi(), dataHoraRetorn).toHours()
-                : 0;
-
-        BigDecimal carrecRetard = preuHora
-                .multiply(BigDecimal.valueOf(horesRetard))
-                .setScale(2, RoundingMode.HALF_UP);
-        
-        reserva.setCarrecExtraPendent(carrecRetard);
-
-        BigDecimal fiancaRetinguda;
-        BigDecimal fiancaRetornada;
-
-        if (desperfectesImputables) {
-            fiancaRetinguda = fianca;
-            fiancaRetornada = BigDecimal.ZERO;
-        } else {
-            fiancaRetinguda = carrecRetard.min(fianca);
-            fiancaRetornada = fianca.subtract(fiancaRetinguda);
-        }
-
-        reserva.setDataHoraRetorn(dataHoraRetorn);
+        // Afegim les observacions de l'agent i l'estat operatiu final del vehicle (Disponible o En_manteniment)
         reserva.setObservacions(observacions.trim());
-        reserva.setDesperfectesImputables(desperfectesImputables);
-        reserva.setFiancaRetinguda(fiancaRetinguda);
-        reserva.setFiancaRetornada(fiancaRetornada);
-        reserva.setEstat(EstatReserva.Retornada);
-
         vehicle.setEstatVehicle(vehiculoAveriado
                 ? EstatVehicle.En_manteniment
                 : EstatVehicle.Disponible);
@@ -580,8 +547,11 @@ public class ReservaLogic {
         vehicleRepo.save(vehicle);
         reservaRepo.save(reserva);
 
-        logger.info("Reserva {} retornada. Fiança retinguda: {} €, retornada: {} €",
-                reserva.getCodiReserva(), fiancaRetinguda, fiancaRetornada);
+        logger.info("Reserva {} retornada. Fiança retinguda: {} €, retornada: {} €, càrrec extra: {} €",
+                reserva.getCodiReserva(),
+                reserva.getFiancaRetinguda(),
+                reserva.getFiancaRetornada(),
+                reserva.getCarrecExtraPendent());
         }
 
     /**

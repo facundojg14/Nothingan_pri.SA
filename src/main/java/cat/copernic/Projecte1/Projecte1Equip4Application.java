@@ -7,13 +7,16 @@ import cat.copernic.Projecte1.entity.Enum.rol;
 import static cat.copernic.Projecte1.entity.Enum.rol.ADMIN;
 import static cat.copernic.Projecte1.entity.Enum.rol.AGENT;
 import static cat.copernic.Projecte1.entity.Enum.rol.CLIENT;
+import cat.copernic.Projecte1.entity.Incidencies;
 import cat.copernic.Projecte1.entity.Reserva;
 import cat.copernic.Projecte1.entity.Usuaris;
 import cat.copernic.Projecte1.entity.Vehicle;
+import cat.copernic.Projecte1.repository.IncidenciesRepository;
 import cat.copernic.Projecte1.repository.ReservaRepository;
 import cat.copernic.Projecte1.repository.UsuarisRepository;
 import cat.copernic.Projecte1.repository.VehicleRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -36,7 +39,8 @@ public class Projecte1Equip4Application {
     public CommandLineRunner initData(
             UsuarisRepository usuarisRepo,
             VehicleRepository vehicleRepo,
-            ReservaRepository reservaRepo) {
+            ReservaRepository reservaRepo,
+            IncidenciesRepository incidenciesRepo) {
         return args -> {
 
             // 1. Creació d'usuaris (1 Admin + 3 Agents + 3 Clients diferents)
@@ -127,9 +131,32 @@ public class Projecte1Equip4Application {
                                     new BigDecimal("175.00"), EstatReserva.Confirmada);
                         });
 
+                            // Creació de reserva retornada amb incidència per a cemacia@alumnat.copernic.cat
+                            vehicleRepo.findByMatriculaIgnoreCase("3343 DGY").stream().findFirst().ifPresent(v1 -> {
+                                crearReservaSiNoExisteix(reservaRepo, "RES-013", client1, v1,
+                                        LocalDateTime.of(2026, 8, 10, 10, 0), LocalDateTime.of(2026, 8, 13, 10, 0),
+                                        new BigDecimal("73.68"), EstatReserva.Retornada);
+
+                                reservaRepo.findByCodiReserva("RES-013").ifPresent(reservaRetornada -> {
+                                    if (incidenciesRepo.findByReserva_Id(reservaRetornada.getId()).isEmpty()) {
+                                        Incidencies inc = new Incidencies();
+                                        inc.setData_Hora(LocalDate.of(2026, 8, 13));
+                                        inc.setQuilometratge(45200);
+                                        inc.setDescripcio("Rascada lleu al lateral posterior dret durant la devolució del vehicle.");
+                                        inc.setResolucio("Pendent de peritatge i valoració al taller.");
+                                        inc.setImporte(85.50);
+                                        inc.setReserva(reservaRetornada);
+
+                                        incidenciesRepo.save(inc);
+                                        System.out.println("Incidència creada per a la reserva: RES-013");
+                                    }
+                                });
+                            });
                     });
                 });
             });
+            
+            
 
             System.out.println("\n----------------------------------------------------------");
             System.out.println(" Aplicació iniciada correctament amb dades de prova!");
