@@ -9,8 +9,6 @@ import cat.copernic.Projecte1.entity.Usuaris;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  *
@@ -39,20 +37,17 @@ public interface UsuarisRepository extends JpaRepository<Usuaris, Long> {
 
     Optional<Usuaris> findByDni(String dni);
 
-    @Query("SELECT u FROM Usuaris u WHERE "
-            + "(:email IS NULL OR :email = '' OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND "
-            + "(:nacionalitat IS NULL OR :nacionalitat = '' OR LOWER(u.nacionalitat) LIKE LOWER(CONCAT('%', :nacionalitat, '%'))) AND "
-            + "(:poblacio IS NULL OR :poblacio = '' OR LOWER(u.poblacio) LIKE LOWER(CONCAT('%', :poblacio, '%'))) AND "
-            + "(:dni IS NULL OR :dni = '' OR LOWER(u.dni) LIKE LOWER(CONCAT('%', :dni, '%'))) AND "
-            + "(:nom IS NULL OR :nom = '' OR LOWER(u.nom) LIKE LOWER(CONCAT('%', :nom, '%'))) AND "
-            + "(:telefon IS NULL OR :telefon = '' OR u.telefon LIKE CONCAT('%', :telefon, '%'))")
-    List<Usuaris> findClientByFiltreMultiple(
-            @Param("email") String email,
-            @Param("nacionalitat") String nacionalitat,
-            @Param("poblacio") String poblacio,
-            @Param("dni") String dni,
-            @Param("nom") String nom,
-            @Param("telefon") String telefon
+    /**
+     * SQL Generado: Consulta combinada filtrando por email, DNI, nombre y
+     * teléfono (LIKE). Son campos obligatorios, nunca son null, así que un
+     * filtro vacío ("") los encuentra todos. La nacionalidad y la población
+     * pueden ser null y se filtran en UsuarisLogic.filtrarClients.
+     */
+    List<Usuaris> findByEmailContainingIgnoreCaseAndDniContainingIgnoreCaseAndNomContainingIgnoreCaseAndTelefonContaining(
+            String email,
+            String dni,
+            String nom,
+            String telefon
     );
 
 }

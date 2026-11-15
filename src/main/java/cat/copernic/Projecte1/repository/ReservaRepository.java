@@ -6,8 +6,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * Repositori JPA de les reserves.
@@ -38,22 +36,20 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
     // Comprueba si el vehículo tiene alguna reserva en uno de los estados indicados (ej. Confirmada o Lliurada)
     boolean existsByVehicle_IdAndEstatIn(long vehicleId, List<EstatReserva> estats);
 
-    // Busca las reservas de un vehículo que coinciden con unas fechas.
-    @Query("SELECT r FROM Reserva r WHERE r.vehicle.id = :vehicleId "
-            + "AND r.estat <> :anulada "
-            + "AND r.dataInici < :dataFi "
-            + "AND r.dataFi > :dataInici")
-    List<Reserva> findReservesSolapades(
-            @Param("vehicleId") long vehicleId,
-            @Param("dataInici") LocalDateTime dataInici,
-            @Param("dataFi") LocalDateTime dataFi,
-            @Param("anulada") EstatReserva anulada);
+    // Busca las reservas de un vehículo que se solapan con unas fechas (sin contar un estado, ej. Anulada).
+    // Se solapan si la reserva empieza antes de la nueva dataFi y acaba después de la nueva dataInici.
+    // Los parámetros van en el mismo orden que en el nombre del método.
+    List<Reserva> findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(
+            long vehicleId,
+            EstatReserva estat,
+            LocalDateTime dataFi,
+            LocalDateTime dataInici);
 
-    // BUSQUEDA PER INFORMES    
-    @Query("SELECT r FROM Reserva r WHERE "
-            + "(:clientId IS NULL OR r.usuari.id = :clientId) "
-            + "ORDER BY r.usuari.nom ASC, r.dataInici DESC")
-    List<Reserva> findReservesPerInforme(@Param("clientId") Integer clientId);
+    // BUSQUEDA PER INFORMES: totes les reserves, ordenades per nom del client i per data (la més recent primer)
+    List<Reserva> findAllByOrderByUsuari_NomAscDataIniciDesc();
+
+    // BUSQUEDA PER INFORMES: les reserves d'un client, ordenades per data (la més recent primer)
+    List<Reserva> findByUsuari_IdOrderByDataIniciDesc(Long usuariId);
 
     Optional<Reserva> findByCodiReserva(String codiReserva);
 }
