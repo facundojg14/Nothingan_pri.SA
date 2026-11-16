@@ -267,14 +267,27 @@ public class UsuarisLogic {
      * @return usuaris que compleixen tots els criteris indicats
      */
     public List<Usuaris> filtrarClients(String email, String nacionalitat, String poblacio, String dni, String nom, String telefon) {
-        return usuariRepo.findClientByFiltreMultiple(
-                cleanParam(email),
-                cleanParam(nacionalitat),
-                cleanParam(poblacio),
-                cleanParam(dni),
-                cleanParam(nom),
-                cleanParam(telefon)
+        // 1. Camps obligatoris (email, DNI, nom i telèfon): els filtra la base de dades
+        List<Usuaris> base = usuariRepo.findByEmailContainingIgnoreCaseAndDniContainingIgnoreCaseAndNomContainingIgnoreCaseAndTelefonContaining(
+                textBuit(email),
+                textBuit(dni),
+                textBuit(nom),
+                textBuit(telefon)
         );
+
+        // 2. Camps que poden ser null (nacionalitat i població): es filtren aquí
+        String nacioClean = cleanParam(nacionalitat);
+        String poblClean = cleanParam(poblacio);
+
+        return base.stream()
+                .filter(u -> nacioClean == null || (u.getNacionalitat() != null && u.getNacionalitat().toLowerCase().contains(nacioClean.toLowerCase())))
+                .filter(u -> poblClean == null || (u.getPoblacio() != null && u.getPoblacio().toLowerCase().contains(poblClean.toLowerCase())))
+                .toList();
+    }
+
+    // Mètode auxiliar: converteix un filtre null en "" perquè el LIKE '%%' ho trobi tot
+    private String textBuit(String param) {
+        return param == null ? "" : param.trim();
     }
 // Método auxiliar para convertir cadenas vacías con espacios ("   ") a null
 

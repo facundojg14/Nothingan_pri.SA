@@ -120,8 +120,9 @@ public class ReservaLogic {
             return false;
         }
 
-        return reservaRepo.findReservesSolapades(
-                vehicleId, dataInici, dataFi, EstatReserva.Anulada).isEmpty();
+        // Reserves no anul·lades del vehicle que comencen abans de dataFi i acaben després de dataInici
+        return reservaRepo.findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(
+                vehicleId, EstatReserva.Anulada, dataFi, dataInici).isEmpty();
     }
 
     /**
@@ -309,7 +310,11 @@ public class ReservaLogic {
      * @return llista de reserves de l'informe
      */
     public List<Reserva> obtenirInformeReserves(Integer clientId) {
-        return reservaRepo.findReservesPerInforme(clientId);
+        // Sense client: les reserves de tots. Amb client: només les seves
+        if (clientId == null) {
+            return reservaRepo.findAllByOrderByUsuari_NomAscDataIniciDesc();
+        }
+        return reservaRepo.findByUsuari_IdOrderByDataIniciDesc(clientId.longValue());
     }
 
     /**
