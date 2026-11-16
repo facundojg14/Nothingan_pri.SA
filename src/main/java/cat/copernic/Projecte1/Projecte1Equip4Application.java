@@ -44,17 +44,17 @@ public class Projecte1Equip4Application {
         return args -> {
 
             // 1. Creació d'usuaris (1 Admin + 3 Agents + 3 Clients diferents)
-            crearUsuariSiNoExisteix(usuarisRepo, "Admin Principal", "alorente@alumnat.copernic.cat", "1212", "384639013", "VALIDAT", "74827465H", false, ADMIN);
-            crearUsuariSiNoExisteix(usuarisRepo, "Agent 1", "fjaeggi@alumnat.copernic.cat", "1212", "456789032", "VALIDAT", "74864465N", false, AGENT);
-            crearUsuariSiNoExisteix(usuarisRepo, "Agent 2", "dnavio@alumnat.copernic.cat", "1212", "234567890", "VALIDAT", "74827665T", false, AGENT);
-            crearUsuariSiNoExisteix(usuarisRepo, "Agent 3", "mruiz@alumnat.copernic.cat", "1212", "678901234", "VALIDAT", "55443322K", false, AGENT);
+            crearUsuariSiNoExisteix(usuarisRepo, "Admin Principal", "alorente@alumnat.copernic.cat", "1212", "384639013", "VALIDAT", "74827465H", false, ADMIN, "espanyola", "Terrasa");
+            crearUsuariSiNoExisteix(usuarisRepo, "Agent 1", "fjaeggi@alumnat.copernic.cat", "1212", "456789032", "VALIDAT", "74864465N", false, AGENT, "espanyola", "Barbera del valles");
+            crearUsuariSiNoExisteix(usuarisRepo, "Agent 2", "dnavio@alumnat.copernic.cat", "1212", "234567890", "VALIDAT", "74827665T", false, AGENT, "espanyola", "Sabadell");
+            crearUsuariSiNoExisteix(usuarisRepo, "Agent 3", "mruiz@alumnat.copernic.cat", "1212", "678901234", "VALIDAT", "55443322K", false, AGENT, "espanyola", "Terrasa");
 
-            crearUsuariSiNoExisteix(usuarisRepo, "Carolina Macià", "cemacia@alumnat.copernic.cat", "1212", "600112233", "VALIDAT", "99887766A", true, CLIENT);
-            crearUsuariSiNoExisteix(usuarisRepo, "Marc Gómez", "mgomez@alumnat.copernic.cat", "1212", "611223344", "VALIDAT", "88776655B", true, CLIENT);
-            crearUsuariSiNoExisteix(usuarisRepo, "Laura Vila", "lvila@alumnat.copernic.cat", "1212", "622334455", "VALIDAT", "77665544C", true, CLIENT);
+            crearUsuariSiNoExisteix(usuarisRepo, "Carolina Macià", "cemacia@alumnat.copernic.cat", "1212", "600112233", "VALIDAT", "99887766A", true, CLIENT, "espanyola", "Barcelona");
+            crearUsuariSiNoExisteix(usuarisRepo, "Marc Gómez", "mgomez@alumnat.copernic.cat", "1212", "611223344", "VALIDAT", "88776655B", true, CLIENT, "espanyola", "Terrasa");
+            crearUsuariSiNoExisteix(usuarisRepo, "Laura Vila", "lvila@alumnat.copernic.cat", "1212", "622334455", "VALIDAT", "77665544C", true, CLIENT, "espanyola", "Terrasa");
 
             // 2. Creació de vehicles
-            crearVehicleSiNoExisteix(vehicleRepo, "3343 DGY", "Seat", "Altea", 2005, Categoria.Monovolum,new BigDecimal("24.56"), new BigDecimal("1.02"), new BigDecimal("150.00"),
+            crearVehicleSiNoExisteix(vehicleRepo, "3343 DGY", "Seat", "Altea", 2005, Categoria.Monovolum, new BigDecimal("24.56"), new BigDecimal("1.02"), new BigDecimal("150.00"),
                     EstatVehicle.Disponible, "vehicles/SeatAltea.jpg");
 
             crearVehicleSiNoExisteix(vehicleRepo, "1123 FRG", "Seat", "Leon", 2014, Categoria.Compacte, new BigDecimal("31.43"), new BigDecimal("1.31"), new BigDecimal("200.00"),
@@ -131,32 +131,30 @@ public class Projecte1Equip4Application {
                                     new BigDecimal("175.00"), EstatReserva.Confirmada);
                         });
 
-                            // Creació de reserva retornada amb incidència per a cemacia@alumnat.copernic.cat
-                            vehicleRepo.findByMatriculaIgnoreCase("3343 DGY").stream().findFirst().ifPresent(v1 -> {
-                                crearReservaSiNoExisteix(reservaRepo, "RES-013", client1, v1,
-                                        LocalDateTime.of(2026, 8, 10, 10, 0), LocalDateTime.of(2026, 8, 13, 10, 0),
-                                        new BigDecimal("73.68"), EstatReserva.Retornada);
+                        // Creació de reserva retornada amb incidència per a cemacia@alumnat.copernic.cat
+                        vehicleRepo.findByMatriculaIgnoreCase("3343 DGY").stream().findFirst().ifPresent(v1 -> {
+                            crearReservaSiNoExisteix(reservaRepo, "RES-013", client1, v1,
+                                    LocalDateTime.of(2026, 8, 10, 10, 0), LocalDateTime.of(2026, 8, 13, 10, 0),
+                                    new BigDecimal("73.68"), EstatReserva.Retornada);
 
-                                reservaRepo.findByCodiReserva("RES-013").ifPresent(reservaRetornada -> {
-                                    if (incidenciesRepo.findByReserva_Id(reservaRetornada.getId()).isEmpty()) {
-                                        Incidencies inc = new Incidencies();
-                                        inc.setData_Hora(LocalDate.of(2026, 8, 13));
-                                        inc.setQuilometratge(45200);
-                                        inc.setDescripcio("Rascada lleu al lateral posterior dret durant la devolució del vehicle.");
-                                        inc.setResolucio("Pendent de peritatge i valoració al taller.");
-                                        inc.setImporte(85.50);
-                                        inc.setReserva(reservaRetornada);
+                            reservaRepo.findByCodiReserva("RES-013").ifPresent(reservaRetornada -> {
+                                if (incidenciesRepo.findByReserva_Id(reservaRetornada.getId()).isEmpty()) {
+                                    Incidencies inc = new Incidencies();
+                                    inc.setData_Hora(LocalDate.of(2026, 8, 13));
+                                    inc.setQuilometratge(45200);
+                                    inc.setDescripcio("Rascada lleu al lateral posterior dret durant la devolució del vehicle.");
+                                    inc.setResolucio("Pendent de peritatge i valoració al taller.");
+                                    inc.setImporte(85.50);
+                                    inc.setReserva(reservaRetornada);
 
-                                        incidenciesRepo.save(inc);
-                                        System.out.println("Incidència creada per a la reserva: RES-013");
-                                    }
-                                });
+                                    incidenciesRepo.save(inc);
+                                    System.out.println("Incidència creada per a la reserva: RES-013");
+                                }
                             });
+                        });
                     });
                 });
             });
-            
-            
 
             System.out.println("\n----------------------------------------------------------");
             System.out.println(" Aplicació iniciada correctament amb dades de prova!");
@@ -169,7 +167,7 @@ public class Projecte1Equip4Application {
         };
     }
 
-    private void crearUsuariSiNoExisteix(UsuarisRepository repo, String nom, String email, String password, String telefon, String estat, String dni, boolean premium, rol rol) {
+    private void crearUsuariSiNoExisteix(UsuarisRepository repo, String nom, String email, String password, String telefon, String estat, String dni, boolean premium, rol rol, String nacionalitat, String poblacio) {
         if (repo.findByEmail(email).isEmpty() && repo.findByDni(dni).isEmpty()) {
             Usuaris u = new Usuaris();
             u.setNom(nom);
@@ -181,6 +179,8 @@ public class Projecte1Equip4Application {
             u.setDni(dni);
             u.setPremium(premium);
             u.setRol(rol);
+            u.setNacionalitat(nacionalitat);
+            u.setPoblacio(poblacio);
             repo.save(u);
             System.out.println("Usuari creat: " + email + " [Rol: " + rol + "]");
         } else {
