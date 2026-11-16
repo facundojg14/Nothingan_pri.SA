@@ -60,6 +60,14 @@ public class HomeController {
 
         Usuaris usuariLoguejat = (Usuaris) session.getAttribute("usuariLoguejat");
 
+        model.addAttribute("dataInici", dataInici);
+        model.addAttribute("dataFi", dataFi);
+
+        if (dataInici.isBefore(LocalDateTime.now().withSecond(0).withNano(0))) {
+            model.addAttribute("error", "No es pot fer una reserva amb una data d'inici passada.");
+            return determinarVistaSegonsRol(usuariLoguejat, model);
+        }
+
         if (!dataFi.isAfter(dataInici)) {
             model.addAttribute("error", "La data final ha de ser posterior a la inicial.");
             return determinarVistaSegonsRol(usuariLoguejat, model);
