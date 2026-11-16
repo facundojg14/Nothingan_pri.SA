@@ -190,6 +190,10 @@ public class ReservaLogic {
                 || !reserva.getDataFi().isAfter(reserva.getDataInici())) {
             throw new IllegalArgumentException("La data final ha de ser posterior a la inicial.");
         }
+        
+        if (reserva.getDataInici().toLocalDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La data d'inici de la reserva no pot ser anterior a avui.");
+        }
 
         if (reserva.getVehicle() == null
                 || reserva.getUsuari() == null
