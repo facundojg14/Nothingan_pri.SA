@@ -249,6 +249,16 @@ public class UsuarisLogic {
     public List<Usuaris> findByEmail(String email) {
         return usuariRepo.findByEmailContainingIgnoreCase(email);
     }
+    
+        public Usuaris getUsuariByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return usuariRepo.findByEmailContainingIgnoreCase(email).stream()
+                .filter(u -> u.getEmail() != null && u.getEmail().equalsIgnoreCase(email))
+                .findFirst()
+                .orElse(null);
+    }
 
     public List<Usuaris> findByDni(String dni) {
         return usuariRepo.findByDniContainingIgnoreCase(dni);
