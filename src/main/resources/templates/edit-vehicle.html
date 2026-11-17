@@ -11,7 +11,6 @@
         <div class="layout">
 
             <!-- BARRA LATERAL DE NAVEGACIÓN -->
-            <!-- Menú lateral comú (fragments/layout.html) -->
             <aside th:replace="~{fragments/layout :: menu('vehicles')}"></aside>
 
             <!-- CONTENIDO PRINCIPAL -->
@@ -134,40 +133,30 @@
                             <!-- Desplegable Estado del Vehículo -->
                             <div class="form-group">
                                 <label for="estatVehicle">Estat del Vehicle <span style="color: red;">*</span></label>
-                                <select id="estatVehicle" th:field="*{estatVehicle}" required>
+
+                                <!-- CASO 1: Creando vehículo nuevo (id == 0) -> Bloqueado en Disponible -->
+                                <th:block th:if="${vehicle.id == 0}">
+                                    <select id="estatVehicle" disabled>
+                                        <option value="Disponible" selected>Disponible</option>
+                                    </select>
+                                    <input type="hidden" name="estatVehicle" value="Disponible" />
+                                </th:block>
+
+                                <!-- CASO 2: Editando vehículo existente (id > 0) -> Excluye 'Baixa' y 'Lliurat' manuales -->
+                                <select th:if="${vehicle.id > 0}" id="estatVehicle" th:field="*{estatVehicle}" required>
                                     <option th:each="estat : ${T(cat.copernic.Projecte1.entity.Enum.EstatVehicle).values()}" 
+                                            th:if="${(estat.name() != 'Baixa' and estat.name() != 'Lliurat') or (vehicle.estatVehicle != null and vehicle.estatVehicle.name() == estat.name())}"
                                             th:value="${estat}" 
                                             th:text="${estat}">Disponible</option>
                                 </select>
                             </div>
 
-                            <!-- Campo: Nombre/Ruta de la Foto -->
-                            <div class="form-group">
-                                <label for="fotoVehicle">Ruta / Nom de la Foto</label>
-                                <input type="text"
-                                       id="fotoVehicle"
-                                       th:field="*{fotoVehicle}"
-                                       maxlength="255"
-                                       placeholder="ej: cotxe1.jpg">
-                            </div>
-
-                            <!-- Checkbox: Activo -->
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label for="actiu" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox"
-                                           id="actiu"
-                                           th:field="*{actiu}"
-                                           style="width: auto;">
-                                    <strong>Vehicle Actiu</strong>
-                                </label>
-                            </div>
-
                         </div>
 
-                        <!-- Botones Submit, Cancelar y Eliminar -->
-                        <div class="button-group" style="margin-top: 24px; display: flex; gap: 10px; align-items: center;">
-                            <button type="submit" class="btn btn-filter">
-                                Desar vehicle
+                        <!-- Botón único de Submit fuera del grid -->
+                        <div class="button-group" style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-filter" th:text="${vehicle.id == 0} ? 'Crear vehicle' : 'Desar vehicle'">
+                                Crear vehicle
                             </button>
 
                             <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
