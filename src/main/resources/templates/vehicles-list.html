@@ -157,6 +157,7 @@
                                     <span th:if="${v.actiu}" class="badge badge-validat">Sí</span>
                                     <span th:unless="${v.actiu}" class="badge badge-rebutjat">No</span>
                                 </td>
+
                                 <td class="actions-cell">
                                     <a th:href="@{__${session.rutaBase}__/vehicles/edit/{id}(id=${v.id})}">Editar</a>
 
@@ -167,6 +168,15 @@
                                        style="color: #e67e22; margin-left: 8px;"
                                        onclick="return confirm('Estàs segur que vols donar de baixa aquest vehicle? Es mantindrà a l\'historial però deixarà d\'estar disponible.');">
                                         Baixa
+                                    </a>
+
+                                    <!-- Alta lógica (reactivar): solo si el vehículo está dado de baja -->
+                                    <a th:unless="${v.actiu}"
+                                       th:href="@{__${session.rutaBase}__/vehicles/alta/{id}(id=${v.id})}"
+                                       class="action-link"
+                                       style="color: #28a745; font-weight: bold; margin-left: 8px;"
+                                       onclick="return confirm('Estàs segur que vols tornar a donar d\'alta aquest vehicle? Tornarà a estar disponible per a reserves.');">
+                                        Donar d'alta
                                     </a>
 
                                     <!-- Eliminación física definitiva: solo si nunca ha tenido reservas -->

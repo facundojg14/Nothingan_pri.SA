@@ -36,9 +36,9 @@ public class VehicleLogic {
     }
 
     /**
-     * Comprova si el vehicle té reserves actives, és a dir, en estat
-     * Confirmada (pendent de lliurar) o Lliurada (el client té el vehicle).
-     * Les reserves Anulada o Retornada ja han acabat i no impedeixen la baixa.
+     * Comprova si el vehicle té reserves actives, és a dir, en estat Confirmada
+     * (pendent de lliurar) o Lliurada (el client té el vehicle). Les reserves
+     * Anulada o Retornada ja han acabat i no impedeixen la baixa.
      *
      * @param vehicleId identificador del vehicle
      * @return true si té alguna reserva Confirmada o Lliurada
@@ -52,8 +52,8 @@ public class VehicleLogic {
     }
 
     /**
-     * Dona de baixa lògica un vehicle (RF41): no s'esborra de la base de
-     * dades, es marca com a inactiu i amb estat Baixa.
+     * Dona de baixa lògica un vehicle (RF41): no s'esborra de la base de dades,
+     * es marca com a inactiu i amb estat Baixa.
      *
      * @param id identificador del vehicle
      * @return true si s'ha donat de baixa; false si té reserves o no existeix
@@ -96,6 +96,20 @@ public class VehicleLogic {
     @Transactional
     public Long saveVehicle(Vehicle vehicle) {
         validarDadesVehicle(vehicle);
+
+        // Si es un vehicle nou (alta), sempre s'inicia com a Disponible i actiu
+        if (vehicle.getId() == 0) {
+            vehicle.setEstatVehicle(EstatVehicle.Disponible);
+            vehicle.setActiu(true);
+        } else {
+            // Si s'està editant: només està actiu si l'estat és Disponible.
+            // Si està en Manteniment o Baixa, passa automàticament a no actiu (i no es podrà reservar).
+            if (vehicle.getEstatVehicle() == EstatVehicle.Disponible) {
+                vehicle.setActiu(true);
+            } else {
+                vehicle.setActiu(false);
+            }
+        }
 
         // Si el preu per hora no s'ha informat o és 0, es calcula automàticament (preuDia / 24)
         if (vehicle.getPreuHora() == null || vehicle.getPreuHora().compareTo(BigDecimal.ZERO) <= 0) {
@@ -170,8 +184,8 @@ public class VehicleLogic {
     }
 
     /**
-     * Filtra els vehicles per diversos criteris alhora (RF45).
-     * Els criteris buits o nuls no es tenen en compte.
+     * Filtra els vehicles per diversos criteris alhora (RF45). Els criteris
+     * buits o nuls no es tenen en compte.
      *
      * @param matricula part de la matrícula
      * @param marca part de la marca
@@ -241,6 +255,26 @@ public class VehicleLogic {
             return true;
         }
 
+        return false;
+    }
+
+    /**
+     * Torna a donar d'alta un vehicle que estava de baixa lògica: el marca com
+     * a actiu i en estat Disponible.
+     *
+     * @param id identificador del vehicle
+     * @return true si s'ha reactivat correctament; false si no existeix
+     */
+    @Transactional
+    public boolean donarDAltaVehicle(Long id) {
+        Vehicle vehicle = getVehicleById(id);
+        if (vehicle != null) {
+            vehicle.setActiu(true);
+            vehicle.setEstatVehicle(EstatVehicle.Disponible);
+            vehicleRepo.save(vehicle);
+            logger.info("Vehicle {} donat d'alta novament", vehicle.getMatricula());
+            return true;
+        }
         return false;
     }
 }

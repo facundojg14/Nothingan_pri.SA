@@ -20,13 +20,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
  * CONTROLADOR WEB DE VEHÍCULOS
  *
- * {@code @Controller}: Marca la clase como un controlador de Spring MVC (devuelve
- * nombres de vistas HTML).
- * {@code @RequestMapping}: Define las rutas base HTTP: /web/agent/vehicles (agent)
- * i /web/admin/vehicles (administrador). La pantalla és la mateixa per als dos.
- * El cercador públic de vehicles (/web/vehicles/cercar) és a HomeController.
- * {@code @Scope("request")}: Spring crea una instancia nueva de este controlador por
- * cada petición HTTP.
+ * {@code @Controller}: Marca la clase como un controlador de Spring MVC
+ * (devuelve nombres de vistas HTML). {@code @RequestMapping}: Define las rutas
+ * base HTTP: /web/agent/vehicles (agent) i /web/admin/vehicles (administrador).
+ * La pantalla és la mateixa per als dos. El cercador públic de vehicles
+ * (/web/vehicles/cercar) és a HomeController. {@code @Scope("request")}: Spring
+ * crea una instancia nueva de este controlador por cada petición HTTP.
  */
 @Controller
 // La mateixa pantalla serveix per a l'agent i per a l'administrador (cada un amb el seu prefix)
@@ -116,7 +115,8 @@ public class VehicleController {
     }
 
     /**
-     * {@code @PostMapping("/save")}: Atiende peticiones POST a /web/vehicles/save
+     * {@code @PostMapping("/save")}: Atiende peticiones POST a
+     * /web/vehicles/save
      *
      * ¿QUÉ HACE?: Procesa la recepción del formulario para crear o guardar
      * cambios de un vehículo. ¿QUÉ CAPTURA?: El objeto Vehicle relleno y un
@@ -153,7 +153,8 @@ public class VehicleController {
     }
 
     /**
-     * {@code @GetMapping("/delete/{id}")}: Atiende GET a /web/vehicles/delete/{id}
+     * {@code @GetMapping("/delete/{id}")}: Atiende GET a
+     * /web/vehicles/delete/{id}
      *
      * ¿QUÉ HACE?: Elimina el vehículo correspondiente a la ID especificada en
      * la URL. ¿QUÉ CAPTURA?: El parámetro {id} de la ruta codificado como Long
@@ -203,8 +204,8 @@ public class VehicleController {
     }
 
     /**
-     * {@code @GetMapping("/eliminar/{id}")}: Eliminación física (borrado de BD). Solo
-     * funciona si el vehículo nunca ha sido reservado.
+     * {@code @GetMapping("/eliminar/{id}")}: Eliminación física (borrado de
+     * BD). Solo funciona si el vehículo nunca ha sido reservado.
      */
     @GetMapping("/eliminar/{id}")
     public String eliminarDefinitivament(@PathVariable("id") Long vehicleId, HttpSession session, RedirectAttributes redirectAttributes) {
@@ -221,6 +222,25 @@ public class VehicleController {
             } else {
                 redirectAttributes.addFlashAttribute("error", "No s'ha trobat el vehicle.");
             }
+        }
+
+        return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
+    }
+
+    /**
+     * {@code @GetMapping("/alta/{id}")}: Reactiva un vehicle que estava donat
+     * de baixa lògica.
+     */
+    @GetMapping("/alta/{id}")
+    public String altaById(@PathVariable("id") Long vehicleId, HttpSession session, RedirectAttributes redirectAttributes) {
+        logger.debug("Intentant donar d'alta novament el vehicle " + vehicleId);
+
+        boolean donatDAlta = vehicleLogic.donarDAltaVehicle(vehicleId);
+
+        if (donatDAlta) {
+            redirectAttributes.addFlashAttribute("missatge", "El vehicle s'ha tornat a donar d'alta correctament i ja torna a estar disponible.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "No s'ha pogut trobar el vehicle per donar-lo d'alta.");
         }
 
         return "redirect:" + RutaBase.obtenir(session) + "/vehicles/all";
