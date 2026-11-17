@@ -76,7 +76,7 @@
 
                             <!-- Telèfon -->
                             <div class="form-group">
-                                <label for="telefon">Telèfon <span style="color: red;">*</span></label>
+                                <label for="telefon">Telèfon</label>
                                 <input type="tel"
                                        id="telefon"
                                        th:field="*{telefon}"
@@ -84,13 +84,12 @@
                                        pattern="[0-9]{9}"
                                        maxlength="9"
                                        placeholder="600000000"
-                                       title="El número de telèfon ha de tenir exactament 9 dígits."
-                                       required>
+                                       title="El número de telèfon ha de tenir exactament 9 dígits.">
                             </div>
 
                             <!-- Contrasenya (S'amaga en mode lectura) -->
                             <div class="form-group" th:if="${!modoLectura}">
-                                <label for="password">Contrasenya <span style="color: red;">*</span></label>
+                                <label for="password">Contrasenya</label>
                                 <input type="password"
                                        id="password"
                                        th:field="*{password}"
@@ -106,9 +105,7 @@
                                 Desar agent
                             </button>
 
-                            <a th:href="@{/web/admin/agents}" class="btn btn-cancel">
-                                <span th:text="${modoLectura} ? 'Tornar' : 'Cancel·lar'">Cancel·lar</span>
-                            </a>
+
                         </div>
 
                     </form>

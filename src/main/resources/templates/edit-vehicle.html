@@ -158,6 +158,15 @@
                             <button type="submit" class="btn btn-filter" th:text="${vehicle.id == 0} ? 'Crear vehicle' : 'Desar vehicle'">
                                 Crear vehicle
                             </button>
+
+                            <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
+                            <a th:if="${vehicle.id > 0}"
+                               th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${vehicle.id})}"
+                               class="btn"
+                               style="background-color: #d9534f; color: white; margin-left: auto; text-decoration: none;"
+                               onclick="return confirm('ATENCIÓ: Esborraràs aquest vehicle definitivament de la base de dades. Només es permet si mai ha tingut cap reserva. Continuar?');">
+                                Eliminar vehicle
+                            </a>
                         </div>
 
                     </form>
