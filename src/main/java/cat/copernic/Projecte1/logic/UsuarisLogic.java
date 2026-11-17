@@ -309,8 +309,8 @@ public class UsuarisLogic {
      * Valida les dades d'un usuari abans de guardar-lo (RN20).
      *
      * Comprova que el nom no estigui buit, que el DNI tingui 8 números i una
-     * lletra, que el telèfon tingui 9 dígits i que l'email, el DNI i el
-     * telèfon no els tingui ja un altre usuari.
+     * lletra, i que l'email i el DNI no els tingui ja un altre usuari. Si
+     * s'informa el telèfon, ha de tenir 9 dígits.
      *
      * @param usuari usuari a validar (si té id, és una modificació i no es
      * compara amb ell mateix)
@@ -361,26 +361,17 @@ public class UsuarisLogic {
             throw new IllegalArgumentException("El nom es obligatori");
         }
 
-        // ja con la mida comprueba si es de 9 digitos osea logica != 9 (si no es de 9 digitos salta error)
-        if (usuari.getTelefon().length() != 9) {
-            throw new IllegalArgumentException("El número de telèfon ha de tenir exactament 9 dígits.");
-        }
-
-        for (int i = 0; i < usuari.getTelefon().length(); i++) {
-            if (!Character.isDigit(usuari.getTelefon().charAt(i))) {
-                throw new IllegalArgumentException("El telèfon només pot contenir números.");
+        String telefon = usuari.getTelefon();
+        if (telefon != null && !telefon.isBlank()) {
+            if (telefon.length() != 9) {
+                throw new IllegalArgumentException("El número de telèfon ha de tenir exactament 9 dígits.");
             }
-        }
 
-        //dentro del if envia una petición a la bbdd comprobanco si el numero ya existe
-        Optional<Usuaris> existente = usuariRepo.findByTelefon(usuari.getTelefon());
-        // si encuentra un usuario con ese mismo telefono devuelve solo ese usuario
-
-        //si el telefono ya existe verifica por la id para saber si es de otro usuario y salta el error dato ya existe 
-        //si dice que nadie esta con ese telefono ya esta todo verificado y permite guardar 
-        if (existente.isPresent() && (usuari.getId() == null || !existente.get().getId().equals(usuari.getId()))) {
-            //si el telefono ya existe salta el siguiente error
-            throw new IllegalArgumentException("El número de telèfon '" + usuari.getTelefon() + "' ja està registrat.");
+            for (int i = 0; i < telefon.length(); i++) {
+                if (!Character.isDigit(telefon.charAt(i))) {
+                    throw new IllegalArgumentException("El telèfon només pot contenir números.");
+                }
+            }
         }
         // si todas las comprobaciones estan guays actualiza o crea un usuario 
     }

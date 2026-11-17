@@ -60,8 +60,6 @@ public class UsuarisLogicTest {
         // GIVEN: No existe otro usuario con el mismo email/DNI/teléfono en la BD
         when(usuariRepo.findByEmail("laura@example.com")).thenReturn(Optional.empty());
         when(usuariRepo.findByDni("12345678Z")).thenReturn(Optional.empty());
-        when(usuariRepo.findByTelefon("600112233")).thenReturn(Optional.empty());
-
         // Simulamos la persistencia devolviendo el usuario con ID asignado = 5L
         when(usuariRepo.save(any(Usuaris.class))).thenAnswer(invocation -> {
             Usuaris u = invocation.getArgument(0);

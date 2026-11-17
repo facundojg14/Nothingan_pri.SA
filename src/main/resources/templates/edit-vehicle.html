@@ -170,11 +170,6 @@
                                 Desar vehicle
                             </button>
 
-                            <a th:href="@{__${session.rutaBase}__/vehicles/all}"
-                               class="btn btn-cancel">
-                                Cancel·lar
-                            </a>
-
                             <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
                             <a th:if="${vehicle.id > 0}"
                                th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${vehicle.id})}"
