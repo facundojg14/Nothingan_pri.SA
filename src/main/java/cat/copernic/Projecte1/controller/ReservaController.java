@@ -20,38 +20,48 @@ import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Controlador web de les reserves (agent i administrador).
+ * Controlador de reservas para agentes y administradores.
  *
- * Permet llistar i filtrar reserves (RF52, RF54), consultar-ne el detall
- * (RF53), buscar vehicles disponibles, crear reserves (RF50), anul·lar-les
- * (RF55), i lliurar (RF49) i retornar (RF48) el vehicle.
- *
- * La fan servir l'agent ({@code /web/agent/reserves}) i l'administrador
- * ({@code /web/admin/reserves}).
+ * Permite consultar, filtrar, crear y anular reservas, así como gestionar
+ * la entrega y devolución de vehículos.
  *
  * @author Equip4
  */
 @Controller
-// La mateixa pantalla serveix per a l'agent i per a l'administrador (cada un amb el seu prefix)
+// La misma pantalla sirve para agentes y administradores, cada uno con su prefijo.
 @RequestMapping({"/web/agent/reserves", "/web/admin/reserves"})
 @RequestScope
 public class ReservaController {
 
+    // ==================== ATRIBUTOS ====================
+
+    // Servicios para gestionar reservas, vehículos, usuarios y correos.
     private final ReservaLogic reservaLogic;
     private final VehicleLogic vehicleLogic;
     private final UsuarisLogic usuarisLogic;
-    private final EmailService emailService; // <- Injectem el servei de correu
+    private final EmailService emailService; // Servicio de envío de correos.
 
+    // ==================== CONSTRUCTOR ====================
+
+    /**
+     * Inicializa los servicios necesarios para gestionar las reservas.
+     */
     public ReservaController(ReservaLogic reservaLogic,
             VehicleLogic vehicleLogic,
             UsuarisLogic usuarisLogic,
-            EmailService emailService) { // <- S'afegeix al constructor
+            EmailService emailService) {
         this.reservaLogic = reservaLogic;
         this.vehicleLogic = vehicleLogic;
         this.usuarisLogic = usuarisLogic;
         this.emailService = emailService;
     }
 
+    // ==================== CONSULTA DE RESERVAS ====================
+
+    /**
+     * Muestra todas las reservas aplicando los filtros seleccionados.
+     * También permite cargar el detalle de una reserva.
+     */
     @GetMapping("/all")
     public String findAll(
             @RequestParam(required = false) String dni,
@@ -62,6 +72,7 @@ public class ReservaController {
             @RequestParam(required = false) Integer detall,
             Model model) {
 
+        // Obtiene las reservas y aplica los filtros indicados.
         List<Reserva> reserves = reservaLogic.findAllReservas().stream()
                 .filter(r -> dni == null || dni.isBlank()
                 || (r.getUsuari() != null && r.getUsuari().getDni() != null && r.getUsuari().getDni().contains(dni)))
@@ -77,6 +88,7 @@ public class ReservaController {
                 && r.getDataReserva().toLocalDate().toString().equals(data)))
                 .toList();
 
+        // Envía los resultados y los filtros a la vista.
         model.addAttribute("reserves", reserves);
         model.addAttribute("dni", dni);
         model.addAttribute("email", email);
@@ -84,6 +96,7 @@ public class ReservaController {
         model.addAttribute("matricula", matricula);
         model.addAttribute("data", data);
 
+        // Carga el detalle de la reserva seleccionada, si existe.
         if (detall != null) {
             Reserva seleccionada = reservaLogic.getReservaById(detall);
             if (seleccionada != null) {
@@ -94,19 +107,29 @@ public class ReservaController {
         return "reserves-list";
     }
 
+    // ==================== CREACIÓN DE RESERVAS ====================
+
+    /**
+     * Muestra el formulario para crear una nueva reserva.
+     */
     @GetMapping("/new")
     public String getForm(Model model) {
+        // Prepara una reserva con vehículo y usuario vacíos.
         Reserva reserva = new Reserva();
         reserva.setVehicle(new Vehicle());
         reserva.setUsuari(new Usuaris());
 
         model.addAttribute("reserva", reserva);
 
+        // Carga los datos necesarios para los desplegables.
         carregarDadesFormulari(model);
 
         return "nova-reserva-agent";
     }
 
+    /**
+     * Busca vehículos disponibles según las fechas y la categoría seleccionadas.
+     */
     @GetMapping("/disponibles")
     public String buscarDisponibles(
             @RequestParam String dataInici,
@@ -117,10 +140,12 @@ public class ReservaController {
         LocalDateTime inici;
         LocalDateTime fi;
 
+        // Convierte las fechas recibidas.
         try {
             inici = LocalDateTime.parse(dataInici);
             fi = LocalDateTime.parse(dataFi);
         } catch (DateTimeParseException e) {
+            // Devuelve el formulario con un mensaje si las fechas no son válidas.
             model.addAttribute("error", "Les dates no són vàlides.");
 
             Reserva reserva = new Reserva();
@@ -137,6 +162,7 @@ public class ReservaController {
             return "nova-reserva-agent";
         }
 
+        // Comprueba que la fecha final sea posterior a la inicial.
         if (!fi.isAfter(inici)) {
             model.addAttribute("error",
                     "La data final ha de ser posterior a la data inicial.");
@@ -155,7 +181,7 @@ public class ReservaController {
             return "nova-reserva-agent";
         }
 
-        // MODIFICACIÓ: Només es mostren vehicles ACTIUS i DISPONIBLES que no estiguin reservats en aquestes dates
+        // Busca vehículos activos, disponibles y sin reservas en ese intervalo.
         List<Vehicle> disponibles = vehicleLogic.findAllVehicles().stream()
                 .filter(v -> Boolean.TRUE.equals(v.getActiu()) && v.getEstatVehicle() == EstatVehicle.Disponible)
                 .filter(v -> reservaLogic.vehicleDisponible(v.getId(), inici, fi))
@@ -163,12 +189,14 @@ public class ReservaController {
                 || v.getCategoria().name().equals(categoria))
                 .toList();
 
+        // Prepara la reserva con las fechas seleccionadas.
         Reserva reserva = new Reserva();
         reserva.setVehicle(new Vehicle());
         reserva.setUsuari(new Usuaris());
         reserva.setDataInici(inici);
         reserva.setDataFi(fi);
 
+        // Envía los vehículos disponibles y los datos del formulario a la vista.
         model.addAttribute("reserva", reserva);
         model.addAttribute("vehicles", disponibles);
         model.addAttribute("senseDisponibilitat", disponibles.isEmpty());
@@ -180,11 +208,14 @@ public class ReservaController {
         return "nova-reserva-agent";
     }
 
+    /**
+     * Guarda una nueva reserva después de comprobar el estado del vehículo.
+     */
     @PostMapping("/save")
     public String save(@ModelAttribute Reserva reserva,
             HttpSession session, RedirectAttributes redirectAttributes) {
         try {
-            // Validació extra: Evitar reservar un vehicle no actiu o no disponible
+            // Comprueba que el vehículo seleccionado siga activo y disponible.
             if (reserva.getVehicle() != null && reserva.getVehicle().getId() > 0) {
                 Vehicle v = vehicleLogic.getVehicleById(reserva.getVehicle().getId());
                 if (v != null && (!Boolean.TRUE.equals(v.getActiu()) || v.getEstatVehicle() != EstatVehicle.Disponible)) {
@@ -193,6 +224,7 @@ public class ReservaController {
                 }
             }
 
+            // Guarda la reserva y muestra el resultado.
             reservaLogic.saveReserva(reserva);
             redirectAttributes.addFlashAttribute("missatge", "Reserva creada correctament.");
         } catch (IllegalArgumentException e) {
@@ -203,6 +235,12 @@ public class ReservaController {
         return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
+    // ==================== DETALLE DE RESERVAS ====================
+
+    /**
+     * Redirige al listado mostrando el detalle de la reserva seleccionada
+     * y manteniendo los filtros aplicados.
+     */
     @GetMapping("/detall/{id}")
     public String details(@PathVariable Integer id,
             @RequestParam(required = false) String dni,
@@ -212,8 +250,10 @@ public class ReservaController {
             @RequestParam(required = false) String data,
             HttpSession session, RedirectAttributes attributes) {
 
+        // Añade el identificador de la reserva seleccionada.
         attributes.addAttribute("detall", id);
 
+        // Conserva los filtros que estaban aplicados.
         if (dni != null && !dni.isBlank()) {
             attributes.addAttribute("dni", dni);
         }
@@ -233,20 +273,27 @@ public class ReservaController {
         return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
+    // ==================== ANULACIÓN DE RESERVAS ====================
+
+    /**
+     * Anula una reserva y envía un correo al cliente con los datos de la devolución.
+     */
     @PostMapping("/cancelar/{id}")
     public String cancel(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "") String motiu,
             @RequestParam(required = false, defaultValue = "100") double percentatgeRetorn,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
+        // Obtiene la reserva seleccionada.
         Reserva reserva = reservaLogic.getReservaById(id);
 
         if (reserva != null && reservaLogic.anularReserva(id)) {
 
+            // Calcula el importe que se devolverá al cliente.
             BigDecimal preuTotal = reserva.getPreuLloguer() != null ? reserva.getPreuLloguer() : BigDecimal.ZERO;
             BigDecimal importRetornat = preuTotal.multiply(BigDecimal.valueOf(percentatgeRetorn / 100.0));
 
-            // Crida a la instància emailService (en minúscula)
+            // Envía el correo de anulación si la reserva tiene un usuario asociado.
             if (reserva.getUsuari() != null) {
                 emailService.enviarEmailAnullacio(
                         reserva.getUsuari().getEmail(),
@@ -266,7 +313,12 @@ public class ReservaController {
         return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
     }
 
-    // Mètode privat afegit per carregar dades dels desplegables al formulari
+    // ==================== MÉTODOS AUXILIARES ====================
+
+    /**
+     * Carga los vehículos activos y disponibles y todos los usuarios
+     * necesarios para el formulario de reservas.
+     */
     private void carregarDadesFormulari(Model model) {
         List<Vehicle> vehiclesActius = vehicleLogic.findAllVehicles().stream()
                 .filter(v -> Boolean.TRUE.equals(v.getActiu()) && v.getEstatVehicle() == EstatVehicle.Disponible)
@@ -275,8 +327,10 @@ public class ReservaController {
         model.addAttribute("usuaris", usuarisLogic.findAllUsuaris());
     }
 
+    // ==================== ENTREGA DE VEHÍCULOS ====================
+
     /**
-     * Pantalla de cerca amb filtres per seleccionar la reserva a lliurar.
+     * Busca reservas pendientes de entrega aplicando los filtros seleccionados.
      */
     @GetMapping("/lliurar")
     public String cercarPerLliurar(
@@ -287,8 +341,10 @@ public class ReservaController {
             @RequestParam(required = false) String dataInici,
             Model model) {
 
+        // Busca las reservas que cumplen los filtros.
         List<Reserva> reservesPendents = reservaLogic.cercarReservesPerLliurar(codi, dni, email, matricula, dataInici);
 
+        // Envía los resultados y los filtros a la vista.
         model.addAttribute("reserves", reservesPendents);
         model.addAttribute("codi", codi);
         model.addAttribute("dni", dni);
@@ -300,11 +356,11 @@ public class ReservaController {
     }
 
     /**
-     * Formulari de verificació visual, descripció, fotos i confirmació del
-     * lliurament.
+     * Muestra el formulario para verificar y confirmar la entrega del vehículo.
      */
     @GetMapping("/lliurar/{id}")
     public String formulariLliurar(@PathVariable Integer id, Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        // Obtiene la reserva y comprueba que esté confirmada.
         Reserva reserva = reservaLogic.getReservaById(id);
 
         if (reserva == null || reserva.getEstat() != cat.copernic.Projecte1.entity.Enum.EstatReserva.Confirmada) {
@@ -312,6 +368,7 @@ public class ReservaController {
             return "redirect:" + RutaBase.obtenir(session) + "/reserves/lliurar";
         }
 
+        // Envía la reserva y la hora actual a la vista.
         model.addAttribute("reserva", reserva);
         model.addAttribute("ara", LocalDateTime.now().withSecond(0).withNano(0));
 
@@ -319,7 +376,7 @@ public class ReservaController {
     }
 
     /**
-     * Processa el formulari de lliurament amb fotos opcionals.
+     * Procesa la entrega del vehículo y guarda la información y las fotografías.
      */
     @PostMapping("/lliurar/{id}")
     public String processarLliurament(
@@ -330,6 +387,7 @@ public class ReservaController {
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         try {
+            // Confirma la entrega y gestiona los posibles errores.
             reservaLogic.confirmarLliuramentVehicle(id, dataHoraLliurament, descripcioLliurament, fotos);
             redirectAttributes.addFlashAttribute("missatge", "Vehicle lliurat correctament al client!");
             return "redirect:" + RutaBase.obtenir(session) + "/reserves/all";
@@ -341,9 +399,11 @@ public class ReservaController {
             return "redirect:" + RutaBase.obtenir(session) + "/reserves/lliurar/" + id;
         }
     }
-    
+
+    // ==================== DEVOLUCIÓN DE VEHÍCULOS ====================
+
     /**
-     * Busca reservas pendientes de devolución aplicando filtros.
+     * Busca reservas pendientes de devolución aplicando los filtros seleccionados.
      */
     @GetMapping("/retornar")
     public String cercarPerRetornar(
@@ -354,9 +414,11 @@ public class ReservaController {
             @RequestParam(required = false) String dataInici,
             Model model) {
 
+        // Busca las reservas que cumplen los filtros.
         List<Reserva> reserves = reservaLogic.cercarReservesPerRetornar(
                 codi, dni, email, matricula, dataInici);
 
+        // Envía los resultados y los filtros a la vista.
         model.addAttribute("reserves", reserves);
         model.addAttribute("codi", codi);
         model.addAttribute("dni", dni);
@@ -368,7 +430,7 @@ public class ReservaController {
     }
 
     /**
-     * Muestra el formulario de devolución de una reserva.
+     * Muestra el formulario de devolución si la reserva está entregada.
      */
     @GetMapping("/retornar/{id}")
     public String formulariRetornar(
@@ -376,6 +438,7 @@ public class ReservaController {
             Model model,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
+        // Obtiene la reserva y comprueba que esté pendiente de devolución.
         Reserva reserva = reservaLogic.getReservaById(id);
 
         if (reserva == null
@@ -385,14 +448,15 @@ public class ReservaController {
             return "redirect:" + RutaBase.obtenir(session) + "/reserves/retornar";
         }
 
+        // Envía la reserva y la hora actual a la vista.
         model.addAttribute("reserva", reserva);
         model.addAttribute("ara", LocalDateTime.now().withSecond(0).withNano(0));
 
         return "retornar-vehicle-form";
     }
-    
+
     /**
-     * Procesa la devolución del vehículo.
+     * Procesa la devolución del vehículo y registra su estado y observaciones.
      */
     @PostMapping("/retornar/{id}")
     public String processarRetorn(
@@ -406,6 +470,7 @@ public class ReservaController {
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         try {
+            // Confirma la devolución y actualiza la información de la reserva.
             reservaLogic.confirmarRetornVehicle(
                     id, dataHoraRetorn, observacions,
                     desperfectesImputables, vehiculoAveriado);

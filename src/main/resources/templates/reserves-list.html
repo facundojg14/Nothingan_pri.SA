@@ -1,5 +1,9 @@
-
 <!DOCTYPE html>
+<!--
+ Página para gestionar las reservas desde el panel de agente.
+ Permite consultar, filtrar y visualizar reservas, entregar vehículos
+ y gestionar las anulaciones y la información de devolución y fianzas.
+-->
 <html lang="ca" xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
@@ -9,22 +13,29 @@
     </head>
     <body>
 
+        <!-- ==================== ESTRUCTURA PRINCIPAL ==================== -->
+
         <div class="layout">
 
-            <!-- Menú lateral de navegación. -->
-            <!-- Menú lateral comú (fragments/layout.html) -->
+            <!-- ==================== BARRA LATERAL DE NAVEGACIÓN ==================== -->
+
+            <!-- Menú lateral común de la aplicación. -->
             <aside th:replace="~{fragments/layout :: menu('reserves')}"></aside>
+
+            <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
 
             <main class="content">
 
-                <!-- Cabecera y sesión del usuario. -->
+                <!-- Cabecera de la página y sesión del usuario. -->
                 <header th:replace="~{fragments/layout :: capcalera('Gestió de reserves')}"></header>
 
-                <!-- Mensajes de éxito y error. -->
+                <!-- Muestra los mensajes de éxito y error recibidos del servidor. -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
-                <!-- Título y acciones. -->
+                <!-- ==================== TÍTULO Y ACCIONES PRINCIPALES ==================== -->
+
+                <!-- Muestra el título de la página y permite acceder a otras operaciones. -->
                 <div class="top-bar">
                     <h3>Llistat de reserves</h3>
 
@@ -38,7 +49,9 @@
                     </div>
                 </div>
 
-                <!-- Filtros de búsqueda. -->
+                <!-- ==================== FILTROS DE BÚSQUEDA ==================== -->
+
+                <!-- Permite filtrar las reservas por datos del cliente, vehículo y fecha. -->
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
                     <form th:action="@{__${session.rutaBase}__/reserves/all}" method="get">
                         <div class="form-grid">
@@ -75,6 +88,7 @@
 
                         </div>
 
+                        <!-- Permite aplicar o limpiar los filtros seleccionados. -->
                         <div class="button-group" style="margin-top: 15px;">
                             <button type="submit" class="btn btn-filter">Filtrar</button>
                             <a th:href="@{__${session.rutaBase}__/reserves/all}" class="btn btn-cancel">
@@ -84,7 +98,9 @@
                     </form>
                 </div>
 
-                <!-- Tabla de reservas. -->
+                <!-- ==================== LISTADO DE RESERVAS ==================== -->
+
+                <!-- Muestra las reservas y las operaciones disponibles para cada una. -->
                 <div class="table-card">
                     <table class="data-table">
                         <thead>
@@ -121,9 +137,10 @@
                                           th:text="${r.estat != null ? r.estat : '-'}"></span>
                                 </td>
 
+                                <!-- Acciones disponibles para cada reserva. -->
                                 <td class="actions-cell">
 
-                                    <!-- Consultar detalles conservando los filtros. -->
+                                    <!-- Permite consultar los detalles conservando los filtros. -->
                                     <a th:href="@{__${session.rutaBase}__/reserves/detall/{id}(
                                        id=${r.id},
                                        dni=${dni},
@@ -135,14 +152,14 @@
                                         Veure
                                     </a>
 
-                                    <!-- Entregar vehículos confirmados. -->
+                                    <!-- Permite entregar vehículos con reservas confirmadas. -->
                                     <a th:if="${r.estat != null and r.estat.name() == 'Confirmada'}"
                                        th:href="@{__${session.rutaBase}__/reserves/lliurar/{id}(id=${r.id})}"
                                        style="color: #16a34a; font-weight: 600; margin-left: 8px; text-decoration: none;">
                                         Lliurar
                                     </a>
 
-                                    <!-- Anular reservas que todavía se pueden cancelar. -->
+                                    <!-- Permite anular reservas que todavía se pueden cancelar. -->
                                     <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada' and r.estat.name()
                                           != 'Retornada'}"
                                           th:action="@{__${session.rutaBase}__/reserves/cancelar/{id}(id=${r.id})}"
@@ -154,6 +171,7 @@
                                 </td>
                             </tr>
 
+                            <!-- Mensaje cuando no hay reservas que mostrar. -->
                             <tr th:if="${#lists.isEmpty(reserves)}">
                                 <td colspan="8" class="empty-state">
                                     No s'han trobat reserves.
@@ -163,11 +181,14 @@
                     </table>
                 </div>
 
-                <!-- Detalles de la reserva seleccionada. -->
+                <!-- ==================== DETALLES DE LA RESERVA SELECCIONADA ==================== -->
+
+                <!-- Muestra la información completa de la reserva seleccionada. -->
                 <div th:if="${reservaSeleccionada != null}"
                      id="detall-reserva"
                      class="table-card" style="padding: 24px; margin-top: 20px;">
 
+                    <!-- Título de los detalles y botón para cerrar el panel. -->
                     <div class="top-bar">
                         <h3>Detalls de la reserva: <span th:text="${reservaSeleccionada.codiReserva}"></span></h3>
 
@@ -182,7 +203,9 @@
                         </a>
                     </div>
 
-                    <!-- Datos generales de la reserva. -->
+                    <!-- ==================== INFORMACIÓN GENERAL DE LA RESERVA ==================== -->
+
+                    <!-- Muestra los datos del cliente, vehículo, fechas, precio, fianza y estado. -->
                     <div class="form-grid" style="gap: 10px 20px;">
 
                         <div class="form-group" style="margin: 0;">
@@ -226,7 +249,9 @@
                         </div>
                     </div>
 
-                    <!-- Información de entrega. -->
+                    <!-- ==================== INFORMACIÓN DE ENTREGA ==================== -->
+
+                    <!-- Muestra la fecha, el estado y las fotografías registradas durante la entrega. -->
                     <div style="margin-top: 20px;">
                         <h4>Lliurament del vehicle</h4>
 
@@ -245,6 +270,7 @@
                                     : 'Sense informació'}"></p>
                             </div>
 
+                            <!-- Muestra las fotografías de la entrega cuando existen. -->
                             <div class="form-group" style="margin: 0;"
                                  th:if="${reservaSeleccionada.fotosLliurament != null and !#lists.isEmpty(reservaSeleccionada.fotosLliurament)}">
                                 <label>Fotografies del lliurament</label>
@@ -261,12 +287,15 @@
                         </div>
                     </div>
 
-                    <!-- Información de devolución y liquidación. -->
+                    <!-- ==================== INFORMACIÓN DE DEVOLUCIÓN Y LIQUIDACIÓN ==================== -->
+
+                    <!-- Muestra los datos de devolución y el resultado de la liquidación de la fianza. -->
                     <div th:if="${reservaSeleccionada.dataHoraRetorn != null}"
                          style="margin-top: 20px;">
 
                         <h4>Devolució del vehicle</h4>
 
+                        <!-- Datos registrados durante la devolución del vehículo. -->
                         <div class="form-grid" style="gap: 10px 20px;">
                             <div class="form-group" style="margin: 0;">
                                 <label>Data i hora de devolució</label>
@@ -291,7 +320,9 @@
                             </div>
                         </div>
 
-                        <!-- Liquidación de la fianza. -->
+                        <!-- ==================== LIQUIDACIÓN DE LA FIANZA ==================== -->
+
+                        <!-- Muestra la fianza depositada, retenida, devuelta y los cargos adicionales. -->
                         <div style="margin-top: 15px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
 
                             <h4 style="margin-top: 0;">Liquidació de la fiança</h4>
@@ -325,6 +356,7 @@
                                 </div>
                             </div>
 
+                            <!-- Aclara que los importes mostrados no representan una transacción bancaria. -->
                             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 0;">
                                 Imports calculats per la gestió de la devolució. No representen una transacció bancària.
                             </p>
@@ -335,6 +367,9 @@
             </main>
         </div>
 
+        <!-- ==================== COMPORTAMIENTO JAVASCRIPT ==================== -->
+
+        <!-- Desplaza la página hasta los detalles cuando se selecciona una reserva. -->
         <script th:if="${reservaSeleccionada != null}">
             document.addEventListener('DOMContentLoaded', function () {
                 const panel = document.getElementById('detall-reserva');

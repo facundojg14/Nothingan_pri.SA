@@ -8,48 +8,66 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * Repositori JPA de les reserves.
+ * Repositorio JPA encargado de las consultas de reservas.
  *
- * Conté les consultes per buscar reserves per usuari o per vehicle, comprovar
- * si dues reserves es solapen en el temps i obtenir les dades de l'informe de
- * reserves per client.
+ * Permite buscar reservas por usuario o vehículo, comprobar su existencia
+ * y consultar solapamientos y datos para los informes.
  *
  * @author Equip4
  */
 public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
 
-    // Comprueba si el código de reserva ya existe.
-    boolean existsByCodiReserva(String codiReserva);
+    // ==================== CONSULTAS POR VEHÍCULO Y USUARIO ====================
 
-    // Busca las reservas de un vehículo.
+    /** Busca las reservas de un vehículo. */
     List<Reserva> findByVehicle_Id(long vehicleId);
 
-    // Busca las reservas de un usuario.
+    /** Busca las reservas de un usuario. */
     List<Reserva> findByUsuariId(Long id);
 
-    // Comprueba si existe alguna reserva asociada al vehículo
+
+    // ==================== COMPROBACIONES DE RESERVAS ====================
+
+    /** Comprueba si el código de reserva ya existe. */
+    boolean existsByCodiReserva(String codiReserva);
+
+    /** Comprueba si existe alguna reserva asociada al vehículo. */
     boolean existsByVehicle_Id(long vehicleId);
 
-    // Comprueba si existe alguna reserva asociada al vehículo excluyendo un estado concreto (ej. ANULADA)
+    /** Comprueba si existe alguna reserva del vehículo excluyendo un estado concreto. */
     boolean existsByVehicle_IdAndEstatNot(long vehicleId, EstatReserva estat);
 
-    // Comprueba si el vehículo tiene alguna reserva en uno de los estados indicados (ej. Confirmada o Lliurada)
+    /** Comprueba si el vehículo tiene reservas en alguno de los estados indicados. */
     boolean existsByVehicle_IdAndEstatIn(long vehicleId, List<EstatReserva> estats);
 
-    // Busca las reservas de un vehículo que se solapan con unas fechas (sin contar un estado, ej. Anulada).
-    // Se solapan si la reserva empieza antes de la nueva dataFi y acaba después de la nueva dataInici.
-    // Los parámetros van en el mismo orden que en el nombre del método.
+
+    // ==================== BÚSQUEDA DE RESERVAS SOLAPADAS ====================
+
+    /**
+     * Busca las reservas de un vehículo que coinciden con un intervalo de fechas,
+     * excluyendo el estado indicado.
+     *
+     * Dos reservas se solapan cuando una empieza antes de que termine la otra
+     * y termina después de que empiece.
+     */
     List<Reserva> findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(
             long vehicleId,
             EstatReserva estat,
             LocalDateTime dataFi,
             LocalDateTime dataInici);
 
-    // BUSQUEDA PER INFORMES: totes les reserves, ordenades per nom del client i per data (la més recent primer)
+
+    // ==================== CONSULTAS PARA INFORMES ====================
+
+    /** Busca todas las reservas ordenadas por cliente y fecha más reciente. */
     List<Reserva> findAllByOrderByUsuari_NomAscDataIniciDesc();
 
-    // BUSQUEDA PER INFORMES: les reserves d'un client, ordenades per data (la més recent primer)
+    /** Busca las reservas de un cliente ordenadas por fecha más reciente. */
     List<Reserva> findByUsuari_IdOrderByDataIniciDesc(Long usuariId);
 
+
+    // ==================== BÚSQUEDA POR CÓDIGO DE RESERVA ====================
+
+    /** Busca una reserva mediante su código. */
     Optional<Reserva> findByCodiReserva(String codiReserva);
 }
