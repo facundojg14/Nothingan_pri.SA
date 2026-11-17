@@ -124,8 +124,8 @@ public class ReservaLogic {
 
         // Busca reservas del mismo vehículo que coincidan con las fechas.
         // Las reservas anuladas no bloquean la disponibilidad.
-        return reservaRepo.findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(
-                vehicleId, EstatReserva.Anulada, dataFi, dataInici).isEmpty();
+        return reservaRepo.findByVehicle_IdAndEstatNotInAndDataIniciLessThanAndDataFiGreaterThan(
+            vehicleId, List.of(EstatReserva.Anulada, EstatReserva.Retornada), dataFi, dataInici).isEmpty();
     }
 
     // ==================== PREPARACIÓN DE RESERVA ====================
@@ -285,8 +285,9 @@ public class ReservaLogic {
                 = reservaRepo.findByVehicle_Id(vehicle.getId());
 
         for (Reserva existent : reserves) {
-            // Las reservas anuladas no impiden reservar el vehículo.
-            if (existent.getEstat() == EstatReserva.Anulada) {
+            // Las reservas anuladas o retornadas no impiden reservar el vehículo.
+            if (existent.getEstat() == EstatReserva.Anulada
+                    || existent.getEstat() == EstatReserva.Retornada) {
                 continue;
             }
 

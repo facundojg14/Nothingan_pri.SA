@@ -50,9 +50,9 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
      * Dos reservas se solapan cuando una empieza antes de que termine la otra
      * y termina después de que empiece.
      */
-    List<Reserva> findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(
+    List<Reserva> findByVehicle_IdAndEstatNotInAndDataIniciLessThanAndDataFiGreaterThan(
             long vehicleId,
-            EstatReserva estat,
+            List<EstatReserva> estats,
             LocalDateTime dataFi,
             LocalDateTime dataInici);
 
