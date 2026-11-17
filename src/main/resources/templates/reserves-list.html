@@ -143,7 +143,8 @@
                                     </a>
 
                                     <!-- Anular reservas que todavía se pueden cancelar. -->
-                                    <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada'}"
+                                    <form th:if="${r.estat != null and r.estat.name() != 'Anulada' and r.estat.name() != 'Lliurada' and r.estat.name()
+                                          != 'Retornada'}"
                                           th:action="@{__${session.rutaBase}__/reserves/cancelar/{id}(id=${r.id})}"
                                           method="post"
                                           style="display: inline; margin-left: 8px;"
