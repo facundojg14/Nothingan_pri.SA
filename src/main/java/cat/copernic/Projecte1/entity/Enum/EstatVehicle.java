@@ -7,7 +7,7 @@ package cat.copernic.Projecte1.entity.Enum;
 public enum EstatVehicle {
     Disponible,
     Lliurat,
-    En_manteniment, 
-    Desactivat,
+    En_manteniment,
     Baixa
+  
 }
