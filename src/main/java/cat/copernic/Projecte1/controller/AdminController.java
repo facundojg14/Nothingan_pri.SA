@@ -160,10 +160,17 @@ public class AdminController {
         try {
             agent.setRol(rol.AGENT);
 
-            if (agent.getId() != null && (agent.getPassword() == null || agent.getPassword().isBlank())) {
+            if (agent.getId() == null) {
+                // Els agents creats directament per l'administrador ja queden validats.
+                agent.setEstatRegistre("VALIDAT");
+            } else {
                 Usuaris usuariExistente = usuarisService.getUsuariById(agent.getId());
                 if (usuariExistente != null) {
-                    agent.setPassword(usuariExistente.getPassword());
+                    if (agent.getPassword() == null || agent.getPassword().isBlank()) {
+                        agent.setPassword(usuariExistente.getPassword());
+                    }
+                    // El formulari d'edició no modifica l'estat del registre.
+                    agent.setEstatRegistre(usuariExistente.getEstatRegistre());
                 }
             }
 
