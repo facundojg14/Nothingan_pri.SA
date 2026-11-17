@@ -201,6 +201,12 @@ public class ReservaLogic {
                 || reserva.getUsuari().getId() == null) {
             throw new IllegalArgumentException("Cal seleccionar un vehicle i un usuari vàlids.");
         }
+        
+        if (reserva.getDataInici().isBefore(LocalDateTime.now().withSecond(0).withNano(0))) {
+            throw new IllegalArgumentException(
+                    "No es pot fer una reserva amb una data d'inici passada."
+            );
+        }
 
         Vehicle vehicle = vehicleRepo.findById(reserva.getVehicle().getId()).orElse(null);
         Usuaris usuari = usuarisRepo.findById(reserva.getUsuari().getId()).orElse(null);
