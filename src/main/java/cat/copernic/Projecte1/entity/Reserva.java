@@ -1,3 +1,4 @@
+
 package cat.copernic.Projecte1.entity;
 
 import cat.copernic.Projecte1.entity.Enum.EstatReserva;
@@ -19,16 +20,19 @@ import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
- * Entitat que representa una reserva d'un vehicle per part d'un client.
+ * Entidad que representa una reserva de un vehículo por parte de un cliente.
  *
- * Guarda les dates, els imports (lloguer, fiança i liquidació final), l'estat
- * de la reserva i les dades del lliurament i del retorn del vehicle.
- * Cada reserva pertany a un usuari i a un vehicle (relació N:1).
+ * Almacena las fechas, los importes, el estado de la reserva y la información
+ * de la entrega, devolución y liquidación de la fianza.
+ *
+ * Cada reserva está asociada a un usuario y a un vehículo.
  *
  * @author Equip4
  */
 @Entity
 public class Reserva {
+
+    // ==================== ATRIBUTOS PRINCIPALES ====================
 
     // Identificador único de la reserva.
     @Id
@@ -39,7 +43,7 @@ public class Reserva {
     @Column(name = "codi_reserva", nullable = false, unique = true)
     private String codiReserva;
 
-    // Fecha en la que se crea la reserva.
+    // Fecha y hora en la que se crea la reserva.
     @Column(nullable = false)
     private LocalDateTime dataReserva;
 
@@ -52,24 +56,33 @@ public class Reserva {
     @Column(nullable = false)
     private LocalDateTime dataFi;
 
-    // Importes económicos relacionados con la reserva.
+    // ==================== IMPORTES ECONÓMICOS ====================
+
+    // Importe total del alquiler.
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal preuLloguer;
 
+    // Importe inicial de la fianza.
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal importFianca;
 
+    // Importe de la fianza retenido.
     @Column(precision = 10, scale = 2)
     private BigDecimal fiancaRetinguda;
 
+    // Coste de las incidencias asociadas a la reserva.
     @Column(precision = 10, scale = 2)
     private BigDecimal costIncidencia;
 
+    // Importe de la fianza devuelto al cliente.
     @Column(precision = 10, scale = 2)
     private BigDecimal fiancaRetornada;
 
+    // Coste final de la reserva.
     @Column(precision = 10, scale = 2)
     private BigDecimal costFinal;
+
+    // ==================== ESTADO Y OBSERVACIONES ====================
 
     // Estado actual de la reserva.
     @Enumerated(EnumType.STRING)
@@ -80,18 +93,24 @@ public class Reserva {
     @Column(length = 1000)
     private String observacions;
 
-    // --- NUEVOS CAMPOS PARA EL LLIURAMENT DEL VEHICLE ---
+    // ==================== DATOS DE ENTREGA ====================
+
+    // Fecha y hora en la que se entrega el vehículo.
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "data_hora_lliurament")
     private LocalDateTime dataHoraLliurament;
 
+    // Descripción del estado del vehículo en la entrega.
     @Column(name = "descripcio_lliurament", length = 1000)
     private String descripcioLliurament;
 
+    // Fotografías guardadas durante la entrega del vehículo.
     @ElementCollection
     @CollectionTable(name = "reserva_fotos_lliurament", joinColumns = @JoinColumn(name = "reserva_id"))
     @Column(name = "ruta_foto")
     private List<String> fotosLliurament = new ArrayList<>();
+
+    // ==================== RELACIONES ====================
 
     // Vehículo y usuario asociados a la reserva.
     @ManyToOne
@@ -102,11 +121,14 @@ public class Reserva {
     @JoinColumn(name = "usuari_id", nullable = false)
     private Usuaris usuari;
 
+    // ==================== CONSTRUCTOR ====================
+
     // Constructor vacío necesario para JPA.
     public Reserva() {
     }
 
-    // Getters y Setters
+    // ==================== GETTERS Y SETTERS ====================
+
     public Integer getId() {
         return id;
     }
@@ -251,16 +273,22 @@ public class Reserva {
         this.usuari = usuari;
     }
 
-    // --- CAMPS PER AL RETORN I LIQUIDACIÓ DE FIANÇA ---
+    // ==================== DATOS DE DEVOLUCIÓN ====================
+
+    // Fecha y hora en la que se devuelve el vehículo.
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "data_hora_retorn")
     private LocalDateTime dataHoraRetorn;
 
+    // Indica si los desperfectos son responsabilidad del cliente.
     @Column(name = "desperfectes_imputables")
     private Boolean desperfectesImputables = false;
 
+    // Importe adicional pendiente de cobrar al cliente.
     @Column(name = "carrec_extra_pendent", precision = 10, scale = 2)
     private BigDecimal carrecExtraPendent = BigDecimal.ZERO;
+
+    // ==================== GETTERS Y SETTERS DE DEVOLUCIÓN ====================
 
     public LocalDateTime getDataHoraRetorn() {
         return dataHoraRetorn;

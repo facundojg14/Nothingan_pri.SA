@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+ Página para confirmar la devolución de un vehículo.
+ Muestra los datos de la reserva y el estado del vehículo en el momento
+ de la entrega, y permite registrar su devolución, desperfectos,
+ observaciones y responsabilidad del cliente para calcular la fianza.
+-->
 <html lang="ca" xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
@@ -8,22 +14,31 @@
     </head>
     <body>
 
+        <!-- ==================== ESTRUCTURA PRINCIPAL ==================== -->
         <div class="layout">
 
-            <!-- Menú lateral comú (fragments/layout.html) -->
+            <!-- ==================== MENÚ LATERAL ==================== -->
+            <!-- Menú lateral común compartido con el resto de páginas. -->
             <aside th:replace="~{fragments/layout :: menu('retornar')}"></aside>
 
+            <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
             <main class="content">
 
+                <!-- Cabecera común de la sección de devoluciones. -->
                 <header th:replace="~{fragments/layout :: capcalera('Devolució de vehicles')}"></header>
 
+                <!-- ==================== TÍTULO Y NAVEGACIÓN ==================== -->
                 <div class="top-bar">
                     <h3 th:text="'Confirmar devolució - Reserva ' + ${reserva.codiReserva}">Confirmar devolució</h3>
                     <a th:href="@{__${session.rutaBase}__/reserves/retornar}" class="btn btn-cancel">Tornar a la cerca</a>
                 </div>
 
+                <!-- ==================== MENSAJES DEL SISTEMA ==================== -->
+                <!-- Muestra los errores devueltos durante el proceso de devolución. -->
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
+                <!-- ==================== DATOS DE LA RESERVA ==================== -->
+                <!-- Muestra la información del cliente, vehículo, fechas y fianza depositada. -->
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px; background-color: #f9fafb;">
                     <h4 style="margin-top: 0; margin-bottom: 12px;">Dades de la Reserva</h4>
 
@@ -60,11 +75,14 @@
                     </div>
                 </div>
 
+                <!-- ==================== ESTADO DEL VEHÍCULO EN LA ENTREGA ==================== -->
+                <!-- Muestra la descripción y las fotografías registradas durante la entrega. -->
                 <div class="table-card" style="padding: 24px; margin-bottom: 20px;">
                     <h4 style="margin-top: 0;">Estat del vehicle en el lliurament</h4>
 
                     <p th:text="${reserva.descripcioLliurament}">Descripció del lliurament</p>
 
+                    <!-- Muestra las fotografías de la entrega cuando existen. -->
                     <div th:if="${!#lists.isEmpty(reserva.fotosLliurament)}">
                         <strong>Fotografies del lliurament:</strong>
 
@@ -80,11 +98,14 @@
                     </div>
                 </div>
 
+                <!-- ==================== FORMULARIO DE DEVOLUCIÓN ==================== -->
+                <!-- Recoge los datos de la devolución para enviarlos al controlador. -->
                 <div class="table-card" style="padding: 24px;">
                     <form th:action="@{__${session.rutaBase}__/reserves/retornar/{id}(id=${reserva.id})}" method="post">
 
                         <div class="form-grid">
 
+                            <!-- Fecha y hora en la que se realiza la devolución. -->
                             <div class="form-group">
                                 <label for="dataHoraRetorn">Data i hora de devolució *</label>
                                 <input type="datetime-local"
@@ -94,6 +115,7 @@
                                        required>
                             </div>
 
+                            <!-- Permite indicar si el vehículo presenta averías. -->
                             <div class="form-group">
                                 <label>Estat del vehicle *</label>
 
@@ -103,6 +125,7 @@
                                 </label>
                             </div>
 
+                            <!-- Indica si los desperfectos son responsabilidad del cliente. -->
                             <div class="form-group" style="grid-column: span 2;">
                                 <label>Responsabilitat dels desperfectes *</label>
 
@@ -116,6 +139,7 @@
                                 </small>
                             </div>
 
+                            <!-- Campo para registrar observaciones sobre el estado del vehículo. -->
                             <div class="form-group" style="grid-column: span 2;">
                                 <label for="observacions">Observacions de la devolució *</label>
 
@@ -130,6 +154,8 @@
 
                         </div>
 
+                        <!-- ==================== ACCIONES DEL FORMULARIO ==================== -->
+                        <!-- Permite confirmar la devolución o cancelar y volver a la búsqueda. -->
                         <div class="button-group" style="margin-top: 24px;">
                             <button type="submit"
                                     class="btn btn-add"

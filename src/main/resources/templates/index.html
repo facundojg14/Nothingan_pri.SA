@@ -14,19 +14,20 @@
 
 <body class="home-page">
 
-    <!-- Cabecera principal -->
-   <header class="home-header" th:with="usuari=${usuariLoguejat}">
+    <!-- ==================== CABECERA Y NAVEGACIÓN ==================== -->
+
+    <header class="home-header" th:with="usuari=${usuariLoguejat}">
         <a th:href="${usuari != null ? '/web/usuaris/client/home' : '/'}" class="home-logo">
             <img th:src="@{/img/logo.png}" alt="Nothingan Pri">
         </a>
 
-        <!-- Navegación si NO está logueado -->
+        <!-- Navegación para usuarios no autenticados -->
         <nav class="home-nav" th:if="${usuari == null}">
             <a th:href="@{/web/usuaris/login}">Identifica't</a>
             <a th:href="@{/web/usuaris/registre}" class="home-register">Registra't</a>
         </nav>
 
-        <!-- Navegación si SÍ está logueado -->
+        <!-- Navegación para usuarios autenticados -->
         <nav class="home-nav" th:if="${usuari != null}">
             <a th:href="@{/web/usuaris/client/reserves}">Les meves reserves</a>            
             <a th:href="@{/web/usuaris/client/perfil}" class="user-nav-item">
@@ -39,7 +40,8 @@
 
     <main>
 
-        <!-- Presentación y búsqueda -->
+        <!-- ==================== PRESENTACIÓN Y BÚSQUEDA ==================== -->
+
         <section class="home-search-area">
 
             <section class="home-hero">
@@ -54,6 +56,7 @@
                     <div class="home-search">
                         <h2>Troba el teu vehicle ideal</h2>
 
+                        <!-- Formulario para buscar vehículos por fechas -->
                         <form th:action="@{/web/vehicles/cercar}" method="get">
 
                             <div class="search-option">
@@ -82,6 +85,7 @@
 
                         </form>
 
+                        <!-- Mensaje de error durante la búsqueda -->
                         <p class="search-error"
                            th:if="${error}"
                            th:text="${error}"></p>
@@ -90,7 +94,8 @@
                 </div>
             </section>
 
-            <!-- Resultados de la búsqueda -->
+            <!-- ==================== RESULTADOS DE LA BÚSQUEDA ==================== -->
+
             <section class="search-results"
                      id="resultats"
                      th:if="${vehicles != null}">
@@ -106,6 +111,7 @@
                     </span>
                 </div>
 
+                <!-- Fechas seleccionadas para el alquiler -->
                 <div class="results-dates">
                     <div class="result-date">
                         <strong>Recollida:</strong>
@@ -118,10 +124,12 @@
                     </div>
                 </div>
 
+                <!-- Listado de vehículos disponibles -->
                 <div class="vehicles-grid" th:if="${!vehicles.isEmpty()}">
 
                     <article class="vehicle-card" th:each="vehicle : ${vehicles}">
 
+                        <!-- Imagen del vehículo o imagen alternativa -->
                         <div class="vehicle-photo"
                              th:if="${vehicle.fotoVehicle != null and !vehicle.fotoVehicle.isEmpty()}">
 
@@ -141,6 +149,7 @@
 
                         <div class="vehicle-content">
 
+                            <!-- Información principal del vehículo -->
                             <span class="vehicle-category"
                                   th:text="${vehicle.categoria}"></span>
 
@@ -151,6 +160,7 @@
                                 <strong th:text="${vehicle.anyFabricacio}"></strong>
                             </div>
 
+                            <!-- Precio diario y coste total del alquiler -->
                             <div class="vehicle-price">
                                 <div class="daily-price">
                                     <span th:text="${#numbers.formatDecimal(vehicle.preuDia, 1, 2)}"></span>
@@ -168,6 +178,7 @@
                                 </div>
                             </div>
 
+                            <!-- Selección del vehículo e inicio de la reserva -->
                             <button type="button"
                                     class="select-vehicle-btn"
                                     onclick="mostrarReserva(this)">
@@ -186,6 +197,7 @@
 
                 </div>
 
+                <!-- Mensaje cuando no hay vehículos disponibles -->
                 <div class="no-results" th:if="${vehicles.isEmpty()}">
                     <div class="car-icon">🚘</div>
                     <h3>No hi ha vehicles disponibles</h3>
@@ -196,7 +208,8 @@
 
         </section>
 
-        <!-- Ventajas de la empresa -->
+        <!-- ==================== VENTAJAS DE LA EMPRESA ==================== -->
+
         <section class="home-benefits">
             <div class="benefit">
                 <span>🚘</span>
@@ -217,8 +230,9 @@
             </div>
         </section>
 
-        <!-- Invitación para crear una cuenta -->
-        <!-- Si NO está logueado -->
+        <!-- ==================== PROMOCIÓN Y ACCESO A LA CUENTA ==================== -->
+
+        <!-- Invitación para crear una cuenta si el usuario no está autenticado -->
         <section class="home-promo" th:if="${usuariLoguejat == null}">
             <div>
                 <h2>Encara no tens un compte?</h2>
@@ -229,7 +243,7 @@
             </a>
         </section>
 
-        <!-- Si SÍ está logueado -->
+        <!-- Acceso a las reservas si el usuario está autenticado -->
         <section class="home-promo" th:if="${usuariLoguejat != null}">
             <div>
                 <h2>Vols revisar l'estat dels teus lloguers?</h2>
@@ -242,10 +256,13 @@
 
     </main>
 
-    <!-- Pie de página -->
+    <!-- ==================== PIE DE PÁGINA ==================== -->
+
     <footer class="home-footer">
         <p>© 2026 Nothingan Pri · Lloguer de vehicles</p>
     </footer>
+
+    <!-- ==================== FUNCIONES JAVASCRIPT ==================== -->
 
     <script>
         // Gestiona la selección de un único vehículo.
@@ -278,6 +295,7 @@
             }
         });
         
+        // Actualiza la fecha mínima de devolución según la fecha de inicio.
         document.addEventListener("DOMContentLoaded", function () {
             const inputInici = document.getElementById("dataInici");
             const inputFi = document.getElementById("dataFi");

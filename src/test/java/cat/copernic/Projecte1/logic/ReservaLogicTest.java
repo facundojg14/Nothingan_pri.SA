@@ -89,7 +89,9 @@ public class ReservaLogicTest {
 
         // THEN: No està disponible i ni tan sols es consulten les reserves
         assertFalse(disponible);
-        verify(reservaRepo, never()).findByVehicle_IdAndEstatNotAndDataIniciLessThanAndDataFiGreaterThan(anyLong(), any(), any(), any());
+        verify(reservaRepo, never()).findByVehicle_IdAndEstatNotInAndDataIniciLessThanAndDataFiGreaterThan(
+                anyLong(), anyList(), any(LocalDateTime.class), any(LocalDateTime.class)
+        );
     }
 
     @Test

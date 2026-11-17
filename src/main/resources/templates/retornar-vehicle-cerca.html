@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!--
+ Página para gestionar la devolución de vehículos.
+ Permite buscar reservas entregadas mediante diferentes filtros
+ y seleccionar la reserva correspondiente para tramitar su devolución.
+-->
 <html lang="ca" xmlns:th="http://www.thymeleaf.org">
     <head>
         <meta charset="UTF-8">
@@ -8,23 +13,32 @@
     </head>
     <body>
 
+        <!-- ==================== ESTRUCTURA PRINCIPAL ==================== -->
         <div class="layout">
 
-            <!-- Menú lateral comú (fragments/layout.html) -->
+            <!-- ==================== MENÚ LATERAL ==================== -->
+            <!-- Menú lateral comú compartido amb la resta de pàgines. -->
             <aside th:replace="~{fragments/layout :: menu('retornar')}"></aside>
 
+            <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
             <main class="content">
 
+                <!-- Cabecera común de la sección de devoluciones. -->
                 <header th:replace="~{fragments/layout :: capcalera('Devolució de vehicles')}"></header>
 
+                <!-- ==================== MENSAJES DEL SISTEMA ==================== -->
+                <!-- Muestra los mensajes de éxito o error devueltos por el controlador. -->
                 <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
                 <div th:if="${error}" class="alert-error" th:text="${error}"></div>
 
+                <!-- ==================== TÍTULO Y ACCIONES ==================== -->
                 <div class="top-bar">
                     <h3>Cerca la reserva per retornar</h3>
                     <a th:href="@{__${session.rutaBase}__/reserves/all}" class="btn btn-cancel">Tornar a reserves</a>
                 </div>
 
+                <!-- ==================== FILTROS DE BÚSQUEDA ==================== -->
+                <!-- Formulario para localizar reservas mediante sus datos principales. -->
                 <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
                     <form th:action="@{__${session.rutaBase}__/reserves/retornar}" method="get">
 
@@ -55,6 +69,7 @@
                             </div>
                         </div>
 
+                        <!-- Acciones para aplicar o limpiar los filtros de búsqueda. -->
                         <div class="button-group" style="margin-top: 15px;">
                             <button type="submit" class="btn btn-filter">Cercar reserva</button>
                             <a th:href="@{__${session.rutaBase}__/reserves/retornar}" class="btn btn-cancel">Netejar filtres</a>
@@ -63,6 +78,8 @@
                     </form>
                 </div>
 
+                <!-- ==================== LISTADO DE RESERVAS ==================== -->
+                <!-- Muestra las reservas encontradas y permite seleccionar una para devolverla. -->
                 <div class="table-card">
                     <table class="data-table">
                         <thead>
@@ -78,6 +95,7 @@
                         </thead>
 
                         <tbody>
+                            <!-- Recorre las reservas obtenidas y muestra sus datos principales. -->
                             <tr th:each="r : ${reserves}">
                                 <td th:text="${r.codiReserva}">RES-001</td>
                                 <td th:text="${r.usuari != null ? r.usuari.nom + ' (' + r.usuari.dni + ')' : '-'}">Client</td>
@@ -88,12 +106,14 @@
                                     <span class="badge badge-validat" th:text="${r.estat}">Lliurada</span>
                                 </td>
                                 <td class="actions-cell">
+                                    <!-- Enlace para acceder al proceso de devolución de la reserva seleccionada. -->
                                     <a th:href="@{__${session.rutaBase}__/reserves/retornar/{id}(id=${r.id})}" class="btn btn-add" style="padding: 6px 12px; font-size: 0.85rem;">
                                         Seleccionar i retornar
                                     </a>
                                 </td>
                             </tr>
 
+                            <!-- Mensaje mostrado cuando no hay reservas que coincidan con los filtros. -->
                             <tr th:if="${#lists.isEmpty(reserves)}">
                                 <td colspan="7" class="empty-state">
                                     No s'han trobat reserves lliurades pendents de devolució amb aquests filtres.
