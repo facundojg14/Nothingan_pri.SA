@@ -133,7 +133,7 @@
                             <!-- Desplegable Estado del Vehículo -->
                             <div class="form-group">
                                 <label for="estatVehicle">Estat del Vehicle <span style="color: red;">*</span></label>
-                                
+
                                 <!-- CASO 1: Creando vehículo nuevo (id == 0) -> Bloqueado en Disponible -->
                                 <th:block th:if="${vehicle.id == 0}">
                                     <select id="estatVehicle" disabled>
@@ -142,10 +142,10 @@
                                     <input type="hidden" name="estatVehicle" value="Disponible" />
                                 </th:block>
 
-                                <!-- CASO 2: Editando vehículo existente (id > 0) -> Excluye 'Baixa' manual -->
+                                <!-- CASO 2: Editando vehículo existente (id > 0) -> Excluye 'Baixa' y 'Lliurat' manuales -->
                                 <select th:if="${vehicle.id > 0}" id="estatVehicle" th:field="*{estatVehicle}" required>
                                     <option th:each="estat : ${T(cat.copernic.Projecte1.entity.Enum.EstatVehicle).values()}" 
-                                            th:if="${estat.name() != 'Baixa' or vehicle.estatVehicle?.name() == 'Baixa'}"
+                                            th:if="${(estat.name() != 'Baixa' and estat.name() != 'Lliurat') or (vehicle.estatVehicle != null and vehicle.estatVehicle.name() == estat.name())}"
                                             th:value="${estat}" 
                                             th:text="${estat}">Disponible</option>
                                 </select>
@@ -153,25 +153,11 @@
 
                         </div>
 
-                        <!-- Botones Submit, Cancelar y Eliminar -->
-                        <div class="button-group" style="margin-top: 24px; display: flex; gap: 10px; align-items: center;">
-                            <button type="submit" class="btn btn-filter">
-                                Desar vehicle
+                        <!-- Botón único de Submit fuera del grid -->
+                        <div class="button-group" style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-filter" th:text="${vehicle.id == 0} ? 'Crear vehicle' : 'Desar vehicle'">
+                                Crear vehicle
                             </button>
-
-                            <a th:href="@{__${session.rutaBase}__/vehicles/all}"
-                               class="btn btn-cancel">
-                                Cancel·lar
-                            </a>
-
-                            <!-- Botón de eliminación física visible solo al editar un vehículo existente (id > 0) -->
-                            <a th:if="${vehicle.id > 0}"
-                               th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${vehicle.id})}"
-                               class="btn"
-                               style="background-color: #d9534f; color: white; margin-left: auto; text-decoration: none;"
-                               onclick="return confirm('ATENCIÓ: Esborraràs aquest vehicle definitivament de la base de dades. Només es permet si mai ha tingut cap reserva. Continuar?');">
-                                Eliminar vehicle
-                            </a>
                         </div>
 
                     </form>
