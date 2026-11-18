@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<!--
+ Página para crear nuevas reservas desde el panel de agente.
+ Permite consultar vehículos disponibles por fechas y categoría,
+ seleccionar un vehículo y un cliente, introducir los datos de la reserva
+ y calcular el presupuesto con el posible descuento para clientes premium.
+-->
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Nova reserva - Nothingan Pri</title>
+
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+        <!-- Librería de iconos Font Awesome. -->
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    </head>
+    <body>
+
+        <!-- ==================== ESTRUCTURA PRINCIPAL ==================== -->
+
+        <div class="layout">
+
+            <!-- ==================== BARRA LATERAL DE NAVEGACIÓN ==================== -->
+
+            <!-- Menú lateral común de la aplicación -->
+            <aside th:replace="~{fragments/layout :: menu('reserves')}"></aside>
+
+            <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+
+            <main class="content">
+
+                <!-- Cabecera de la página -->
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de reserves')}"></header>
+
+                <!-- Título de la página y botón para volver -->
+                <div class="top-bar">
+                    <h3>Nova reserva</h3>
+
+                    <a th:href="@{__${session.rutaBase}__/reserves/all}"
+                       class="btn btn-cancel">
+                        Tornar al llistat
+                    </a>
+                </div>
+
+                <!-- Muestra los errores recibidos del servidor -->
+                <div th:if="${error}"
+                     class="alert-error"
+                     th:text="${error}"></div>
+
+                <!-- ==================== CONSULTA DE DISPONIBILIDAD (RF31) ==================== -->
+
+                <div class="table-card"
+                     style="padding: 16px 20px; margin-bottom: 20px;">
+
+                    <h3 style="font-size: 18px; margin: 0 0 16px 0;">
+                        Consultar disponibilitat
+                    </h3>
+
+                    <!-- Permite consultar vehículos disponibles según las fechas seleccionadas -->
+                    <form th:action="@{__${session.rutaBase}__/reserves/disponibles}"
+                          method="get">
+
+                        <div style="display: grid;
+                             grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+                             gap: 16px;
+                             align-items: end;">
+
+                            <div class="form-group">
+                                <label for="dataInici">Data i hora d'inici</label>
+
+                                <input type="datetime-local"
+                                       id="dataInici"
+                                       name="dataInici"
+                                       th:value="${dataInici}"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataFi">Data i hora de finalització</label>
+
+                                <input type="datetime-local"
+                                       id="dataFi"
+                                       name="dataFi"
+                                       th:value="${dataFi}"
+                                       required>
+                            </div>
+
+                            <!-- Permite filtrar los vehículos por categoría -->
+                            <div class="form-group">
+                                <label for="categoria">Categoria del vehicle</label>
+
+                                <select id="categoria" name="categoria">
+                                    <option value="">Totes les categories</option>
+                                    <option value="Utilitari" th:selected="${categoria == 'Utilitari'}">Utilitari</option>
+                                    <option value="Compacte" th:selected="${categoria == 'Compacte'}">Compacte</option>
+                                    <option value="SUV" th:selected="${categoria == 'SUV'}">SUV</option>
+                                    <option value="Berlina" th:selected="${categoria == 'Berlina'}">Berlina</option>
+                                    <option value="Furgoneta" th:selected="${categoria == 'Furgoneta'}">Furgoneta</option>
+                                    <option value="Monovolum" th:selected="${categoria == 'Monovolum'}">Monovolum</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-filter">
+                                Cercar
+                            </button>
+
+                        </div>
+                    </form>
+
+                    <!-- Informa si no hay vehículos disponibles -->
+                    <div th:if="${senseDisponibilitat}"
+                         class="alert-error"
+                         style="margin-top: 12px;">
+                        No hi ha vehicles disponibles amb els criteris seleccionats.
+                    </div>
+                </div>
+
+                <!-- ==================== FORMULARIO DE CREACIÓN DE RESERVA ==================== -->
+
+                <div class="table-card" style="padding: 24px;">
+
+                    <form th:action="@{__${session.rutaBase}__/reserves/save}"
+                          th:object="${reserva}"
+                          method="post">
+
+                        <div class="form-grid">
+
+                            <!-- ==================== SELECCIÓN DEL VEHÍCULO ==================== -->
+
+                            <div class="form-group">
+                                <label for="vehicle">Vehicle</label>
+
+                                <select id="vehicle" name="vehicle.id" required>
+                                    <option value="" selected disabled>
+                                        Selecciona un vehicle...
+                                    </option>
+
+                                    <!-- Guarda los datos del vehículo para mostrar sus características -->
+                                    <option th:each="v : ${vehicles}"
+                                            th:value="${v.id}"
+                                            th:attr="data-matricula=${v.matricula},
+                                            data-marca=${v.marca},
+                                            data-model=${v.model},
+                                            data-any=${v.anyFabricacio},
+                                            data-categoria=${v.categoria},
+                                            data-preu-dia=${v.preuDia},
+                                            data-fianca=${v.fiancaEstandar},
+                                            data-estat=${v.estatVehicle}"
+                                            th:text="${v.matricula + ' - ' + v.marca + ' ' + v.model + ' (' + v.estatVehicle + ')'}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- ==================== SELECCIÓN DEL CLIENTE ==================== -->
+
+                            <div class="form-group">
+                                <label for="usuari">Client</label>
+
+                                <select id="usuari" name="usuari.id" required>
+                                    <option value="" selected disabled>
+                                        Selecciona un client...
+                                    </option>
+
+                                    <!-- Guarda la información del cliente y su condición premium -->
+                                    <option th:each="u : ${usuaris}"
+                                            th:value="${u.id}"
+                                            th:attr="data-premium=${u.premium}"
+                                            th:text="${u.nom + ' - ' + u.dni + ' (' + u.estatRegistre + ')'}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- ==================== DETALLES DEL VEHÍCULO ==================== -->
+
+                            <details id="detallsVehicle" class="vehicle-details"
+                                     style="display:none; grid-column:1 / -1;">
+
+                                <!-- Cabecera del desplegable -->
+                                <summary>
+                                    <i class="fa-solid fa-car"></i>
+                                    Característiques del vehicle
+                                </summary>
+
+                                <div class="vehicle-details-content">
+
+                                    <!-- Matrícula -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-id-card detail-icon"></i>
+                                        <div>
+                                            <span class="detail-label">Matrícula</span>
+                                            <strong id="detallMatricula"></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Marca y modelo -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-car-side detail-icon"></i>
+                                        <div>
+                                            <span class="detail-label">Marca i model</span>
+                                            <strong><span id="detallMarca"></span> <span id="detallModel"></span></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Año de fabricación -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-calendar-days detail-icon"></i>
+                                        <div>
+                                            <span class="detail-label">Any de fabricació</span>
+                                            <strong id="detallAny"></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Categoría -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-tag detail-icon"></i>
+                                        <div>
+                                            <span class="detail-label">Categoria</span>
+                                            <strong id="detallCategoria"></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Precio por día -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-euro-sign detail-icon"></i>
+                                        <div>
+                                            <span class="detail-label">Preu per dia</span>
+                                            <strong><span id="detallPreu"></span> €</strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Estado del vehículo -->
+                                    <div class="vehicle-detail">
+                                        <i class="fa-solid fa-circle-check detail-icon detail-status"></i>
+                                        <div>
+                                            <span class="detail-label">Estat</span>
+                                            <strong id="detallEstat"></strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </details>
+
+                            <!-- ==================== FECHAS Y DATOS DE LA RESERVA ==================== -->
+
+                            <!-- Fecha de inicio del alquiler -->
+                            <div class="form-group">
+                                <label for="dataIniciReserva">
+                                    Data i hora d'inici
+                                </label>
+
+                                <input type="datetime-local"
+                                       id="dataIniciReserva"
+                                       th:field="*{dataInici}"
+                                       th:readonly="${dataInici != null}"
+                                       required>
+                            </div>
+
+                            <!-- Fecha de finalización del alquiler -->
+                            <div class="form-group">
+                                <label for="dataFiReserva">
+                                    Data i hora de finalització
+                                </label>
+
+                                <input type="datetime-local"
+                                       id="dataFiReserva"
+                                       th:field="*{dataFi}"
+                                       th:readonly="${dataFi != null}"
+                                       required>
+                            </div>
+
+                            <!-- Muestra la fianza estándar del vehículo -->
+                            <div class="form-group">
+                                <label for="importFianca">Fiança del vehicle (€)</label>
+                                <input type="text"
+                                       id="importFianca"
+                                       readonly
+                                       placeholder="Selecciona un vehicle">
+                            </div>
+
+                            <!-- Observaciones adicionales de la reserva -->
+                            <div class="form-group">
+                                <label for="observacions">Observacions</label>
+
+                                <textarea id="observacions"
+                                          th:field="*{observacions}"
+                                          rows="3"
+                                          maxlength="1000"></textarea>
+                            </div>
+
+                        </div>
+
+                        <!-- ==================== RESUMEN DEL PRESUPUESTO ==================== -->
+
+                        <!-- Muestra el cálculo del alquiler y la fianza -->
+                        <div id="resumPreu"
+                             aria-live="polite"
+                             style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+
+                            <h3 style="margin: 0 0 12px; font-size: 16px; color: #1e293b;">
+                                Resum del pressupost
+                            </h3>
+
+                            <p style="margin: 0; padding: 10px 12px; background: #eff6ff; border-radius: 6px; color: #64748b; font-size: 13px;">
+                                Selecciona un vehicle, un client i unes dates vàlides.
+                            </p>
+                        </div>
+
+                        <!-- ==================== ACCIONES DEL FORMULARIO ==================== -->
+
+                        <!-- Permite guardar la reserva o cancelar la operación -->
+                        <div class="button-group" style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-filter">
+                                Desar reserva
+                            </button>
+
+
+                        </div>
+
+                    </form>
+                </div>
+            </main>
+        </div>
+
+        <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+
+        <script>
+            // Obtiene los elementos del formulario.
+            const vehicle = document.getElementById('vehicle');
+            const usuari = document.getElementById('usuari');
+            const inici = document.getElementById('dataIniciReserva');
+            const fi = document.getElementById('dataFiReserva');
+            const fianca = document.getElementById('importFianca');
+            const resum = document.getElementById('resumPreu');
+
+            // Obtiene el contenedor de los detalles del vehículo.
+            const detallsVehicle = document.getElementById('detallsVehicle');
+
+            // ==================== MOSTRAR DETALLES DEL VEHÍCULO ====================
+
+            // Muestra las características del vehículo seleccionado.
+            function mostrarDetallsVehicle() {
+                const v = vehicle.selectedOptions[0];
+
+                if (!vehicle.value) {
+                    detallsVehicle.style.display = 'none';
+                    detallsVehicle.open = false;
+                    return;
+                }
+
+                document.getElementById('detallMatricula').textContent = v.dataset.matricula;
+                document.getElementById('detallMarca').textContent = v.dataset.marca;
+                document.getElementById('detallModel').textContent = v.dataset.model;
+                document.getElementById('detallAny').textContent = v.dataset.any;
+                document.getElementById('detallCategoria').textContent = v.dataset.categoria;
+                document.getElementById('detallPreu').textContent = v.dataset.preuDia;
+                document.getElementById('detallEstat').textContent = v.dataset.estat;
+
+                detallsVehicle.style.display = 'block';
+                detallsVehicle.open = true;
+            }
+
+            // ==================== CONVERSIÓN DE FECHAS ====================
+
+            // Convierte la fecha local a una escala común para calcular la duración.
+            function convertirData(valor) {
+                if (!valor) {
+                    return NaN;
+                }
+
+                const [data, hora] = valor.split('T');
+                const [any, mes, dia] = data.split('-').map(Number);
+                const [h, m] = hora.split(':').map(Number);
+
+                return Date.UTC(any, mes - 1, dia, h, m);
+            }
+
+            // ==================== CÁLCULO DEL PRESUPUESTO ====================
+
+            // Calcula y muestra el presupuesto de la reserva.
+            function calcularPreu() {
+                const titol = `
+                    <h3 style="margin:0 0 18px;font-size:18px;color:#1e293b;">
+                        Resum del pressupost
+                    </h3>`;
+
+                const v = vehicle.selectedOptions[0];
+                const u = usuari.selectedOptions[0];
+
+                // Muestra siempre la fianza estándar del vehículo seleccionado.
+                const fiancaBase = vehicle.value ? Number(v.dataset.fianca) : NaN;
+                fianca.value = Number.isFinite(fiancaBase) && fiancaBase >= 0
+                    ? fiancaBase.toFixed(2) + ' €'
+                    : '';
+
+                if (!vehicle.value || !usuari.value || !inici.value || !fi.value) {
+                    resum.innerHTML = titol + `
+                        <p style="color:#64748b;margin:0;">
+                            Selecciona un vehicle, un client i unes dates vàlides.
+                        </p>`;
+                    return;
+                }
+
+                const preuDia = Number(v.dataset.preuDia);
+                const dataInici = convertirData(inici.value);
+                const dataFi = convertirData(fi.value);
+
+                // Formatea los importes en euros.
+                const euros = valor => valor.toLocaleString('ca-ES', {
+                    style: 'currency',
+                    currency: 'EUR'
+                });
+
+                // Comprueba que los datos sean válidos.
+                if (!Number.isFinite(dataInici) ||
+                    !Number.isFinite(dataFi) ||
+                    dataFi <= dataInici ||
+                    !Number.isFinite(preuDia) ||
+                    preuDia <= 0 ||
+                    !Number.isFinite(fiancaBase) ||
+                    fiancaBase < 0) {
+
+                    resum.innerHTML = titol + `
+                        <p style="color:#dc2626;margin:0;">
+                            Comprova les dates, el preu i la fiança del vehicle.
+                        </p>`;
+                    return;
+                }
+
+                // Calcula el precio del alquiler.
+                const dies = Math.ceil((dataFi - dataInici) / 86400000);
+                const preuTotal = dies * preuDia;
+
+                // Aplica el descuento Premium únicamente a la fianza.
+                const premium = u.dataset.premium === 'true';
+
+                const descompte = premium ? fiancaBase * 0.25 : 0;
+                const fiancaFinal = Math.round((fiancaBase - descompte) * 100) / 100;
+                const totalReserva = preuTotal + fiancaFinal;
+
+                // Muestra el resumen del presupuesto.
+                resum.innerHTML = titol + `
+                    <div style="display:grid;gap:12px;color:#475569;font-size:14px;">
+
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Durada del lloguer</span>
+                            <strong style="color:#1e293b;">${dies} dies</strong>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Preu del lloguer</span>
+                            <strong style="color:#1e293b;">${euros(preuTotal)}</strong>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Fiança del vehicle</span>
+                            <strong style="color:#1e293b;">${euros(fiancaFinal)}</strong>
+                        </div>
+
+                        ${premium ? `
+                        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:13px;color:#15803d;">
+                            <span>Descompte premium aplicat (25 %)</span>
+                            <span>−${euros(descompte)}</span>
+                        </div>` : ''}
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Descompte Premium (25 %)</span>
+                            <strong style="color:#16a34a;">− ${euros(descompte)}</strong>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Fiança final</span>
+                            <strong style="color:#1e293b;">${euros(fiancaFinal)}</strong>
+                        </div>
+
+                        <div style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:4px;
+                                    display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:16px;color:#1e293b;">Total de la reserva</strong>
+                            <strong style="font-size:22px;color:#2563eb;">${euros(totalReserva)}</strong>
+                        </div>
+
+                    </div>`;
+            }
+
+            // ==================== ACTUALIZACIÓN DEL FORMULARIO ====================
+
+            // Actualiza los detalles y el presupuesto al seleccionar un vehículo.
+            vehicle.addEventListener('change', () => {
+                mostrarDetallsVehicle();
+                calcularPreu();
+            });
+
+            // Actualiza el presupuesto cuando cambia algún otro dato.
+            [usuari, inici, fi].forEach(element => {
+                element.addEventListener('input', calcularPreu);
+                element.addEventListener('change', calcularPreu);
+            });
+
+            // Calcula el presupuesto inicial al cargar la página.
+            mostrarDetallsVehicle();
+            calcularPreu();
+        </script>
+        
+    </body>
+</html>

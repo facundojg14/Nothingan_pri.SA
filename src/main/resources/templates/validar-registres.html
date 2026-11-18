@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Validar Registres (Admin) - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- Menú Lateral Administrador -->
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('pendents')}"></aside>
+
+            <!-- Contingut Principal -->
+            <main class="content">
+
+                <!-- Capçalera superior amb Perfil i Logout -->
+                <header th:replace="~{fragments/layout :: capcalera('Validar registres de clients')}"></header>
+
+                <!-- Missatges d'èxit i d'error -->
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <div class="top-bar">
+                    <p style="margin: 0;">Revisa les dades i els documents de cada sol·licitud abans de validar-la (RF82).</p>
+                    <a th:href="@{/web/admin/usuaris/all}" class="btn btn-cancel" style="text-decoration: none;">Tornar a clients</a>
+                </div>
+
+                <!-- Taula de registres pendents -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>DNI</th>
+                                <th>Caducitat DNI</th>
+                                <th>Llicència</th>
+                                <th>Email</th>
+                                <th>Telèfon</th>
+                                <th>Documents</th>
+                                <th>Accions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${usuarisPendents}">
+                                <td th:text="${u.nom}">Nom</td>
+                                <td th:text="${u.dni}">12345678A</td>
+                                <td th:text="${u.dataCaducitatDni}">2030-01-01</td>
+                                <td>
+                                    <span th:text="${u.tipusLlicencia}">B</span>
+                                    <span th:if="${u.dataCaducitatLlicencia != null}" th:text="'(' + ${u.dataCaducitatLlicencia} + ')'"></span>
+                                </td>
+                                <td th:text="${u.email}">client@exemple.cat</td>
+                                <td th:text="${u.telefon}">600000000</td>
+
+                                <!-- Enllaços a les imatges pujades al registre -->
+                                <td class="actions-cell">
+                                    <a th:if="${u.imatgedni != null}" th:href="@{'/uploads/' + ${u.imatgedni}}" target="_blank">DNI</a>
+                                    <span th:if="${u.imatgedni != null and u.imatgeLlicencia != null}"> · </span>
+                                    <a th:if="${u.imatgeLlicencia != null}" th:href="@{'/uploads/' + ${u.imatgeLlicencia}}" target="_blank">Llicència</a>
+                                    <span th:if="${u.imatgedni == null and u.imatgeLlicencia == null}">Sense documents</span>
+                                </td>
+
+                                <!-- Validar o rebutjar la sol·licitud -->
+                                <td>
+                                    <form th:action="@{/web/admin/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
+                                        <input type="hidden" name="estat" value="VALIDAT">
+                                        <button type="submit" class="btn btn-add" style="padding: 6px 12px;"
+                                                onclick="return confirm('Validar aquest registre?')">Validar</button>
+                                    </form>
+                                    <form th:action="@{/web/admin/validar/{id}(id=${u.id})}" method="post" style="display: inline;">
+                                        <input type="hidden" name="estat" value="REBUTJAT">
+                                        <button type="submit" class="btn btn-cancel" style="padding: 6px 12px;"
+                                                onclick="return confirm('Rebutjar aquest registre?')">Rebutjar</button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                            <!-- Estat buit -->
+                            <tr th:if="${#lists.isEmpty(usuarisPendents)}">
+                                <td colspan="8" class="empty-state">
+                                    No hi ha cap registre pendent de validar.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestió de vehicles - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- BARRA LATERAL DE NAVEGACIÓN -->
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('vehicles')}"></aside>
+
+            <!-- CONTENIDO PRINCIPAL -->
+            <main class="content">
+
+                <!-- Capçalera superior per a Agents (Perfil i Logout) -->
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de vehicles')}"></header>
+
+                <!-- MENSAJES DE ÉXITO Y ERROR -->
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <!-- BARRA SUPERIOR CON TÍTULO Y BOTÓN DE CREAR -->
+                <div class="top-bar">
+                    <h3>Llistat de vehicles</h3>
+
+                    <a th:href="@{__${session.rutaBase}__/vehicles/new}" class="btn btn-add">
+                        + Nou vehicle
+                    </a>
+                </div>
+
+                <!-- FORMULARIO DE FILTROS COMBINADOS -->
+                <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
+                    <form th:action="@{__${session.rutaBase}__/vehicles/all}" method="get">
+                        <div class="form-grid">
+
+                            <!-- Filtro 1: Matrícula -->
+                            <div class="form-group">
+                                <label for="matricula">Matrícula del vehicle</label>
+                                <input type="text"
+                                       id="matricula"
+                                       name="matricula"
+                                       placeholder="Introdueix la matrícula"
+                                       th:value="${matricula}">
+                            </div>
+
+                            <!-- Filtro 2: Marca -->
+                            <div class="form-group">
+                                <label for="marca">Marca del vehicle</label>
+                                <input type="text"
+                                       id="marca"
+                                       name="marca"
+                                       placeholder="Introdueix la marca"
+                                       th:value="${marca}">
+                            </div>
+
+                            <!-- Filtro 3: Modelo -->
+                            <div class="form-group">
+                                <label for="model">Model del vehicle</label>
+                                <input type="text" id="model" name="model" placeholder="Introdueix el model" th:value="${modelParam}">
+                            </div>
+
+                            <!-- Filtro 4: Año de Fabricación -->
+                            <div class="form-group">
+                                <label for="anyFabricacio">Any de Fabricació</label>
+                                <input type="number" 
+                                       id="anyFabricacio" 
+                                       name="anyFabricacio" 
+                                       placeholder="Ex: 2022" 
+                                       min="1900" 
+                                       max="2099"
+                                       th:value="${anyFabricacio}">
+                            </div>
+
+                            <!-- Filtro 5: Desplegable por Categoría -->
+                            <div class="form-group">
+                                <label for="categoria">Categoria</label>
+                                <select id="categoria" name="categoria">
+                                    <option value="">-- Totes les categories --</option>
+                                    <option th:each="cat : ${T(cat.copernic.Projecte1.entity.Enum.Categoria).values()}" 
+                                            th:value="${cat.name()}" 
+                                            th:text="${cat}"
+                                            th:selected="${categoriaSel != null and cat == categoriaSel}">SUV</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro 6: Fecha/Hora Inicio -->
+                            <div class="form-group">
+                                <label for="dataInici">Disponible des de</label>
+                                <input type="datetime-local" 
+                                       id="dataInici" 
+                                       name="dataInici" 
+                                       th:value="${dataInici}">
+                            </div>
+
+                            <!-- Filtro 7: Fecha/Hora Fin -->
+                            <div class="form-group">
+                                <label for="dataFi">Disponible fins a</label>
+                                <input type="datetime-local" 
+                                       id="dataFi" 
+                                       name="dataFi" 
+                                       th:value="${dataFi}">
+                            </div>
+
+                        </div>
+
+                        <!-- Botones de acción del filtro -->
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button type="submit" class="btn btn-filter">Filtrar</button>
+                            <a th:href="@{__${session.rutaBase}__/vehicles/all}" class="btn btn-cancel">Netejar filtres</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TABLA DE VEHÍCULOS RESULTANTES -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Marca / Model</th>
+                                <th>Categoria</th>
+                                <th>Any</th>
+                                <th>Preu / Dia</th>
+                                <th>Estat</th>
+                                <th>Actiu</th>
+                                <th>Accions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="v : ${vehicle}">
+                                <td th:text="${v.matricula}">1234ABC</td>
+                                <td th:text="${v.marca + ' ' + v.model}">Seat Ibiza</td>
+
+                                <td>
+                                    <span class="badge badge-validat" 
+                                          th:if="${v.categoria != null}" 
+                                          th:text="${v.categoria.name()}">SUV</span>
+                                    <span th:if="${v.categoria == null}">-</span>
+                                </td>
+
+                                <td th:text="${v.anyFabricacio}">2022</td>
+                                <td th:text="${#numbers.formatDecimal(v.preuDia, 1, 2) + ' €'}">45.00 €</td>
+
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${v.estatVehicle != null and v.estatVehicle.name() == 'Disponible'} ? ' badge-validat' : ' badge-baixa'"
+                                          th:text="${v.estatVehicle}">Disponible</span>
+                                </td>
+
+                                <td>
+                                    <span th:if="${v.actiu}" class="badge badge-validat">Sí</span>
+                                    <span th:unless="${v.actiu}" class="badge badge-rebutjat">No</span>
+                                </td>
+
+                                <td class="actions-cell">
+                                    <a th:href="@{__${session.rutaBase}__/vehicles/edit/{id}(id=${v.id})}">Editar</a>
+
+                                    <!-- Baja lógica: solo si el vehículo está activo -->
+                                    <a th:if="${v.actiu}"
+                                       th:href="@{__${session.rutaBase}__/vehicles/delete/{id}(id=${v.id})}"
+                                       class="action-link"
+                                       style="color: #e67e22; margin-left: 8px;"
+                                       onclick="return confirm('Estàs segur que vols donar de baixa aquest vehicle? Es mantindrà a l\'historial però deixarà d\'estar disponible.');">
+                                        Baixa
+                                    </a>
+
+                                    <!-- Alta lógica (reactivar): solo si el vehículo está dado de baja -->
+                                    <a th:unless="${v.actiu}"
+                                       th:href="@{__${session.rutaBase}__/vehicles/alta/{id}(id=${v.id})}"
+                                       class="action-link"
+                                       style="color: #28a745; font-weight: bold; margin-left: 8px;"
+                                       onclick="return confirm('Estàs segur que vols tornar a donar d\'alta aquest vehicle? Tornarà a estar disponible per a reserves.');">
+                                        Donar d'alta
+                                    </a>
+
+                                    <!-- Eliminación física definitiva: solo si nunca ha tenido reservas -->
+                                    <a th:href="@{__${session.rutaBase}__/vehicles/eliminar/{id}(id=${v.id})}"
+                                       class="action-link"
+                                       style="color: var(--danger-color, #d9534f); margin-left: 8px;"
+                                       onclick="return confirm('ATENCIÓ: Aquesta acció eliminarà el vehicle definitivament de la base de dades (només permès si mai ha tingut reserves). Vols continuar?');">
+                                        Eliminar
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(vehicle)}">
+                                <td colspan="8" class="empty-state">
+                                    No s'han trobat vehicles registrats.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

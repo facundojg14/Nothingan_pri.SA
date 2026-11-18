@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestió de Clients - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- Menú Lateral Esquerre -->
+            <aside th:replace="~{fragments/layout :: menu('clients')}"></aside>
+
+            <!-- Contingut Principal -->
+            <main class="content">
+
+                <!-- Capçalera superior per a Agents (Perfil i Logout) -->
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de clients')}"></header>
+
+                <!-- Missatges d'èxit i d'error -->
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <!-- Barra de Cerca per Email i Botó Alta -->
+                <div class="top-bar">
+                    <form th:action="@{__${session.rutaBase}__/usuaris/all}" method="get" class="filter-group">
+                        <div class="input-wrapper">
+                            <label for="filterEmail">Buscar per Email</label>
+                            <input type="text" id="filterEmail" name="email" th:value="${emailFiltre != null ? emailFiltre : param.email}" placeholder="client@exemple.cat"/>
+                        </div>
+                        <button class="btn btn-filter" type="submit">Buscar</button>
+
+                        <!-- Botó per netejar quan hi ha cerca per email -->
+                        <a th:if="${(emailFiltre != null and !emailFiltre.empty) or (param.email != null and !#strings.isEmpty(param.email))}" 
+                           th:href="@{__${session.rutaBase}__/usuaris/all}" 
+                           class="btn btn-cancel" 
+                           style="padding: 10px 14px; text-decoration: none;">Netejar</a>
+                    </form>
+
+                    <a th:href="@{__${session.rutaBase}__/usuaris/new}" class="btn btn-add">+ Alta de client</a>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- SECCIÓ DE FILTRES MÚLTIPLES (RF26)         -->
+                <!-- ========================================== -->
+                <div class="card-filtres" style="background: #ffffff; padding: 18px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e0e0e0;">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Filtres avançats</h3>
+
+                    <form th:action="@{__${session.rutaBase}__/usuaris/all}" method="get" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+
+                        <div class="input-wrapper" style="flex: 1; min-width: 150px;">
+                            <label for="fNom">Nom</label>
+                            <input type="text" id="fNom" name="nom" th:value="${param.nom}" placeholder="Ex: Joan" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
+                        </div>
+
+                        <div class="input-wrapper" style="flex: 1; min-width: 150px;">
+                            <label for="fDni">DNI</label>
+                            <input type="text" id="fDni" name="dni" th:value="${param.dni}" placeholder="Ex: 12345678X" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
+                        </div>
+
+                        <div class="input-wrapper" style="flex: 1; min-width: 150px;">
+                            <label for="fNacionalitat">Nacionalitat</label>
+                            <input type="text" id="fNacionalitat" name="nacionalitat" th:value="${param.nacionalitat}" placeholder="Ex: Espanyola" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
+                        </div>
+
+                        <div class="input-wrapper" style="flex: 1; min-width: 150px;">
+                            <label for="fPoblacio">Població</label>
+                            <input type="text" id="fPoblacio" name="poblacio" th:value="${param.poblacio}" placeholder="Ex: Barcelona" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
+                        </div>
+
+                        <div class="input-wrapper" style="flex: 1; min-width: 150px;">
+                            <label for="fTelefon">Telèfon</label>
+                            <input type="text" id="fTelefon" name="telefon" th:value="${param.telefon}" placeholder="Ex: 600123456" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-filter" type="submit" style="padding: 9px 16px;">Filtrar</button>
+
+                            <!-- Botó per netejar filtres múltiples -->
+                            <a th:href="@{__${session.rutaBase}__/usuaris/all}" class="btn btn-cancel" style="padding: 9px 16px; text-decoration: none;">Netejar filtres</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- ========================================== -->
+
+                <!-- Taula d'usuaris -->
+                <div class="table-card" style="overflow-x: auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>DNI</th>
+                                <th>Nacionalitat</th>
+                                <th>Població</th>
+                                <th>Telèfon</th>
+                                <th>Email</th>
+                                <th>Registre</th>
+                                <th>Accions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="u : ${usuaris}">
+                                <td style="white-space: nowrap;">
+                                    <span th:text="${u.nom}">Denis Navio</span>
+                                    <span th:if="${u.premium}" class="badge badge-validat" style="margin-left: 6px; font-size: 0.75rem;">★ Premium</span>
+                                </td>
+                                <td style="white-space: nowrap;" th:text="${u.dni}">12345678A</td>
+                                <td th:text="${u.nacionalitat != null ? u.nacionalitat : '-'}">Espanyola</td>
+                                <td th:text="${u.poblacio != null ? u.poblacio : '-'}">Barcelona</td>
+                                <td style="white-space: nowrap;" th:text="${u.telefon}">600000000</td>
+                                <td th:text="${u.email}">dnavio@alumnat.copernic.cat</td>
+
+                                <!-- Columna Registre -->
+                                <td style="white-space: nowrap;">
+                                    <span th:if="${u.estatRegistre == 'VALIDAT' or u.estatRegistre == 'ACCEPTAT'}" class="badge badge-validat">Validat</span>
+                                    <span th:if="${u.estatRegistre == 'PENDENT' or u.estatRegistre == null}" class="badge badge-pendent">Pendent</span>
+                                    <span th:if="${u.estatRegistre == 'REBUTJAT'}" class="badge badge-rebutjat">Rebutjat</span>
+                                    <span th:if="${u.estatRegistre == 'BAIXA'}" class="badge badge-baixa">Baixa</span>
+                                </td>
+
+                                <!-- Columna d'accions -->
+                                <td class="actions-cell" style="white-space: nowrap;">
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/view/{id}(id=${u.id})}">Veure</a> · 
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/edit/{id}(id=${u.id})}">Editar</a> · 
+                                    <a th:href="@{__${session.rutaBase}__/usuaris/delete/{id}(id=${u.id})}" onclick="return confirm('Estàs segur de eliminar aquest client?')">Eliminar</a>
+                                </td>
+                            </tr>
+
+                            <!-- Estat buit si no hi ha usuaris -->
+                            <tr th:if="${#lists.isEmpty(usuaris)}">
+                                <td colspan="8" class="empty-state">
+                                    No s'han trobat clients registrats amb aquests criteris.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

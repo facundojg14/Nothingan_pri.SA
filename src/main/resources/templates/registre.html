@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registre de Nou Client</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light p-4">
+    
+    <div class="container" style="max-width: 850px;">
+
+        <div class="card shadow-sm p-4">
+            <h3 class="mb-4 text-primary">Registre de nou client</h3>
+
+            <!-- Missatges d'error si la validació falla (RF09) -->
+            <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">
+                S'ha produït un error en el registre.
+            </div>
+
+            <!-- Formulari amb enctype="multipart/form-data" per permetre pujada de fitxers -->
+            <form th:action="@{/web/usuaris/registre}" th:object="${usuari}" method="post" enctype="multipart/form-data">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nom" class="form-label">Nom complet <span class="text-danger">*</span></label>
+                        <input type="text" id="nom" th:field="*{nom}" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="dni" class="form-label">Número d'identificació (DNI/NIE) <span class="text-danger">*</span></label>
+                        <input type="text" id="dni" th:field="*{dni}" class="form-control" required />
+                    </div>
+
+                    <!-- Data de Caducitat DNI -->
+                    <div class="col-md-6">
+                        <label for="dataCaducitatDni" class="form-label">Caducitat del document <span class="text-danger">*</span></label>
+                        <input type="date" id="dataCaducitatDni" th:field="*{dataCaducitatDni}" class="form-control" required />
+                    </div>
+
+                    <!-- Pujada Imatge DNI -->
+                    <div class="col-md-6">
+                        <label for="fitxerDni" class="form-label">Imatge DNI/Passaport (JPG/PNG) <span class="text-danger">*</span></label>
+                        <input type="file" id="fitxerDni" name="fitxerDni" accept="image/*" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="tipusLlicencia" class="form-label">Tipus de llicència</label>
+                        <input type="text" id="tipusLlicencia" th:field="*{tipusLlicencia}" class="form-control" placeholder="Ej. B, A2" />
+                    </div>
+
+                    <!-- Data de Caducitat Llicència -->
+                    <div class="col-md-6">
+                        <label for="dataCaducitatLlicencia" class="form-label">Caducitat de la llicència</label>
+                        <input type="date" id="dataCaducitatLlicencia" th:field="*{dataCaducitatLlicencia}" class="form-control" />
+                    </div>
+
+                    <!-- Pujada Imatge Llicència -->
+                    <div class="col-md-6">
+                        <label for="fitxerLlicencia" class="form-label">Imatge de la Llicència (JPG/PNG) <span class="text-danger">*</span></label>
+                        <input type="file" id="fitxerLlicencia" name="fitxerLlicencia" accept="image/*" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="telefon" class="form-label">Telèfon </label>
+                        <input type="tel" id="telefon" th:field="*{telefon}" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="targetaCredit" class="form-label">Número targeta de crèdit</label>
+                        <input type="text" id="targetaCredit" th:field="*{targetaCredit}" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="adreca" class="form-label">Adreça del domicili</label>
+                        <input type="text" id="adreca" th:field="*{adreca}" class="form-control" />
+                    </div>
+
+                    <!-- Camp Població afegit per al filtre (RF26) -->
+                    <div class="col-md-6">
+                        <label for="poblacio" class="form-label">Població</label>
+                        <input type="text" id="poblacio" th:field="*{poblacio}" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="nacionalitat" class="form-label">Nacionalitat</label>
+                        <input type="text" id="nacionalitat" th:field="*{nacionalitat}" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email (nom d'usuari) <span class="text-danger">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Contrasenya <span class="text-danger">*</span></label>
+                        <input type="password" id="password" th:field="*{password}" class="form-control" required />
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="alert alert-info my-3">
+                    Un cop enviat, el registre quedarà en estat <strong>Pendent d'aprovació</strong> per l'administrador.
+                </div>
+
+                <!-- Botons d'acció -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Enviar Sol·licitud</button>
+                    <a th:href="@{/web/usuaris/login}" class="btn btn-secondary">Cancel·lar</a>
+                </div>
+
+            </form>
+        </div>
+
+    </div>
+
+</body>
+</html>

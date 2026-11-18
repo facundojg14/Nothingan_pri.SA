@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Informe de Reserves (Admin) - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- Menú Lateral Administrador -->
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('informes')}"></aside>
+
+            <!-- Contingut Principal -->
+            <main class="content">
+
+                <!-- Capçalera superior -->
+                <header th:replace="~{fragments/layout :: capcalera('Informe de reserves')}"></header>
+
+                <!-- Missatges d'alerta o informatius -->
+                <div th:if="${missatge}" class="alert-success" th:text="${missatge}"></div>
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <div class="top-bar">
+                    <h3>Consulta d'informes</h3>
+                </div>
+
+                <!-- Filtre per Selecció de Client -->
+                <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
+                    <form th:action="@{/web/admin/informes}" method="get">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="clientId">Filtrar per Client</label>
+                                <select id="clientId" name="clientId" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; background-color: #fff;">
+                                    <option value="">-- Tots els clients --</option>
+                                    <option th:each="c : ${clients}" 
+                                            th:value="${c.id}" 
+                                            th:text="${c.nom + ' (' + c.dni + ')'}"
+                                            th:selected="${c.id == clientIdSeleccionat}">
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button type="submit" class="btn btn-filter">Generar informe</button>
+                            <a th:href="@{/web/admin/informes}" class="btn btn-cancel">Netejar filtre</a>                       
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Taula d'Informe de Reserves -->
+                <div class="table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Vehicle</th>
+                                <th>Client</th>
+                                <th>Import</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr th:each="r : ${reserves}">
+                                <td th:text="${#temporals.format(r.dataInici, 'dd/MM/yyyy HH:mm')}">01/01/2026 10:00</td>
+                                <td th:text="${r.vehicle != null ? r.vehicle.matricula + ' - ' + r.vehicle.model : 'N/A'}">1234ABC - Seat Leon</td>
+                                <td th:text="${r.usuari != null ? r.usuari.nom : 'N/A'}">Joan Garcia</td>
+                                <td th:text="${#numbers.formatDecimal(r.preuLloguer, 1, 2) + ' €'}">150.00 €</td>
+                            </tr>
+
+                            <!-- Estat buit -->
+                            <tr th:if="${#lists.isEmpty(reserves)}">
+                                <td colspan="4" class="empty-state">
+                                    No s'han trobat reserves relacionades amb aquests criteris.
+                                </td>
+                            </tr>
+                        </tbody>
+
+                        <!-- Peu de la taula amb el Total de Reserves i Import acumulat (RF91) -->
+                        <tfoot th:if="${!#lists.isEmpty(reserves)}" style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
+                            <tr>
+                                <td colspan="2" style="padding: 12px 15px;">
+                                    Total de reserves: <span th:text="${totalReserves}">0</span>
+                                </td>
+                                <td style="text-align: right; padding: 12px 15px;">Import Total:</td>
+                                <td th:text="${#numbers.formatDecimal(importTotal, 1, 2) + ' €'}" style="color: #2e7d32; font-size: 1.05rem; padding: 12px 15px;">
+                                    0.00 €
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

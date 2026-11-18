@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!--
+ Fragments comuns de les pantalles internes (agent i administrador).
+
+ - menu(actiu): menú lateral. Tothom veu les opcions de l'agent; l'administrador
+   veu, a més, les seves (Validar registres, Agents i Informes).
+ - capcalera(titol): capçalera superior amb el títol, el perfil i "Tancar sessió".
+
+ Els enllaços fan servir la ruta base guardada a la sessió en fer login
+ (session.rutaBase): "/web/admin" per a l'administrador i "/web/agent" per a l'agent.
+ L'expressió __${session.rutaBase}__ (pre-processament de Thymeleaf) posa aquest
+ text dins de l'enllaç abans de construir-lo. Exemple:
+   @{__${session.rutaBase}__/reserves/all}  ->  /web/admin/reserves/all
+
+ Ús a cada pàgina:
+   <aside th:replace="~{fragments/layout :: menu('reserves')}"></aside>
+   <header th:replace="~{fragments/layout :: capcalera('Gestió de reserves')}"></header>
+-->
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <body>
+
+        <!-- MENÚ LATERAL -->
+        <aside class="sidebar" th:fragment="menu(actiu)">
+            <div class="logo-container">
+                <a th:href="@{__${session.rutaBase}__/usuaris/all}">
+                    <img th:src="@{/img/logo.png}" alt="Nothingan Pri" class="logo">
+                </a>
+            </div>
+
+            <nav class="nav-menu">
+                <!-- Opcions de l'agent (també les veu l'administrador) -->
+                <a th:href="@{__${session.rutaBase}__/reserves/all}"
+                   th:classappend="${actiu == 'reserves'} ? 'active'">• Reserves</a>
+                <a th:href="@{__${session.rutaBase}__/reserves/lliurar}"
+                   th:classappend="${actiu == 'lliurar'} ? 'active'">• Lliurar vehicle</a>
+                <a th:href="@{__${session.rutaBase}__/reserves/retornar}"
+                   th:classappend="${actiu == 'retornar'} ? 'active'">• Retornar vehicle</a>
+                <a th:href="@{__${session.rutaBase}__/vehicles/all}"
+                   th:classappend="${actiu == 'vehicles'} ? 'active'">• Vehicles</a>
+                <a th:href="@{__${session.rutaBase}__/usuaris/all}"
+                   th:classappend="${actiu == 'clients'} ? 'active'">• Clients</a>
+
+                <!-- Opcions només per a l'administrador -->
+                <th:block th:if="${session.usuariLoguejat != null and session.usuariLoguejat.rol != null and session.usuariLoguejat.rol.name() == 'ADMIN'}">
+                    <a th:href="@{/web/admin/pendents}"
+                       th:classappend="${actiu == 'pendents'} ? 'active'">• Validar registres</a>
+                    <a th:href="@{/web/admin/agents}"
+                       th:classappend="${actiu == 'agents'} ? 'active'">• Agents</a>
+                    <a th:href="@{/web/admin/informes}"
+                       th:classappend="${actiu == 'informes'} ? 'active'">• Informes</a>
+                </th:block>
+            </nav>
+        </aside>
+
+        <!-- CAPÇALERA SUPERIOR (títol, perfil i tancar sessió) -->
+        <header class="top-header" th:fragment="capcalera(titol)">
+            <h2 th:text="${titol}">Títol</h2>
+
+            <div class="user-dropdown" style="display: flex; align-items: center; gap: 15px;">
+                <!-- Enllaç al perfil amb el nom de l'usuari -->
+                <a th:href="@{__${session.rutaBase}__/perfil}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                    <span th:text="${session.usuariLoguejat != null ? session.usuariLoguejat.nom : 'El meu perfil'}">El meu perfil</span>
+                </a>
+
+                <!-- Botó per tancar sessió -->
+                <a th:href="@{/web/usuaris/logout}" class="btn btn-cancel" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+                    Tancar Sessió
+                </a>
+            </div>
+        </header>
+
+    </body>
+</html>

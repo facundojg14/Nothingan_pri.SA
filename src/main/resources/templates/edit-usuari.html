@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ca" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Formulari Client - Nothingan Pri</title>
+        <link rel="stylesheet" th:href="@{/css/styles.css}">
+    </head>
+    <body>
+
+        <div class="layout">
+
+            <!-- Menú lateral comú (fragments/layout.html) -->
+            <aside th:replace="~{fragments/layout :: menu('clients')}"></aside>
+
+            <main class="content">
+
+                <!-- Capçalera superior per a Agents (Perfil i Logout) -->
+                <header th:replace="~{fragments/layout :: capcalera('Gestió de clients')}"></header>
+
+                <div class="top-bar">
+                    <h3 th:text="${modoLectura} ? 'Detalls del Client (Només lectura)' : 'Formulari Client'">Formulari Client</h3>
+
+                    <a th:href="@{__${session.rutaBase}__/usuaris/all}" class="btn btn-cancel">
+                        Tornar al llistat
+                    </a>
+                </div>
+
+                <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+                <div class="table-card" style="padding: 24px;">
+
+                    <!-- Formulari connectat amb Spring Boot -->
+                    <form th:action="@{__${session.rutaBase}__/usuaris/save}" th:object="${usuari}" method="post">
+
+                        <!-- ID ocult per saber si creem o editem -->
+                        <input type="hidden" th:field="*{id}" />
+
+                        <div class="form-grid">
+
+                            <!-- Dades de Contacte i Identificació -->
+                            <div class="form-group">
+                                <label for="nom">Nom complet <span style="color: red;">*</span></label>
+                                <input type="text" id="nom" th:field="*{nom}" th:disabled="${modoLectura}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dni">DNI / NIE <span style="color: red;">*</span></label>
+                                <input type="text" id="dni" th:field="*{dni}" th:disabled="${modoLectura}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataCaducitatDni">Caducitat DNI</label>
+                                <input type="date" id="dataCaducitatDni" th:field="*{dataCaducitatDni}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="telefon">Telèfon</label>
+                                <input type="tel" id="telefon" th:field="*{telefon}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email (Usuari) <span style="color: red;">*</span></label>
+                                <input type="email" id="email" th:field="*{email}" th:disabled="${modoLectura}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Contrasenya (Deixa en blanc per mantenir l'actual)</label>
+                                <input type="password" id="password" th:field="*{password}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <!-- Dades Administratives (RF26) -->
+                            <div class="form-group">
+                                <label for="adreca">Adreça</label>
+                                <input type="text" id="adreca" th:field="*{adreca}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="poblacio">Població</label>
+                                <input type="text" id="poblacio" th:field="*{poblacio}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nacionalitat">Nacionalitat</label>
+                                <input type="text" id="nacionalitat" th:field="*{nacionalitat}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="targetaCredit">Targeta de crèdit</label>
+                                <input type="text" id="targetaCredit" th:field="*{targetaCredit}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <!-- Llicència de Conduir -->
+                            <div class="form-group">
+                                <label for="tipusLlicencia">Tipus Llicència</label>
+                                <input type="text" id="tipusLlicencia" th:field="*{tipusLlicencia}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dataCaducitatLlicencia">Caducitat Llicència</label>
+                                <input type="date" id="dataCaducitatLlicencia" th:field="*{dataCaducitatLlicencia}" th:disabled="${modoLectura}">
+                            </div>
+
+                            <!-- Rol de l'Usuari -->
+                            <div class="form-group">
+                                <label for="rol">Rol de l'usuari</label>
+                                <select id="rol" th:field="*{rol}" th:disabled="${modoLectura}">
+                                    <option value="CLIENT">CLIENT</option>
+                                    <option value="AGENT">AGENT</option>
+                                    <option value="ADMIN">ADMINISTRADOR</option>
+                                </select>
+                            </div>
+
+                            <!-- Secció Gestió de l'Estat del Registre (RF12/RF13) -->
+                            <div class="form-group">
+                                <label for="estatRegistre">Estat del Registre (RF12/RF13)</label>
+                                <select id="estatRegistre" th:field="*{estatRegistre}" th:disabled="${modoLectura}">
+                                    <option value="PENDENT">PENDENT (Pendent de revisió)</option>
+                                    <option value="VALIDAT">VALIDAT (Aprovat / Donat d'alta)</option>
+                                    <option value="REBUTJAT">REBUTJAT (Sol·licitud denegada)</option>
+                                    <option value="BAIXA">BAIXA (Client Inactiu)</option>
+                                </select>
+                            </div>
+
+                            <!-- Checkbox Client Premium (RF21/RF22) -->
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label for="premium" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="premium" th:field="*{premium}" th:disabled="${modoLectura}" style="width: auto;">
+                                    <span><strong>Client Premium (RF21/RF22)</strong> (Aplica descomptes en la fiança)</span>
+                                </label>
+                            </div>
+
+                            <!-- Visualització de la Documentació Adjunta -->
+                            <div class="form-group" style="grid-column: span 2;" th:if="${usuari.imatgedni != null or usuari.imatgeLlicencia != null}">
+                                <label>Documentació adjunta:</label>
+                                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                                    <a th:if="${usuari.imatgedni}" th:href="@{'/uploads/' + ${usuari.imatgedni}}" target="_blank" class="btn btn-cancel">Ver Imatge DNI</a>
+                                    <a th:if="${usuari.imatgeLlicencia}" th:href="@{'/uploads/' + ${usuari.imatgeLlicencia}}" target="_blank" class="btn btn-cancel">Ver Imatge Llicència</a>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="button-group" style="margin-top: 24px;">
+                            <!-- Botó de desar només visible si NO és modoLectura -->
+                            <button th:unless="${modoLectura}" type="submit" class="btn btn-filter">
+                                Desar Client
+                            </button>
+
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </main>
+        </div>
+
+    </body>
+</html>

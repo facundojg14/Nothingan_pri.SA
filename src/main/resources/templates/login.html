@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Inicia sessió</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <style>
+            body {
+                background-color: #EBF3FC;
+            }
+            .card-custom {
+                border-radius: 20px;
+                border: none;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+                background-color: #ffffff;
+            }
+            .form-control {
+                border-radius: 8px;
+                border: 1px solid #DDE2E5;
+                padding: 10px 14px;
+            }
+            .btn-custom {
+                background-color: #3B82F6;
+                border-color: #3B82F6;
+                border-radius: 10px;
+                padding: 10px;
+                font-weight: 600;
+            }
+            .btn-custom:hover {
+                background-color: #2563EB;
+                border-color: #2563EB;
+            }
+            .logo-img {
+                max-width: 250px;
+                height: auto;
+            }
+            .badge-role {
+                font-size: 0.75rem;
+                padding: 4px 8px;
+                border-radius: 6px;
+            }
+        </style>
+    </head>
+    <body class="d-flex align-items-center justify-content-center p-3" style="min-height: 100vh;">
+
+        <div class="container" style="max-width: 900px;">
+            <div class="row g-4 align-items-stretch">
+                
+                <!-- Columna Esquerra: Formulari de Login -->
+                <div class="col-md-6">
+                    <div class="card card-custom p-4 h-100 justify-content-center">
+
+                        <!-- Logo -->
+                        <div class="text-center mb-3">
+                            <img th:src="@{/img/logo.png}" alt="NOTHINGAN PRI" class="logo-img img-fluid" />
+                        </div>
+
+                        <h6 class="text-center mb-4 text-secondary fw-normal">Inicia sessió</h6>
+
+                        <!-- Formulari de Login -->
+                        <form th:action="@{/web/usuaris/login}" method="post">
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-semibold text-secondary small">Email (usuari)</label>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="dnavio@alumnat.copernic.cat" required />
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-semibold text-secondary small">Contrasenya</label>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-custom w-100 mb-3">Entrar</button>
+                            
+                            <!-- Missatges d'Error (SecurityConfig -> customFailureHandler) -->
+                            <div th:if="${param.error}"
+                                 class="alert alert-danger py-2 px-3 mt-2 mb-3 text-center small"
+                                 role="alert">
+                                El correu o la contrasenya no són correctes.
+                            </div>
+
+                            <!-- Compte no actiu: registre PENDENT, REBUTJAT o de BAIXA -->
+                            <div th:if="${param.pendent}"
+                                 class="alert alert-warning py-2 px-3 mt-2 mb-3 text-center small"
+                                 role="alert">
+                                El teu compte no està actiu: el registre està pendent de validar, ha estat rebutjat o està de baixa.
+                            </div>
+
+                            <div class="text-center mt-3 mb-2">
+                                <a th:href="@{/web/usuaris/registre}" class="text-decoration-none small text-primary fw-medium">No tens compte? Registra't</a>
+                            </div>
+
+                            <div class="text-center">
+                                <a href="#" class="text-decoration-none small text-muted">Has oblidat la contrasenya?</a>
+                            </div>
+                        </form>
+
+                        <!-- Missatges d'Error -->
+                        <div th:if="${error}" class="alert alert-danger mt-3 mb-0 text-center small" role="alert" th:text="${error}">
+                            Credencials incorrectes.
+                        </div>
+
+                        <div th:if="${param.logout}" class="alert alert-info mt-3 mb-0 text-center small" role="alert">
+                            Has tancat la sessió correctament.
+                        </div>
+
+                        <!-- Missatges d'Avís -->
+                        <div th:if="${param.registrePendent}" class="alert alert-info mt-3 mb-0 text-center small" role="alert">
+                            La teva sol·licitud s'ha enviat correctament! Està pendent de revisió per un agent.
+                        </div>
+
+                        <div th:if="${alertaPendent}" class="alert alert-warning mt-3 mb-0 text-center small" role="alert" th:text="${alertaPendent}">
+                            El teu usuari encara no està validat per un agent.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Dreta: Guia d'Usuaris de Prova -->
+                <div class="col-md-6">
+                    <div class="card card-custom p-4 h-100 border-start border-primary border-4">
+                        <h5 class="fw-bold text-dark mb-3">Guia d'Usuaris</h5>
+                        <p class="text-muted small mb-3">Credencials de prova configurades per a l'avaluació:</p>
+
+                        <div class="list-group list-group-flush">
+                            
+                            <!-- Admin -->
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-dark small">Admin Principal</span>
+                                    <span class="badge bg-danger badge-role">ADMIN</span>
+                                </div>
+                                <div class="small text-secondary">
+                                    <div><strong>Email:</strong> <code>alorente@alumnat.copernic.cat</code></div>
+                                    <div><strong>Contrasenya:</strong> <code>1212</code></div>
+                                </div>
+                            </div>
+
+                            <!-- Client -->
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-dark small">Carolina Macià</span>
+                                    <span class="badge bg-success badge-role">CLIENT</span>
+                                </div>
+                                <div class="small text-secondary">
+                                    <div><strong>Email:</strong> <code>cemacia@alumnat.copernic.cat</code></div>
+                                    <div><strong>Contrasenya:</strong> <code>1212</code></div>
+                                </div>
+                            </div>
+
+                            <!-- Agent -->
+                            <div class="list-group-item bg-transparent px-0 py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-dark small">Agent 1</span>
+                                    <span class="badge bg-warning text-dark badge-role">AGENT</span>
+                                </div>
+                                <div class="small text-secondary">
+                                    <div><strong>Email:</strong> <code>fjaeggi@alumnat.copernic.cat</code></div>
+                                    <div><strong>Contrasenya:</strong> <code>1212</code></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </body>
+</html>
