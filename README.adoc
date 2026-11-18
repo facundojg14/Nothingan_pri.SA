@@ -3,6 +3,10 @@
 :toc-title: Índex
 :icons: font
 
+📄 link:Projecte%20Nothingan%20Pri.pdf[Documentació del projecte]
+
+toc::[]
+
 == Descripció del projecte
 
 *Projecte1* és una aplicació web per gestionar una empresa de lloguer de vehicles.
