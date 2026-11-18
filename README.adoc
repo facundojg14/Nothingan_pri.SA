@@ -1,0 +1,136 @@
+= Projecte1 – Gestió de lloguer de vehicles
+:toc:
+:toc-title: Índex
+:icons: font
+
+== Descripció del projecte
+
+*Projecte1* és una aplicació web per gestionar una empresa de lloguer de vehicles.
+Permet als clients registrar-se, consultar la flota disponible i fer reserves, mentre que
+els agents i l'administrador gestionen els vehicles, els usuaris, les reserves, el
+lliurament i el retorn dels vehicles i les fiances associades.
+
+L'aplicació està desenvolupada amb *Spring Boot* seguint una arquitectura en capes
+(_Controller → Logic → Repository_) i utilitza *Thymeleaf* per generar les vistes.
+
+== Tecnologies
+
+* Java 21
+* Spring Boot (Web MVC, Data JPA, Security, Mail)
+* Thymeleaf
+* MySQL
+* Maven
+* HTTPS amb certificat local (port `8443`)
+
+== Rols de l'aplicació
+
+[cols="1,3", options="header"]
+|===
+| Rol | Què pot fer
+| *CLIENT* | Registrar-se, consultar vehicles, fer i anul·lar les seves reserves i editar el seu perfil.
+| *AGENT* | Gestionar vehicles, clients i reserves, i fer el lliurament i el retorn dels vehicles.
+| *ADMIN* | Tot el que fa un agent, a més de validar registres, gestionar agents i consultar informes.
+|===
+
+== Principals funcionalitats
+
+=== Usuaris i seguretat
+
+* Registre de clients amb pujada d'imatges del DNI i del carnet de conduir.
+* Validació dels registres pendents per part de l'administrador.
+* Inici i tancament de sessió amb control d'accés per rol (Spring Security).
+* Contrasenyes xifrades i notificacions per correu electrònic.
+* Edició del perfil de l'usuari.
+
+=== Gestió de vehicles
+
+* Llistat i cerca de vehicles disponibles.
+* Alta, edició i baixa (lògica) de vehicles, i reactivació de vehicles donats de baixa.
+* Categories: Utilitari, Compacte, SUV, Berlina, Furgoneta i Monovolum.
+* Estats: Disponible, Lliurat, En manteniment i Baixa.
+* Preu per dia, preu per hora i fiança estàndard per vehicle, amb fotografia.
+
+=== Gestió de reserves
+
+* Creació de reserves per part del client o d'un agent, comprovant la disponibilitat.
+* Consulta del detall de cada reserva i del seu estat (Confirmada, Anul·lada, Lliurada, Retornada).
+* Anul·lació de reserves amb devolució segons els dies d'antelació configurats.
+* *Lliurament* del vehicle amb data, descripció i fotos de l'estat.
+* *Retorn* del vehicle registrant la data real i els possibles desperfectes.
+
+=== Fiances
+
+* Càlcul de la fiança segons el vehicle i la reputació del client (NORMAL o PREMIUM, amb un 25% de descompte).
+* Retenció total de la fiança si hi ha desperfectes imputables al client.
+* Penalització per hores de retard i registre del càrrec extra pendent si supera la fiança.
+
+=== Administració
+
+* Gestió d'agents (alta, edició, consulta i baixa).
+* Informes de reserves.
+* Registre de l'activitat de l'aplicació en fitxers de log.
+
+== Estructura del projecte
+
+----
+src/main/java/cat/copernic/Projecte1
+├── config       → Seguretat, xifrat de contrasenyes i configuració web
+├── controller   → Controladors MVC (rutes /web/...)
+├── entity       → Entitats JPA (Usuaris, Vehicle, Reserva, Incidencies) i enums
+├── logic        → Lògica de negoci (reserves, vehicles, usuaris, fiances, correu, fitxers)
+└── repository   → Repositoris d'accés a dades
+src/main/resources
+├── templates    → Vistes Thymeleaf
+├── static       → Estils i imatges
+└── application.properties
+----
+
+== Posada en marxa
+
+. Tenir instal·lat Java 21 i un servidor MySQL en local.
+. Configurar l'usuari i la contrasenya de MySQL a `src/main/resources/application.properties`
+  (la base de dades `Projecte1` es crea automàticament).
+. Executar l'aplicació:
++
+[source,bash]
+----
+./mvnw spring-boot:run
+----
+. Accedir a https://localhost:8443
+
+== Equip i repartiment de tasques
+
+Projecte desenvolupat per l'equip 4 de l'Institut Copernic.
+
+[cols="1,1,4", options="header"]
+|===
+| Membre | Rol | Principals aportacions
+
+| *Facundo*
+| Team leader
+| Creació inicial del projecte i de l'estructura de paquets. Gestió de vehicles (entitat,
+lògica, repositori, controlador i vistes), filtres i llistat de vehicles, baixa de vehicles
+i lliurament del vehicle. Unificació de pantalles, normalització d'estils, resolució de
+conflictes i coordinació de l'equip.
+
+| *Denis*
+| Desenvolupador
+| Seguretat amb Spring Security (BCrypt, redirecció per rols i HTTPS), login, registre i
+validació de clients, CRUD d'usuaris i agents, pantalles de l'administrador, informe de
+reserves (RF91), anul·lació de reserves amb correu per a agent i admin, gestió d'errors,
+sistema de logs, relacions entre entitats, JavaDoc i tests unitaris amb JUnit 5.
+
+| *Alejandro*
+| Desenvolupador
+| Gestió de reserves (entitat, lògica, repositori, controlador i vistes), cerca de vehicles
+disponibles per dates i categoria, fitxa detallada del vehicle, imatges dels vehicles,
+càlcul de la fiança amb el descompte Premium del 25%, lliurament i retorn amb càrrecs per
+retard, filtre de reserves per email i pantalla inicial.
+
+| *Carolina*
+| Desenvolupadora
+| Part del client: pàgina principal, `ClientController`, perfil, llistat i filtres de les
+seves reserves, creació de reserves amb visualització de la fiança, detall de reserva
+(RF53), anul·lació de reserves amb enviament de correu (`EmailService`) i consulta
+d'incidències de les reserves retornades.
+|===
